@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://ciyl6m880u8m7"]
+
+[ext_resource type="Script" uid="uid://h1vw5vub82yx" path="res://scripts/game_manager.gd" id="1_amxg5"]
+[ext_resource type="Texture2D" uid="uid://by1mn4xk51ucp" path="res://assets/dev_textures/black/texture_01.png" id="2_amxg5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3263u"]
+albedo_texture = ExtResource("2_amxg5")
+uv1_triplanar = true
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_kyfjp"]
+
+[sub_resource type="Sky" id="Sky_amxg5"]
+sky_material = SubResource("ProceduralSkyMaterial_kyfjp")
+
+[sub_resource type="Environment" id="Environment_3263u"]
+background_mode = 2
+sky = SubResource("Sky_amxg5")
+
+[node name="Node3D" type="Node3D" unique_id=1369026332]
+script = ExtResource("1_amxg5")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=955455376]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.20000005, 0)
+material_override = SubResource("StandardMaterial3D_3263u")
+use_collision = true
+size = Vector3(13, 0.3, 11)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1314921531]
+environment = SubResource("Environment_3263u")
+
+[node name="Control" type="Control" parent="." unique_id=1741909012]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Log" type="RichTextLabel" parent="Control" unique_id=748660809]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
