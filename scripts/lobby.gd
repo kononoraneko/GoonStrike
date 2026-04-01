@@ -11,7 +11,7 @@ const MAX_CONNECTIONS = 20
 
 var players = {}
 
-var player_info = {"name": "Name"}
+var player_info = {"name": "Name", "hp": 100}
 
 var players_loaded = 0
 

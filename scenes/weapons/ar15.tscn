@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://rhwp02aggmh5"]
+
+[ext_resource type="PackedScene" uid="uid://ckhbescttbk7j" path="res://assets/models/weapons/ar15/ar-15.glb" id="1_a4lxr"]
+
+[node name="Sketchfab_Scene" unique_id=1947599148 instance=ExtResource("1_a4lxr")]
+transform = Transform3D(-4.371139e-06, 0, 100, 0, 100, 0, -100, 0, -4.371139e-06, 0, 0, 0)
