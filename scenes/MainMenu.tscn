@@ -25,11 +25,16 @@ offset_bottom = 33.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="LineEdit" type="LineEdit" parent="VBoxContainer" unique_id=1930361350]
+[node name="NameEdit" type="LineEdit" parent="VBoxContainer" unique_id=1930361350]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 text = "Name"
 placeholder_text = "Name"
+
+[node name="IpEdit" type="LineEdit" parent="VBoxContainer" unique_id=1893836777]
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "IP"
 
 [node name="ConnectionButtons" type="HBoxContainer" parent="VBoxContainer" unique_id=1067170532]
 layout_mode = 2
@@ -43,6 +48,7 @@ text = "Host"
 layout_mode = 2
 text = "Join"
 
-[connection signal="text_changed" from="VBoxContainer/LineEdit" to="." method="_on_line_edit_text_changed"]
+[connection signal="text_changed" from="VBoxContainer/NameEdit" to="." method="_on_line_edit_text_changed"]
+[connection signal="text_changed" from="VBoxContainer/IpEdit" to="." method="_on_ip_edit_text_changed"]
 [connection signal="pressed" from="VBoxContainer/ConnectionButtons/HostButton" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="VBoxContainer/ConnectionButtons/JoinButton" to="." method="_on_join_pressed"]

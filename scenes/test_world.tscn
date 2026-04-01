@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://h1vw5vub82yx" path="res://scripts/game_manager.gd" id="1_amxg5"]
 [ext_resource type="Texture2D" uid="uid://by1mn4xk51ucp" path="res://assets/dev_textures/black/texture_01.png" id="2_amxg5"]
+[ext_resource type="PackedScene" uid="uid://bsyqrrqt4nfsv" path="res://assets/models/maiden_moo2021.glb" id="3_3263u"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3263u"]
 albedo_texture = ExtResource("2_amxg5")
@@ -43,3 +44,6 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 grow_horizontal = 2
+
+[node name="Sketchfab_Scene" parent="." unique_id=191015368 instance=ExtResource("3_3263u")]
+transform = Transform3D(28.484852, 0, 0, 0, 28.484852, 0, 0, 0, 28.484852, 0.04788059, -0.00729052, 0.032790244)
