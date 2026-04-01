@@ -10,23 +10,14 @@ config_version=5
 
 [application]
 
-config/name="GoonStrike_0.1"
+config/name="GoonStrike_01"
 run/main_scene="uid://cfq4b3lleo5ml"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
-Network="uid://dnvtge836n10e"
 Lobby="*uid://btxoouso5uydi"
-
-[editor_plugins]
-
-<<<<<<< HEAD
-enabled=PackedStringArray("res://addons/GitGodot/plugin.cfg", "res://addons/mixamo_root_motion_remover/plugin.cfg")
-=======
-enabled=PackedStringArray("res://addons/mixamo_root_motion_remover/plugin.cfg")
->>>>>>> ae430065fac82ea67b9f4635caa3c96f26b0d3e3
 
 [input]
 
