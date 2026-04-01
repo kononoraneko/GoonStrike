@@ -1,9 +1,12 @@
-extends Node3D
+class_name GameManager extends Node3D 
 
 var player_scene = preload("res://scenes/Player_character.tscn")
 var players_nodes = {}
 
 @onready var log = $Control/Log
+
+signal player_spawned(id, p_info)
+signal player_despawned(id, p_info)
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -18,13 +21,13 @@ func _on_player_connected(id, info):
 	#if multiplayer.is_server():
 		#spawn_player(id)
 
-func _on_player_disconnected(id):
-	if multiplayer.is_server():
-		players_nodes[id].queue_free()
-		players_nodes.erase(id)
+func _on_player_disconnected(id, p_info):
+	players_nodes[id].queue_free()
+	players_nodes.erase(id)
+	player_despawned.emit(id, p_info)
 
 func spawn_player(id):
-	log.append_text("spawning_player: " + str(id))
+	player_spawned.emit(id, Lobby.players[id])
 	var player = player_scene.instantiate()
 	player.name = str(id)
 	player.set_multiplayer_authority(id)

@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://b7nlou1kpcqmu"]
+
+[ext_resource type="Script" uid="uid://c2brcv1s6c608" path="res://scripts/dev_ui.gd" id="1_dssu2"]
+
+[node name="Control" type="Control" unique_id=1725811779]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_dssu2")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=108609122]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=750039573]
+layout_mode = 2
+
+[node name="SendButton" type="Button" parent="VBoxContainer/HBoxContainer" unique_id=1532341715]
+layout_mode = 2
+text = "send"
+
+[node name="ChatInput" type="LineEdit" parent="VBoxContainer/HBoxContainer" unique_id=1648721730]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Log" type="RichTextLabel" parent="VBoxContainer" unique_id=1729097422]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+scroll_following = true
+
+[connection signal="button_down" from="VBoxContainer/HBoxContainer/SendButton" to="." method="_on_Send_pressed"]

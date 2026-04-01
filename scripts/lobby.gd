@@ -1,7 +1,7 @@
 extends Node
 
 signal player_connected(peer_id, player_info)
-signal player_disconnected(peer_id)
+signal player_disconnected(peer_id, player_info)
 signal server_disconnected
 signal message_recieved(player_info, message)
 
@@ -78,8 +78,9 @@ func handle_message(message):
 		send_message.rpc(players[multiplayer.get_remote_sender_id()], message)
 
 func _on_player_disconnected(id):
+	var p_i = players[id].duplicate()
 	players.erase(id)
-	player_disconnected.emit(id)
+	player_disconnected.emit(id, p_i)
 
 func _on_connected_ok():
 	var peer_id = multiplayer.get_unique_id()
