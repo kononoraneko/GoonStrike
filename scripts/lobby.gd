@@ -16,6 +16,7 @@ var player_info = {"name": "Name", "hp": 100}
 var players_loaded = 0
 
 func _ready():
+	set_multiplayer_authority(1)
 	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected_ok)

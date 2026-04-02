@@ -34,3 +34,10 @@ func spawn_player(id):
 	
 	add_child(player)
 	players_nodes[id] = player
+
+
+@rpc("any_peer", "call_local")
+func server_receive_input(cmd):
+	if multiplayer.is_server():
+		var player = players_nodes[multiplayer.get_remote_sender_id()]
+		player.process_server_input(cmd)
