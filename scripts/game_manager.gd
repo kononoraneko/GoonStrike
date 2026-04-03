@@ -3,7 +3,7 @@ class_name GameManager extends Node3D
 var player_scene = preload("res://scenes/Player_character.tscn")
 var players_nodes = {}
 
-@onready var log = $Control/Log
+#@onready var log = $Control/Log
 
 signal player_spawned(id, p_info)
 signal player_despawned(id, p_info)
@@ -36,6 +36,7 @@ func spawn_player(id):
 	
 	add_child(player)
 	players_nodes[id] = player
+	
 
 
 @rpc("any_peer", "call_local", "unreliable")

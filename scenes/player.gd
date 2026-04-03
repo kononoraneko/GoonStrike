@@ -7,6 +7,18 @@ class_name OnlinePlayer extends CharacterBody3D
 @onready var name_label: Label3D = $Label3D
 @onready var camera = $Camera3D
 @onready var anim = $AnimationTree
+@onready var weapon: Weapon = $Weapon 
+@onready var skeleton: Skeleton3D = $"Erika Archer/Skeleton3D"
+
+@onready var marker_up = $"Erika Archer/Skeleton3D/marker_up"
+@onready var marker_center = $"Erika Archer/Skeleton3D/marker_center"
+@onready var marker_down = $"Erika Archer/Skeleton3D/marker_down"
+
+var spine_bone_idx: int = -1
+var default_spine_transform: Transform3D
+
+var aim_angle: float = 0.0
+var health = 100
 
 var player_info = {}
 var target_position: Vector3
@@ -24,43 +36,66 @@ var input_queue: Array = []
 var remote_player_id: int = 0   # ID владельца этого персонажа (установить при спавне)
 var last_processed_tick: int = 0
 
+signal damage_taken(current_hp)
+
+var spine_up: Transform3D
+var spine_center: Transform3D
+var spine_down: Transform3D
+
 func _ready():
 	name_label.text = player_info["name"]
+	
 	if is_multiplayer_authority():
+		if multiplayer.is_server():
+			visible = false
+			transform.origin.y += 10
+			return
 		camera.current = true
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	if multiplayer.is_server():
 		visible = false
-		camera.current = false
-
+	elif name == "1":
+		visible = false
+	
+	if skeleton:
+		spine_bone_idx = skeleton.find_bone("mixamorig_Spine")
+		if spine_bone_idx == -1:
+			print("Bone 'spine' not found")
+			return
+		default_spine_transform = skeleton.get_bone_global_pose(spine_bone_idx)
+		spine_up = skeleton.global_transform.affine_inverse() * marker_up.global_transform
+		spine_center = skeleton.global_transform.affine_inverse() * marker_center.global_transform
+		spine_down = skeleton.global_transform.affine_inverse() * marker_down.global_transform
 
 func _physics_process(delta):
-	if is_multiplayer_authority():
-		process_input(delta)
+	if multiplayer.is_server():
+		if is_multiplayer_authority():
+			return
+		process_all_commands()
 	else:
-		if multiplayer.is_server():
-			#print("Server: _physics_process for remote player", name, " queue size ", input_queue.size())
-			process_all_commands()
-			
-			#if input_queue.is_empty():
-				#velocity.x = 0
-				#velocity.z = 0
-				#move_and_slide()
-			
-		elif !multiplayer.is_server():
+		if is_multiplayer_authority():
+			process_input(delta)
+		else:
 			global_transform.origin = global_transform.origin.lerp(target_position, 10 * delta)
+		handle_animation()
 	apply_gravity(delta)
-	handle_animation()
+	update_aim_pose()
+
+
 
 
 func _unhandled_input(event):
-	if !is_multiplayer_authority():
+	if !is_multiplayer_authority() || multiplayer.is_server():
 		return
 	if event is InputEventMouseMotion:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		rotation_x -= event.relative.y * mouse_sensitivity
 		rotation_x = clamp(rotation_x, -1.5, 1.5)
 		camera.rotation.x = rotation_x
+		aim_angle = rotation_x / 1.5
+	if event.is_action_pressed("shoot"):
+		# Получаем точку прицела (центр экрана + рейкаст)
+		var direction = get_shoot_direction()
+		weapon.shoot(direction)
 
 
 # сбор инпута, отправка на сервер и применение локально на клиенте.
@@ -89,6 +124,7 @@ func process_input(_delta):
 		"tick": tick,
 		"dir": direction,
 		"raw_dir": input_dir,
+		"aim": aim_angle,
 		"rot": rotation,
 		"jump": is_jump
 	}
@@ -157,6 +193,8 @@ func apply_movement(cmd):
 	#print("uniq id - ", multiplayer.get_unique_id(), " cmd - ", cmd, " sender - " ,multiplayer.get_remote_sender_id(), " delta - ", delta)
 	velocity.x = cmd.dir.x * speed
 	velocity.z = cmd.dir.z * speed
+	if cmd["aim"]:
+		aim_angle = cmd.aim
 	if cmd["jump"]:
 		velocity.y += jump_velocity
 	move_and_slide()
@@ -184,18 +222,79 @@ func update_remote_state(pos,cmd):
 		target_position = pos
 		rotation = cmd["rot"]
 		input_dir = cmd["raw_dir"]
+		aim_angle = cmd["aim"]
 
 
-
-
-# unused
 func apply_gravity(delta):
 	if not is_on_floor():
 		velocity += get_gravity() * delta
-
-
 
 func handle_animation():
 	anim.set("parameters/conditions/moving", input_dir != Vector2.ZERO)
 	anim.set("parameters/conditions/idle", input_dir == Vector2.ZERO)
 	anim.set("parameters/BlendSpace2D/blend_position", input_dir)
+
+
+func get_shoot_direction() -> Vector3:
+	var camera = $Camera3D
+	var viewport = get_viewport()
+	var center = viewport.get_visible_rect().size / 2
+	return camera.project_ray_normal(center)
+
+
+#func get_shoot_target() -> Vector3:
+	#var camera = $Camera3D
+	#var viewport = get_viewport()
+	#var center_screen = viewport.get_visible_rect().size / 2
+	#var from = camera.project_ray_origin(center_screen)
+	#var to = from + camera.project_ray_normal(center_screen) * weapon.range
+	#var params = PhysicsRayQueryParameters3D.new()
+	#params.from = from
+	#params.to = to
+	#params.collision_mask = 2   # слой игроков
+	#var result = get_world_3d().direct_space_state.intersect_ray(params)
+	#if result:
+		#return result.position
+	#return to
+
+func take_damage(amount: int, attacker: OnlinePlayer):
+	# Только сервер выполняет логику урона
+	if not multiplayer.is_server():
+		return
+	# Здесь можно добавить здоровье, броню, смерть
+	health -= amount
+	if health <= 0:
+		die()
+	# Уведомить всех о изменении здоровья
+	
+	rpc("update_health", health)
+
+@rpc("any_peer","reliable")
+func update_health(new_health: int):
+	health = new_health
+	damage_taken.emit(health)
+
+func update_aim_pose():
+	if not skeleton or spine_bone_idx == -1:
+		return
+
+	
+	var t = clamp(aim_angle, -1.0, 1.0)
+	var target_transform: Transform3D
+	if t >= 0:
+		# интерполяция между center (0) и up (1)
+		target_transform = spine_center.interpolate_with(spine_up, t)
+	else:
+		# интерполяция между center (0) и down (-1)
+		target_transform = spine_center.interpolate_with(spine_down, -t)
+	
+	skeleton.set_bone_global_pose_override(spine_bone_idx, target_transform, 1.0, true)
+	
+	
+	
+
+
+
+
+func die():
+	print("Player died!")
