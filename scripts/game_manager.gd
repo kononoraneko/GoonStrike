@@ -28,16 +28,21 @@ func _on_player_disconnected(id, p_info):
 
 func spawn_player(id):
 	player_spawned.emit(id, Lobby.players[id])
-	var player = player_scene.instantiate()
+	var player: OnlinePlayer = player_scene.instantiate()
 	player.name = str(id)
+	player.player_info = Lobby.players[id]
 	player.set_multiplayer_authority(id)
+	player.remote_player_id = id 
 	
 	add_child(player)
 	players_nodes[id] = player
 
 
-@rpc("any_peer", "call_local")
+@rpc("any_peer", "call_local", "unreliable")
 func server_receive_input(cmd):
 	if multiplayer.is_server():
-		var player = players_nodes[multiplayer.get_remote_sender_id()]
+		var p_i = multiplayer.get_remote_sender_id()
+		if p_i > 1:
+			print("ms - ", Time.get_ticks_usec(), " server recieved cmd. player - ", p_i, " cmd - ", cmd)
+		var player = players_nodes[p_i]
 		player.process_server_input(cmd)
