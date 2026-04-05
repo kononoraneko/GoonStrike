@@ -1,6 +1,6 @@
 class_name GameManager extends Node3D 
 
-var player_scene = preload("res://scenes/Player_character.tscn")
+var player_scene = preload("res://scenes/online_player.tscn")
 var players_nodes = {}
 
 #@onready var log = $Control/Log

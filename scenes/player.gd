@@ -3,16 +3,18 @@ class_name OnlinePlayer extends CharacterBody3D
 @export var speed := 5.0
 @export var mouse_sensitivity := 0.002
 @export var jump_velocity = 30
+@export var spine_bone_name: String 
 
 @onready var name_label: Label3D = $Label3D
 @onready var camera = $Camera3D
 @onready var anim = $AnimationTree
 @onready var weapon: Weapon = $Weapon 
-@onready var skeleton: Skeleton3D = $"Erika Archer/Skeleton3D"
+@onready var skeleton: Skeleton3D = $model/GeneralSkeleton
 
-@onready var marker_up = $"Erika Archer/Skeleton3D/marker_up"
-@onready var marker_center = $"Erika Archer/Skeleton3D/marker_center"
-@onready var marker_down = $"Erika Archer/Skeleton3D/marker_down"
+@onready var marker_up = $model/GeneralSkeleton/pose_up
+@onready var marker_center = $model/GeneralSkeleton/pose_center
+@onready var marker_down = $model/GeneralSkeleton/pose_down
+
 
 var spine_bone_idx: int = -1
 var default_spine_transform: Transform3D
@@ -46,6 +48,7 @@ var shoot_anim_timer: SceneTreeTimer
 var hit_anim_timer: SceneTreeTimer
 
 func _ready():
+	print(self)
 	name_label.text = player_info["name"]
 	
 	if is_multiplayer_authority():
@@ -60,7 +63,7 @@ func _ready():
 		visible = false
 	
 	if skeleton:
-		spine_bone_idx = skeleton.find_bone("mixamorig_Spine")
+		spine_bone_idx = skeleton.find_bone(spine_bone_name)
 		if spine_bone_idx == -1:
 			print("Bone 'spine' not found")
 			return
