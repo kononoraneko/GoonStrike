@@ -42,6 +42,9 @@ var spine_up: Transform3D
 var spine_center: Transform3D
 var spine_down: Transform3D
 
+var shoot_anim_timer: SceneTreeTimer
+var hit_anim_timer: SceneTreeTimer
+
 func _ready():
 	name_label.text = player_info["name"]
 	
@@ -79,7 +82,6 @@ func _physics_process(delta):
 		handle_animation()
 	apply_gravity(delta)
 	update_aim_pose()
-
 
 
 
@@ -143,7 +145,7 @@ func process_input(_delta):
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE else Input.MOUSE_MODE_VISIBLE)
 	
 	#if !multiplayer.is_server():
-		#apply_movement(cmd)
+	apply_movement(cmd)
 	handle_animation()
 
 
@@ -242,20 +244,6 @@ func get_shoot_direction() -> Vector3:
 	return camera.project_ray_normal(center)
 
 
-#func get_shoot_target() -> Vector3:
-	#var camera = $Camera3D
-	#var viewport = get_viewport()
-	#var center_screen = viewport.get_visible_rect().size / 2
-	#var from = camera.project_ray_origin(center_screen)
-	#var to = from + camera.project_ray_normal(center_screen) * weapon.range
-	#var params = PhysicsRayQueryParameters3D.new()
-	#params.from = from
-	#params.to = to
-	#params.collision_mask = 2   # слой игроков
-	#var result = get_world_3d().direct_space_state.intersect_ray(params)
-	#if result:
-		#return result.position
-	#return to
 
 func take_damage(amount: int, attacker: OnlinePlayer):
 	# Только сервер выполняет логику урона
@@ -266,13 +254,20 @@ func take_damage(amount: int, attacker: OnlinePlayer):
 	if health <= 0:
 		die()
 	# Уведомить всех о изменении здоровья
-	
+	rpc("rpc_play_hit_animation") 
 	rpc("update_health", health)
 
 @rpc("any_peer","reliable")
 func update_health(new_health: int):
 	health = new_health
+	
 	damage_taken.emit(health)
+
+@rpc("any_peer","reliable", "call_local")
+func rpc_play_hit_animation():
+	# На сервере анимация не нужна (если сервер не рендерит), но можно проверить
+	if not multiplayer.is_server() or is_multiplayer_authority():
+		play_hit_animation()
 
 func update_aim_pose():
 	if not skeleton or spine_bone_idx == -1:
@@ -293,7 +288,25 @@ func update_aim_pose():
 	
 	
 
+func play_shoot_animation():
+	if not is_inside_tree(): return
+	anim.set("parameters/conditions/shoot", true)
+	if shoot_anim_timer: shoot_anim_timer.timeout.disconnect(_reset_shoot_anim)
+	shoot_anim_timer = get_tree().create_timer(0.1)  # длительность анимации выстрела
+	shoot_anim_timer.timeout.connect(_reset_shoot_anim)
 
+func _reset_shoot_anim():
+	anim.set("parameters/conditions/shoot", false)
+
+func play_hit_animation():
+	if not is_inside_tree(): return
+	anim.set("parameters/conditions/hit", true)
+	if hit_anim_timer: hit_anim_timer.timeout.disconnect(_reset_hit_anim)
+	hit_anim_timer = get_tree().create_timer(0.2)  # длительность анимации урона
+	hit_anim_timer.timeout.connect(_reset_hit_anim)
+
+func _reset_hit_anim():
+	anim.set("parameters/conditions/hit", false)
 
 
 func die():

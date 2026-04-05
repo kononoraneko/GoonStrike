@@ -7,6 +7,7 @@ class_name Weapon
 @export var bullet_scene: PackedScene  # визуальный эффект (трассер)
 @export var muzzle_flash: PackedScene
 @export var hit: PackedScene
+@export var muzzle: Marker3D
 
 var can_shoot := true
 var shoot_timer: SceneTreeTimer
@@ -81,6 +82,7 @@ func broadcast_shot(muzzle_pos: Vector3, hit_point: Vector3, hit_success: bool, 
 		#print("  -> showing effects for client ", multiplayer.get_unique_id())
 		play_effects(muzzle_pos)
 		show_tracer(muzzle_pos, hit_point)
+		owner_player.play_shoot_animation()
 	if hit_success:
 		show_hit_effect(hit_point)
 
@@ -151,7 +153,6 @@ func show_hit_effect(pos: Vector3):
 func get_global_muzzle_position() -> Vector3:
 	
 	# Предполагаем, что у оружия есть узел Marker3D "Muzzle"
-	var muzzle = $"../Camera3D/Muzzle"
 	if muzzle:
 		#print("muzzle pos - ", muzzle.global_position)
 		return muzzle.global_position
