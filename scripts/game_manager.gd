@@ -15,7 +15,7 @@ const DEFAULT_DEATHMATCH_MODE := preload("res://scripts/game_modes/deathmatch_mo
 @onready var spawner: PlayerSpawner = $PlayerSpawner
 @onready var hud_manager: HUDManager = $HUDManager
 
-var game_mode: GameMode
+@onready var game_mode: GameMode = $DeathmatchMode
 
 
 func _ready() -> void:
