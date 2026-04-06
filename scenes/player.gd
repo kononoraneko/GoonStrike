@@ -48,12 +48,11 @@ var shoot_anim_timer: SceneTreeTimer
 var hit_anim_timer: SceneTreeTimer
 
 func _ready():
-	print(self)
 	name_label.text = player_info["name"]
-	
 	if is_multiplayer_authority():
 		if multiplayer.is_server():
 			visible = false
+			camera.current = false
 			transform.origin.y += 10
 			return
 		camera.current = true
@@ -88,7 +87,10 @@ func _physics_process(delta):
 
 
 
-func _unhandled_input(event):
+
+
+
+func _input(event: InputEvent) -> void:
 	if !is_multiplayer_authority() || multiplayer.is_server():
 		return
 	if event is InputEventMouseMotion:
