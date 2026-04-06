@@ -37,6 +37,8 @@ func drop_weapon() -> void:
 
 ## Стрельба — делегируется текущему оружию.
 func try_shoot(aim_ray: Dictionary) -> void:
+	if owner_player.is_dead:
+		return
 	if current_weapon == null:
 		return
 	#print("try shoot")
@@ -55,6 +57,8 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 		return
 	var sender_id := multiplayer.get_remote_sender_id()
 	if sender_id != owner_player.remote_player_id:
+		return
+	if owner_player.is_dead:
 		return
 	if current_weapon == null:
 		return
