@@ -13,7 +13,7 @@ func _on_join_pressed():
 
 
 func _on_line_edit_text_changed(new_text: String) -> void:
-	Lobby.set_playername(new_text)
+	Lobby.set_player_name(new_text)
 
 
 func _on_ip_edit_text_changed(new_text: String) -> void:

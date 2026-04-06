@@ -1,49 +1,66 @@
-class_name GameManager extends Node3D 
+## GameManager.gd
+## Оркестратор игровой сцены. Делегирует спавн → PlayerSpawner,
+## HUD → HUDManager. Сам не знает про OnlinePlayer внутри.
+##
+## Структура сцены:
+## Game  (Node3D, GameManager.gd)
+## ├── World  (Node3D — карта, навмеш и т.д.)
+## ├── PlayerSpawner  (Node3D, PlayerSpawner.gd)
+## └── HUDManager    (CanvasLayer, HUDManager.gd)
 
-var player_scene = preload("res://scenes/online_player.tscn")
-var players_nodes = {}
+class_name GameManager extends Node3D
 
-#@onready var log = $Control/Log
+signal player_spawned(id: int, info: Dictionary)
+signal player_despawned(id: int, info: Dictionary)
 
-signal player_spawned(id, p_info)
-signal player_despawned(id, p_info)
+@onready var spawner:     PlayerSpawner = $PlayerSpawner
+@onready var hud_manager: HUDManager    = $HUDManager
 
-# Called when the node enters the scene tree for the first time.
+
 func _ready() -> void:
+	# Подписка на Lobby
 	Lobby.player_connected.connect(_on_player_connected)
 	Lobby.player_disconnected.connect(_on_player_disconnected)
+	Lobby.server_disconnected.connect(_on_server_disconnected)
+	Lobby.all_players_loaded.connect(start_game)
 
-	for player in Lobby.players:
-		spawn_player(player)
+	# Спавним уже подключённых (пришли раньше смены сцены)
+	for id in Lobby.players:
+		_spawn(id)
 
-func _on_player_connected(id, info):
-	spawn_player(id)
-	#if multiplayer.is_server():
-		#spawn_player(id)
+	# Сообщаем серверу что мы загрузились
+	Lobby.notify_loaded()
 
-func _on_player_disconnected(id, p_info):
-	players_nodes[id].queue_free()
-	players_nodes.erase(id)
-	player_despawned.emit(id, p_info)
 
-func spawn_player(id):
+# ── Спавн / деспавн ───────────────────────────────────────────────────────
+
+func _on_player_connected(id: int, _info: Dictionary) -> void:
+	_spawn(id)
+
+
+func _on_player_disconnected(id: int, info: Dictionary) -> void:
+	spawner.despawn(id)
+	hud_manager.remove_hud(id)
+	player_despawned.emit(id, info)
+
+
+func _spawn(id: int) -> void:
+	var player := spawner.spawn(id, Lobby.players[id])
+	if player == null:
+		return
 	player_spawned.emit(id, Lobby.players[id])
-	var player: OnlinePlayer = player_scene.instantiate()
-	player.name = str(id)
-	player.player_info = Lobby.players[id]
-	player.set_multiplayer_authority(id)
-	player.remote_player_id = id 
-	
-	add_child(player)
-	players_nodes[id] = player
-	
+
+	# HUD только для локального игрока
+	if id == multiplayer.get_unique_id():
+		hud_manager.create_hud(player)
 
 
-@rpc("any_peer", "call_local", "unreliable")
-func server_receive_input(cmd):
-	if multiplayer.is_server():
-		var p_i = multiplayer.get_remote_sender_id()
-		if p_i > 1:
-			print("ms - ", Time.get_ticks_usec(), " server recieved cmd. player - ", p_i, " cmd - ", cmd)
-		var player = players_nodes[p_i]
-		player.process_server_input(cmd)
+# ── Старт / финиш игры ────────────────────────────────────────────────────
+
+func start_game() -> void:
+	# Здесь: снять экран загрузки, начать таймер раунда и т.д.
+	print("All players loaded — game started")
+
+
+func _on_server_disconnected() -> void:
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

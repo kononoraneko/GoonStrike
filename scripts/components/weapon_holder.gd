@@ -1,0 +1,99 @@
+class_name WeaponHolder extends Node
+
+## Отвечает за: текущее оружие, подбор, выброс, смену.
+## Оружия могут не быть вовсе — current_weapon == null.
+## RPC методы репликируют состояние слота на все клиенты.
+
+signal weapon_changed(new_weapon: Weapon)
+
+@export var weapon_mount: Node3D   # точка крепления оружия (например $model/hand_R)
+
+var current_weapon: Weapon = null
+var owner_player: OnlinePlayer
+
+func _ready() -> void:
+	owner_player = get_parent() as OnlinePlayer
+	assert(owner_player != null, "WeaponHolder must be child of OnlinePlayer")
+
+
+## Подбор оружия — вызывается сервером через RPC на всех клиентах.
+@rpc("any_peer", "reliable", "call_local")
+func equip_from_pickup(_pickup_path: NodePath, data_path: String) -> void:
+	var data := load(data_path) as WeaponData
+	if data == null or data.weapon_scene == null:
+		push_error("WeaponHolder: invalid WeaponData at " + data_path)
+		return
+	_set_weapon(data)
+
+
+## Сброс оружия (выбросить или умереть).
+func drop_weapon() -> void:
+	if current_weapon == null:
+		return
+	current_weapon.queue_free()
+	current_weapon = null
+	weapon_changed.emit(null)
+
+
+## Стрельба — делегируется текущему оружию.
+func try_shoot(direction: Vector3) -> void:
+	if current_weapon == null:
+		return
+	current_weapon.shoot(direction)
+
+
+## Оружие сообщает о выстреле через сигнал — WeaponHolder отправляет на сервер.
+func _on_shot_requested(muzzle_pos: Vector3, direction: Vector3) -> void:
+	if owner_player.is_multiplayer_authority():
+		rpc_id(1, "_server_receive_shot", muzzle_pos, direction)
+
+
+@rpc("any_peer", "reliable")
+func _server_receive_shot(muzzle_pos: Vector3, direction: Vector3) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id != owner_player.remote_player_id:
+		return
+	if current_weapon == null:
+		return
+
+	var world := owner_player.get_world_3d()
+	var params := PhysicsRayQueryParameters3D.new()
+	params.from = muzzle_pos
+	params.to = muzzle_pos + direction * current_weapon.data.range
+	params.collision_mask = 2
+	params.exclude = [owner_player]
+
+	var result := world.direct_space_state.intersect_ray(params)
+	var hit_point := params.to
+	var hit_player: OnlinePlayer = null
+
+	if result:
+		hit_point = result.position
+		if result.collider is OnlinePlayer:
+			hit_player = result.collider
+			hit_player.health_component.take_damage(current_weapon.data.damage, owner_player)
+
+	rpc("_broadcast_shot", muzzle_pos, hit_point, hit_player != null, sender_id)
+
+
+@rpc("any_peer", "reliable", "call_local")
+func _broadcast_shot(muzzle_pos: Vector3, hit_point: Vector3, hit_success: bool, shooter_id: int) -> void:
+	if current_weapon != null:
+		current_weapon.on_broadcast_shot(muzzle_pos, hit_point, hit_success, shooter_id)
+
+
+# ── приватные ──────────────────────────────────────────────────────────────
+
+func _set_weapon(data: WeaponData) -> void:
+	drop_weapon()
+	var instance := data.weapon_scene.instantiate() as Weapon
+	if instance == null:
+		push_error("WeaponHolder: weapon_scene is not a Weapon node")
+		return
+	instance.data = data
+	(weapon_mount if weapon_mount else owner_player).add_child(instance)
+	instance.shot_requested.connect(_on_shot_requested)
+	current_weapon = instance
+	weapon_changed.emit(current_weapon)

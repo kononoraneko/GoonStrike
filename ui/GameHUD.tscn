@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://c4jwyinsdd4is"]
+
+[ext_resource type="Script" uid="uid://b0igdnoawhpku" path="res://scripts/UI/GameHUD.gd" id="1_igm77"]
+[ext_resource type="PackedScene" uid="uid://xt16u3vjktvd" path="res://ui/PlayerHUD.tscn" id="2_8wvdd"]
+[ext_resource type="PackedScene" uid="uid://m8r6sdd8yjw6" path="res://ui/ChatConsole.tscn" id="2_b8fo0"]
+
+[node name="GameHUD" type="CanvasLayer" unique_id=2020260338]
+script = ExtResource("1_igm77")
+
+[node name="PlayerHUD" parent="." unique_id=1807842638 instance=ExtResource("2_8wvdd")]
+
+[node name="ChatConsole" parent="." unique_id=1597358457 instance=ExtResource("2_b8fo0")]

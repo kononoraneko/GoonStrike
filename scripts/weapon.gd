@@ -1,5 +1,4 @@
 extends Node3D
-class_name Weapon
 
 @export var damage := 25
 @export var range := 100.0
