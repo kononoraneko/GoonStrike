@@ -73,7 +73,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		aim_component.aim_angle = movement.rotation_x / 1.5
 
 	if event.is_action_pressed("shoot"):
-		weapon_holder.try_shoot(get_shoot_direction())
+		weapon_holder.try_shoot(get_aim_ray())
 
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
@@ -85,6 +85,17 @@ func get_shoot_direction() -> Vector3:
 	var vp := get_viewport()
 	var center := vp.get_visible_rect().size / 2.0
 	return camera.project_ray_normal(center)
+
+
+func get_aim_ray() -> Dictionary:
+	var vp := get_viewport()
+	var center := vp.get_visible_rect().size / 2.0
+	# Для 1-го и 3-го лица математика прицеливания всегда идёт от камеры.
+	# Если добавите камеру 3-го лица (SpringArm), этот код продолжит работать идеально.
+	return {
+		"origin": camera.project_ray_origin(center),
+		"direction": camera.project_ray_normal(center)
+	}
 
 
 # ── RPC (роутинг к компонентам) ───────────────────────────────────────────

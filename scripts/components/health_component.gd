@@ -1,8 +1,8 @@
 class_name HealthComponent extends Node
  
 signal health_changed(current_hp: int)
-signal died
- 
+signal died(attacker: OnlinePlayer)
+
 @export var max_health: int = 100
 var health: int = max_health
  
@@ -21,7 +21,7 @@ func take_damage(amount: int, _attacker: OnlinePlayer) -> void:
 	if health <= 0:
 		health = 0
 		rpc("_sync_health", health)
-		owner_player.rpc("rpc_play_hit_animation")
+		died.emit(_attacker)
 		die()
 	else:
 		rpc("_sync_health", health)
@@ -29,8 +29,8 @@ func take_damage(amount: int, _attacker: OnlinePlayer) -> void:
  
  
 func die() -> void:
-	died.emit()
 	print("Player %s died" % owner_player.name)
+	owner_player.visible = false
  
  
 @rpc("any_peer", "reliable", "call_local")

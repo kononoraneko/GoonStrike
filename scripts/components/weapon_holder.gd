@@ -36,20 +36,21 @@ func drop_weapon() -> void:
 
 
 ## Стрельба — делегируется текущему оружию.
-func try_shoot(direction: Vector3) -> void:
+func try_shoot(aim_ray: Dictionary) -> void:
 	if current_weapon == null:
 		return
-	current_weapon.shoot(direction)
+	#print("try shoot")
+	current_weapon.shoot(aim_ray)
 
 
 ## Оружие сообщает о выстреле через сигнал — WeaponHolder отправляет на сервер.
-func _on_shot_requested(muzzle_pos: Vector3, direction: Vector3) -> void:
+func _on_shot_requested(aim_origin: Vector3, aim_direction: Vector3) -> void:
 	if owner_player.is_multiplayer_authority():
-		rpc_id(1, "_server_receive_shot", muzzle_pos, direction)
+		rpc_id(1, "_server_receive_shot", aim_origin, aim_direction)
 
 
 @rpc("any_peer", "reliable")
-func _server_receive_shot(muzzle_pos: Vector3, direction: Vector3) -> void:
+func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 	if not multiplayer.is_server():
 		return
 	var sender_id := multiplayer.get_remote_sender_id()
@@ -60,9 +61,9 @@ func _server_receive_shot(muzzle_pos: Vector3, direction: Vector3) -> void:
 
 	var world := owner_player.get_world_3d()
 	var params := PhysicsRayQueryParameters3D.new()
-	params.from = muzzle_pos
-	params.to = muzzle_pos + direction * current_weapon.data.range
-	params.collision_mask = 2
+	params.from = aim_origin
+	params.to = aim_origin + aim_direction * current_weapon.data.range
+	params.collision_mask = 3
 	params.exclude = [owner_player]
 
 	var result := world.direct_space_state.intersect_ray(params)
@@ -75,13 +76,14 @@ func _server_receive_shot(muzzle_pos: Vector3, direction: Vector3) -> void:
 			hit_player = result.collider
 			hit_player.health_component.take_damage(current_weapon.data.damage, owner_player)
 
-	rpc("_broadcast_shot", muzzle_pos, hit_point, hit_player != null, sender_id)
+	print("server handled shot. hit point: ", hit_point)
+	rpc("_broadcast_shot", hit_point, hit_player != null, sender_id)
 
 
 @rpc("any_peer", "reliable", "call_local")
-func _broadcast_shot(muzzle_pos: Vector3, hit_point: Vector3, hit_success: bool, shooter_id: int) -> void:
+func _broadcast_shot(hit_point: Vector3, hit_success: bool, shooter_id: int) -> void:
 	if current_weapon != null:
-		current_weapon.on_broadcast_shot(muzzle_pos, hit_point, hit_success, shooter_id)
+		current_weapon.on_broadcast_shot(hit_point, hit_success, shooter_id)
 
 
 # ── приватные ──────────────────────────────────────────────────────────────

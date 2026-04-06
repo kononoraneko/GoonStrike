@@ -7,6 +7,7 @@ extends Node3D
 @export var muzzle_flash: PackedScene
 @export var hit: PackedScene
 @export var muzzle: Marker3D
+@onready var spread: SpreadComponent = $SpreadComponent
 
 var can_shoot := true
 var shoot_timer: SceneTreeTimer
@@ -23,15 +24,27 @@ func _ready():
 	world_3d = get_world_3d()
 
 
-func shoot(direction: Vector3) -> void:
+func shoot(direction: Vector3, first_person: bool = true) -> void:
 	if not can_shoot:
 		return
 	can_shoot = false
 	shoot_timer = get_tree().create_timer(fire_rate)
 	shoot_timer.timeout.connect(func(): can_shoot = true)
 	
+	var spread_node: SpreadComponent = get_node_or_null("SpreadComponent")
+	if spread_node:
+		var mv: MovementComponent = owner_player.movement
+		var is_moving   := mv.input_dir != Vector2.ZERO
+		var is_airborne := not owner_player.is_on_floor()
+		direction = spread_node.apply(direction, is_moving, is_airborne)
+		spread_node.on_shot_fired()
+	
 	# Локальное предсказание (визуал, звук)
 	var muzzle_pos = get_global_muzzle_position()
+	
+	if first_person:
+		muzzle_pos = owner_player.camera.global_position
+	
 	play_effects(muzzle_pos)
 	show_tracer(muzzle_pos, muzzle_pos + direction * range)
 	

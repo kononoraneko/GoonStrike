@@ -1,6 +1,6 @@
 extends Control
 
-@export var level:String = "res://scenes/test_world.tscn"
+@export var level:String = "res://scenes/levels/test_battle_area.tscn"
 var ip = "127.0.0.1"
 
 func _on_host_pressed():

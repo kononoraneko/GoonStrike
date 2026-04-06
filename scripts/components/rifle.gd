@@ -29,5 +29,5 @@ func _stop_auto_fire() -> void:
  
  
 func _fire_once() -> void:
-	var direction := owner_player.get_shoot_direction()
-	shoot(direction)
+	var aim_ray := owner_player.get_aim_ray()
+	shoot(aim_ray)
