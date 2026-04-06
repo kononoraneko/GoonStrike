@@ -90,6 +90,8 @@ func _wire_player_events(player: OnlinePlayer) -> void:
 func _on_player_died(victim_id: int, attacker_id: int) -> void:
 	if not multiplayer.is_server():
 		return
+
+	_broadcast_killfeed(victim_id, attacker_id)
 	_rpc_on_player_died.rpc(victim_id, attacker_id)
 	game_mode.on_player_died(victim_id, attacker_id)
 
@@ -118,18 +120,39 @@ func _rpc_respawn_player(peer_id: int) -> void:
 
 func start_game() -> void:
 	game_mode.on_game_started()
-	print("All players loaded — game started")
+	var msg: String = "[DM] Матч начался"
+	print(msg)
+	if multiplayer.is_server():
+		ChatNetwork.send_system(msg)
 
 
 func _on_score_changed(player_id: int, score: int) -> void:
 	var player_name: String = _resolve_player_name(player_id)
-	print("[DM] %s score = %d" % [player_name, score])
+	var msg: String = "[DM] %s: %d" % [player_name, score]
+	print(msg)
+	ChatNetwork.send_system(msg)
 
 
 func _on_match_finished(winner_id: int, score: int) -> void:
 	var winner_name: String = _resolve_player_name(winner_id)
-	print("[DM] Winner: %s (%d frags)" % [winner_name, score])
+	var msg: String = "[DM] Победитель: %s (%d фрагов)" % [winner_name, score]
+	print(msg)
+	ChatNetwork.send_system(msg)
 
+
+func _broadcast_killfeed(victim_id: int, attacker_id: int) -> void:
+	var victim_name: String = _resolve_player_name(victim_id)
+	var msg: String
+	if attacker_id <= 0:
+		msg = "[KILL] %s погиб" % victim_name
+	elif attacker_id == victim_id:
+		msg = "[KILL] %s самоустранился" % victim_name
+	else:
+		var attacker_name: String = _resolve_player_name(attacker_id)
+		msg = "[KILL] %s → %s" % [attacker_name, victim_name]
+
+	print(msg)
+	ChatNetwork.send_system(msg)
 
 func _resolve_player_name(peer_id: int) -> String:
 	var info: Dictionary = Lobby.players.get(peer_id, {}) as Dictionary
