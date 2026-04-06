@@ -5,28 +5,30 @@ class_name OnlinePlayer extends CharacterBody3D
 
 # ── дочерние компоненты (настроить в сцене) ──────────────────────────────
 
-@onready var movement:       MovementComponent  = $MovementComponent
-@onready var network:        NetworkComponent   = $NetworkComponent
-@onready var health_component: HealthComponent  = $HealthComponent
-@onready var animation:      AnimationComponent = $AnimationComponent
-@onready var aim_component:  AimComponent       = $AimComponent
-@onready var weapon_holder:  WeaponHolder       = $WeaponHolder
+@onready var movement: MovementComponent = $MovementComponent
+@onready var network: NetworkComponent = $NetworkComponent
+@onready var health_component: HealthComponent = $HealthComponent
+@onready var animation: AnimationComponent = $AnimationComponent
+@onready var aim_component: AimComponent = $AimComponent
+@onready var weapon_holder: WeaponHolder = $WeaponHolder
 
-@onready var camera:         Camera3D           = $Camera3D
-@onready var name_label:     Label3D            = $Label3D
-@onready var skeleton:       Skeleton3D         = $model/GeneralSkeleton
+@onready var camera: Camera3D = $Camera3D
+@onready var name_label: Label3D = $Label3D
+@onready var skeleton: Skeleton3D = $model/GeneralSkeleton
+@onready var collision: CollisionShape3D = $CollisionShape3D
 
-@onready var marker_up:     Marker3D = $model/GeneralSkeleton/pose_up
+@onready var marker_up: Marker3D = $model/GeneralSkeleton/pose_up
 @onready var marker_center: Marker3D = $model/GeneralSkeleton/pose_center
-@onready var marker_down:   Marker3D = $model/GeneralSkeleton/pose_down
+@onready var marker_down: Marker3D = $model/GeneralSkeleton/pose_down
 
 # ── данные ────────────────────────────────────────────────────────────────
 
 var player_info: Dictionary = {}
-var remote_player_id: int = 0   # id владельца, устанавливается при спавне
+var remote_player_id: int = 0 # id владельца, устанавливается при спавне
 
 ## Позиция, к которой lerp-ают не-authority клиенты
 var target_position: Vector3
+var is_dead: bool = false
 
 
 # ── жизненный цикл ────────────────────────────────────────────────────────
@@ -34,20 +36,14 @@ var target_position: Vector3
 func _ready() -> void:
 	name_label.text = player_info.get("name", "Player")
 	aim_component.setup(skeleton, marker_up, marker_center, marker_down)
-	
-	if is_multiplayer_authority():
-		if multiplayer.is_server():
-			visible = false
-			transform.origin.y += 10
-			return
-		camera.current = true
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-		visible = false
-	elif name == "1":
-		visible = false
+	health_component.reset_health()
+	set_alive_state()
 
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		return
+
 	if multiplayer.is_server():
 		if not is_multiplayer_authority():
 			network.process_server_queue()
@@ -65,6 +61,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_dead:
+		return
 	if not is_multiplayer_authority() or multiplayer.is_server():
 		return
 
@@ -98,11 +96,46 @@ func get_aim_ray() -> Dictionary:
 	}
 
 
+func set_dead_state() -> void:
+	is_dead = true
+	velocity = Vector3.ZERO
+	if collision:
+		collision.disabled = true
+	visible = false
+
+
+func set_alive_state() -> void:
+	is_dead = false
+	velocity = Vector3.ZERO
+	if collision:
+		collision.disabled = false
+	_update_visibility()
+
+
+func _update_visibility() -> void:
+	if is_dead:
+		visible = false
+		return
+
+	if is_multiplayer_authority():
+		if multiplayer.is_server():
+			visible = false
+			transform.origin.y += 10
+			return
+		camera.current = true
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		visible = false
+	elif name == "1":
+		visible = false
+	else:
+		visible = true
+
+
 # ── RPC (роутинг к компонентам) ───────────────────────────────────────────
 
 @rpc("any_peer", "unreliable", "call_local")
 func process_server_input(cmd: Dictionary) -> void:
-	if not multiplayer.is_server():
+	if not multiplayer.is_server() or is_dead:
 		return
 	network.enqueue(cmd)
 
