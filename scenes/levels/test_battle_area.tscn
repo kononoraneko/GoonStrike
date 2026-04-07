@@ -3,10 +3,11 @@
 [ext_resource type="Texture2D" uid="uid://by1mn4xk51ucp" path="res://assets/dev_textures/black/texture_01.png" id="1_6lluh"]
 [ext_resource type="Script" uid="uid://h1vw5vub82yx" path="res://scripts/game_manager.gd" id="1_8rn00"]
 [ext_resource type="Script" uid="uid://6cbm3vor7sfv" path="res://scripts/PlayerSpawner.gd" id="2_vkhxg"]
-[ext_resource type="PackedScene" uid="uid://dbxqqcnwkvl1o" path="res://scenes/online_player.tscn" id="3_xmrfy"]
 [ext_resource type="Script" uid="uid://cnrs6403rx5bq" path="res://scripts/HUDManager.gd" id="4_8rn00"]
+[ext_resource type="PackedScene" uid="uid://drq5sxmo4htrx" path="res://scenes/characters/lain_character.tscn" id="4_uuk04"]
 [ext_resource type="PackedScene" uid="uid://c4jwyinsdd4is" path="res://ui/GameHUD.tscn" id="5_uuk04"]
 [ext_resource type="PackedScene" uid="uid://3ql3dksnk44p" path="res://scenes/weapons/ar-15_spawner.tscn" id="7_3jdlx"]
+[ext_resource type="Script" uid="uid://diporw6jj81sm" path="res://scripts/game_modes/deathmatch_mode.gd" id="8_3jdlx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vkhxg"]
 albedo_texture = ExtResource("1_6lluh")
@@ -44,8 +45,9 @@ sky_material = SubResource("ProceduralSkyMaterial_8rn00")
 background_mode = 2
 sky = SubResource("Sky_uuk04")
 
-[node name="Game" type="Node3D" unique_id=752645134]
+[node name="Game" type="Node3D" unique_id=752645134 node_paths=PackedStringArray("game_mode")]
 script = ExtResource("1_8rn00")
+game_mode = NodePath("DeathmatchMode")
 
 [node name="CSGCombiner3D" type="CSGCombiner3D" parent="." unique_id=1150004654]
 visible = false
@@ -185,7 +187,7 @@ mesh = SubResource("ArrayMesh_3bb8p")
 [node name="PlayerSpawner" type="Node3D" parent="." unique_id=2103032533]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5932617, -0.48203468)
 script = ExtResource("2_vkhxg")
-player_scene = ExtResource("3_xmrfy")
+player_scene = ExtResource("4_uuk04")
 metadata/_custom_type_script = "uid://6cbm3vor7sfv"
 
 [node name="HUDManager" type="CanvasLayer" parent="." unique_id=1838474413]
@@ -225,3 +227,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.581762, 0.03335767, 30.20
 
 [node name="WeaponPickup4" parent="SpawnPoints" unique_id=326740042 instance=ExtResource("7_3jdlx")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.103125, 3.1170015, 5.2921247)
+
+[node name="DeathmatchMode" type="Node" parent="." unique_id=1801916228]
+script = ExtResource("8_3jdlx")
+metadata/_custom_type_script = "uid://diporw6jj81sm"

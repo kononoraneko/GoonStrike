@@ -15,7 +15,7 @@ const DEFAULT_DEATHMATCH_MODE := preload("res://scripts/game_modes/deathmatch_mo
 @onready var spawner: PlayerSpawner = $PlayerSpawner
 @onready var hud_manager: HUDManager = $HUDManager
 
-var game_mode: GameMode
+@export var game_mode: GameMode 
 
 
 func _ready() -> void:
@@ -96,7 +96,7 @@ func _on_player_died(victim_id: int, attacker_id: int) -> void:
 
 @rpc("authority", "reliable", "call_local")
 func _rpc_on_player_died(victim_id: int, attacker_id: int) -> void:
-	var info := Lobby.players.get(victim_id, {})
+	var info: Dictionary = Lobby.players.get(victim_id, {}) as Dictionary
 	_despawn_player(victim_id, info)
 	player_died.emit(victim_id, attacker_id)
 
@@ -122,14 +122,19 @@ func start_game() -> void:
 
 
 func _on_score_changed(player_id: int, score: int) -> void:
-	var player_name := Lobby.players.get(player_id, {}).get("name", str(player_id))
+	var player_name: String = _resolve_player_name(player_id)
 	print("[DM] %s score = %d" % [player_name, score])
 
 
 func _on_match_finished(winner_id: int, score: int) -> void:
-	var winner_name := Lobby.players.get(winner_id, {}).get("name", str(winner_id))
+	var winner_name: String = _resolve_player_name(winner_id)
 	print("[DM] Winner: %s (%d frags)" % [winner_name, score])
 
+func _resolve_player_name(peer_id: int) -> String:
+	var info: Dictionary = Lobby.players.get(peer_id, {}) as Dictionary
+	if info.has("name"):
+		return str(info["name"])
+	return str(peer_id)
 
 func _on_server_disconnected() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
