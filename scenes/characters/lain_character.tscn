@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://drq5sxmo4htrx"]
+
+[ext_resource type="PackedScene" uid="uid://toqxjudej7db" path="res://scenes/characters/base_player.tscn" id="1_iepen"]
+[ext_resource type="PackedScene" uid="uid://naujvxq5706b" path="res://scenes/characters/lain_model.res" id="2_6me5d"]
+[ext_resource type="AnimationNodeStateMachine" uid="uid://ckqdehmgnjjsa" path="res://assets/leama/new_animation_node_state_machine.tres" id="2_x6xrw"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_x6xrw"]
+radius = 0.3696289
+height = 1.6083984
+
+[node name="base_player" unique_id=909074154 instance=ExtResource("1_iepen")]
+
+[node name="CollisionShape3D" parent="." index="0" unique_id=1414048419]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8041992, 0)
+shape = SubResource("CapsuleShape3D_x6xrw")
+
+[node name="Label3D" parent="." index="1" unique_id=645377243]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
+
+[node name="WeaponHolder" parent="." index="7" unique_id=493272097 node_paths=PackedStringArray("weapon_mount")]
+weapon_mount = NodePath("../model/GeneralSkeleton/BoneAttachment3D/weapon_pos")
+
+[node name="AnimationTree" type="AnimationTree" parent="." index="9" unique_id=1309295961]
+root_node = NodePath("../model")
+tree_root = ExtResource("2_x6xrw")
+anim_player = NodePath("../model/AnimationPlayer")
+parameters/conditions/hit = false
+parameters/conditions/idle = false
+parameters/conditions/moving = false
+parameters/conditions/shoot = false
+parameters/BlendSpace2D/blend_position = Vector2(0, 0)
+
+[node name="model" parent="." index="10" unique_id=635666049 instance=ExtResource("2_6me5d")]
+transform = Transform3D(-0.9887381, 0, -0.14965622, 0, 1, 0, 0.14965622, 0, -0.9887381, 0, 0, 0)
+
+[node name="GeneralSkeleton" parent="model" index="0" unique_id=988209765]
+bones/1/rotation = Quaternion(-0.11165509, -0.3399923, -0.030168096, 0.933289)
+bones/2/rotation = Quaternion(0.055227872, 0.000117259624, 0.0007933245, 0.9984735)
+bones/3/rotation = Quaternion(0.13601948, 5.6381174e-05, -0.005122384, 0.990693)
+bones/4/rotation = Quaternion(0.14030784, -0.00024029595, -0.005073122, 0.9900949)
+bones/5/rotation = Quaternion(0.008619649, 0.065169044, 0.007824468, 0.9978063)
+bones/6/rotation = Quaternion(-0.026734661, 0.19027923, 0.09338371, 0.9769128)
+bones/9/rotation = Quaternion(0.6040825, 0.6636251, 0.31336817, -0.3106228)
+bones/10/rotation = Quaternion(0.22339748, 0.8139865, -0.47299054, 0.25258583)
+bones/11/rotation = Quaternion(0.3744604, -0.5979441, 0.3744865, 0.60166615)
+bones/12/rotation = Quaternion(-0.27204165, -0.24638003, -0.067982934, 0.9277222)
+bones/14/rotation = Quaternion(0.66074544, -0.6146839, -0.21691616, -0.37219146)
+bones/15/rotation = Quaternion(-0.5458259, 0.66085464, -0.49493256, 0.14278279)
+bones/16/rotation = Quaternion(0.53545386, 0.4618101, -0.5354629, 0.46184415)
+bones/17/rotation = Quaternion(-0.28834018, -0.33777604, 0.057336412, 0.8941364)
+bones/23/rotation = Quaternion(0.3967194, 0.06599277, 0.9047108, -0.1405601)
+bones/24/rotation = Quaternion(0.006210149, 0.98503345, -0.17216949, 0.005307684)
+bones/25/rotation = Quaternion(-0.0029657474, 0.729905, -0.68316257, 0.022775836)
+bones/26/rotation = Quaternion(-5.6799463e-09, 1, -5.662441e-07, 3.300954e-08)
+bones/30/rotation = Quaternion(0.047534917, -0.035931375, 0.9969475, 0.050449897)
+bones/31/rotation = Quaternion(-0.00782659, 0.96582186, -0.25887904, -0.010419595)
+bones/32/rotation = Quaternion(-0.054255478, 0.5630895, -0.8123223, -0.14184211)
+bones/33/rotation = Quaternion(3.91632e-09, 0.99999994, 0.00051605894, 1.4037571e-08)
+
+[node name="BoneAttachment3D" type="BoneAttachment3D" parent="model/GeneralSkeleton" index="6" unique_id=870130652]
+transform = Transform3D(-0.9888977, 0.05240961, -0.13904683, -0.130186, 0.14556341, 0.9807461, 0.07164105, 0.98796004, -0.13712418, -0.08839339, 1.1473988, 0.2601748)
+bone_name = "hand.R_end_029"
+bone_idx = 18
+
+[node name="weapon_pos" type="Marker3D" parent="model/GeneralSkeleton/BoneAttachment3D" index="0" unique_id=881247158]
+transform = Transform3D(-0.09359476, -0.19477616, -0.9763721, 0.036876015, 0.9793262, -0.19890028, 0.9949289, -0.0546206, -0.08447686, 0.009667516, -0.037499785, 0.01826942)
+
+[node name="pose_up" type="Marker3D" parent="model/GeneralSkeleton" index="7" unique_id=1945297831]
+transform = Transform3D(0.86160225, -0.14931935, -0.4851243, 0.50721306, 0.21673295, 0.8341233, -0.01940839, -0.96474385, 0.26247442, 0.0031951289, 1.0530337, -0.0032092123)
+
+[node name="pose_down" type="Marker3D" parent="model/GeneralSkeleton" index="8" unique_id=1889973568]
+transform = Transform3D(0.88159734, -0.24351616, -0.40433338, -0.43949285, -0.11109393, -0.89135, 0.17213911, 0.9635135, -0.20496385, 0.0031951289, 1.0530337, -0.0032092123)
+
+[node name="pose_center" type="Marker3D" parent="model/GeneralSkeleton" index="9" unique_id=1765122515]
+transform = Transform3D(0.735139, -0.085492104, -0.67250365, 0.14031081, 0.9897238, 0.027560282, 0.66323686, -0.11462018, 0.73958015, 0.0031951289, 1.0530337, -0.0032092123)
+
+[editable path="model"]

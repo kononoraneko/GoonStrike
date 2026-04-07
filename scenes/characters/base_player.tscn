@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://toqxjudej7db"]
+
+[ext_resource type="Script" uid="uid://ura6g40j0xgy" path="res://scripts/components/movement_component.gd" id="1_qr6b5"]
+[ext_resource type="Script" uid="uid://eedgvk0u0hei" path="res://scenes/player.gd" id="1_sjg4r"]
+[ext_resource type="Script" uid="uid://derlmu2e80bwa" path="res://scripts/components/aim_component.gd" id="2_sjg4r"]
+[ext_resource type="Script" uid="uid://cjw5y6ylgqk" path="res://scripts/components/network_component.gd" id="3_mfdve"]
+[ext_resource type="Script" uid="uid://dxx82m6a1bxso" path="res://scripts/components/animation_component.gd" id="4_shdl6"]
+[ext_resource type="Script" uid="uid://cpbcm8tv4k1jg" path="res://scripts/components/weapon_holder.gd" id="5_idp2q"]
+[ext_resource type="Script" uid="uid://duvvfdtpc8sqa" path="res://scripts/components/health_component.gd" id="6_k1g8e"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qr6b5"]
+
+[node name="base_player" type="CharacterBody3D" unique_id=909074154]
+script = ExtResource("1_sjg4r")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1414048419]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_qr6b5")
+
+[node name="Label3D" type="Label3D" parent="." unique_id=645377243]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+billboard = 2
+text = "Name"
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=292611893]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4112831, 0)
+
+[node name="MovementComponent" type="Node" parent="." unique_id=614829675]
+script = ExtResource("1_qr6b5")
+metadata/_custom_type_script = "uid://ura6g40j0xgy"
+
+[node name="AimComponent" type="Node" parent="." unique_id=2043330017]
+script = ExtResource("2_sjg4r")
+spine_bone_name = "Spine"
+metadata/_custom_type_script = "uid://derlmu2e80bwa"
+
+[node name="NetworkComponent" type="Node" parent="." unique_id=110293473]
+script = ExtResource("3_mfdve")
+metadata/_custom_type_script = "uid://cjw5y6ylgqk"
+
+[node name="AnimationComponent" type="Node" parent="." unique_id=54770749]
+script = ExtResource("4_shdl6")
+metadata/_custom_type_script = "uid://dxx82m6a1bxso"
+
+[node name="WeaponHolder" type="Node" parent="." unique_id=493272097]
+script = ExtResource("5_idp2q")
+metadata/_custom_type_script = "uid://cpbcm8tv4k1jg"
+
+[node name="HealthComponent" type="Node" parent="." unique_id=1863850198]
+script = ExtResource("6_k1g8e")
+metadata/_custom_type_script = "uid://duvvfdtpc8sqa"
