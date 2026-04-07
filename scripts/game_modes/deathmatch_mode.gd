@@ -5,13 +5,17 @@ signal match_finished(winner_id: int, score: int)
 
 @export var respawn_delay: float = 2.5
 @export var frag_limit: int = 10
+@export var default_weapon: WeaponData
 
 var _scores: Dictionary = {}
 
 
-func on_player_spawned(id: int, _player: OnlinePlayer, _info: Dictionary) -> void:
+func on_player_spawned(id: int, player: OnlinePlayer, _info: Dictionary) -> void:
 	if not _scores.has(id):
 		_scores[id] = 0
+
+	if multiplayer.is_server() and default_weapon != null:
+		player.weapon_holder.rpc("equip_from_pickup", NodePath(), default_weapon.resource_path)
 
 
 func on_player_despawned(id: int, _info: Dictionary) -> void:

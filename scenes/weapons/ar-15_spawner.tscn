@@ -1,41 +1,16 @@
 [gd_scene format=3 uid="uid://3ql3dksnk44p"]
 
 [ext_resource type="Script" uid="uid://bifl7kpir82p4" path="res://scripts/components/weapon_pickup.gd" id="1_8asc1"]
-[ext_resource type="PackedScene" uid="uid://dc3s4xicrws8p" path="res://scenes/test_bullet.tscn" id="2_43ux5"]
-[ext_resource type="PackedScene" uid="uid://cucnr8wrof6a" path="res://scenes/test_hit.tscn" id="3_qwglv"]
-[ext_resource type="PackedScene" uid="uid://pim0xaimmmtq" path="res://scenes/test_flash.tscn" id="4_j5s0m"]
-[ext_resource type="Texture2D" uid="uid://dw0cmjehixpwo" path="res://icon.svg" id="5_3fcee"]
-[ext_resource type="Script" uid="uid://djgpqgxbn0ode" path="res://scripts/components/weapon_data.gd" id="6_hhmpw"]
-[ext_resource type="Script" uid="uid://bud5pv3s80dwv" path="res://scripts/components/SpreadPattern.gd" id="7_athyc"]
-[ext_resource type="PackedScene" uid="uid://bsx0hs4soaco5" path="res://scenes/riffle.tscn" id="8_5u2hb"]
+[ext_resource type="Resource" uid="uid://c72m5b0d6gfbg" path="res://resources/ar-15_data.res" id="2_ym52l"]
 [ext_resource type="ArrayMesh" uid="uid://b3e5oticon8yp" path="res://assets/res/ar-15.res" id="9_52mvj"]
 [ext_resource type="ArrayMesh" uid="uid://wuxuvibptu55" path="res://assets/res/ar-15_magazine.res" id="10_6ex5o"]
-
-[sub_resource type="Resource" id="Resource_ko4od"]
-script = ExtResource("7_athyc")
-metadata/_custom_type_script = "uid://bud5pv3s80dwv"
-
-[sub_resource type="Resource" id="Resource_ar7ra"]
-script = ExtResource("6_hhmpw")
-weapon_name = "Riffle"
-damage = null
-range = null
-fire_rate = null
-is_automatic = true
-spread_pattern = SubResource("Resource_ko4od")
-weapon_scene = ExtResource("8_5u2hb")
-bullet_scene = ExtResource("2_43ux5")
-muzzle_flash_scene = ExtResource("4_j5s0m")
-hit_scene = ExtResource("3_qwglv")
-pickup_icon = ExtResource("5_3fcee")
-metadata/_custom_type_script = "uid://djgpqgxbn0ode"
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ixgyf"]
 size = Vector3(1, 1.5653076, 1)
 
 [node name="WeaponPickup" type="Area3D" unique_id=2147406810]
 script = ExtResource("1_8asc1")
-weapon_data = SubResource("Resource_ar7ra")
+weapon_data = ExtResource("2_ym52l")
 metadata/_custom_type_script = "uid://bifl7kpir82p4"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=229321575]
