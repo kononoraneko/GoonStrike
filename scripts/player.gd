@@ -14,12 +14,12 @@ class_name OnlinePlayer extends CharacterBody3D
 
 @onready var camera: Camera3D = $Camera3D
 @onready var name_label: Label3D = $Label3D
-@onready var skeleton: Skeleton3D = $model/GeneralSkeleton
+@onready var skeleton: Skeleton3D = $Model/GeneralSkeleton
 @onready var collision: CollisionShape3D = $CollisionShape3D
 
-@onready var marker_up: Marker3D = $model/GeneralSkeleton/pose_up
-@onready var marker_center: Marker3D = $model/GeneralSkeleton/pose_center
-@onready var marker_down: Marker3D = $model/GeneralSkeleton/pose_down
+@onready var marker_up: Marker3D = $Model/GeneralSkeleton/pose_up
+@onready var marker_center: Marker3D = $Model/GeneralSkeleton/pose_center
+@onready var marker_down: Marker3D = $Model/GeneralSkeleton/pose_down
 
 # ── данные ────────────────────────────────────────────────────────────────
 

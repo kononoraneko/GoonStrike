@@ -54,14 +54,7 @@ func apply_shared_movement_to_player(player: OnlinePlayer) -> void:
 		player.movement.jump_velocity = shared_jump
 
 
-## Отправить системное сообщение от сервера всем клиентам.
-func send_system(text: String) -> void:
-	if not multiplayer.is_server():
-		return
-	text = text.strip_edges().left(MAX_LENGTH)
-	if text.is_empty():
-		return
-	_rpc_broadcast_system.rpc(text)
+
 
 
 @rpc("any_peer", "reliable")

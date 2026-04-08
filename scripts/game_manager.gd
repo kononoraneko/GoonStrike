@@ -10,7 +10,7 @@ signal player_died(victim_id: int, attacker_id: int)
 
 const DEFAULT_DEATHMATCH_MODE := preload("res://scripts/game_modes/deathmatch_mode.gd")
 
-@export var game_mode_scene: PackedScene
+#@export var game_mode_scene: PackedScene
 
 @onready var spawner: PlayerSpawner = $PlayerSpawner
 @onready var hud_manager: HUDManager = $HUDManager
@@ -36,12 +36,11 @@ func _ready() -> void:
 
 
 func _setup_game_mode() -> void:
-	if game_mode_scene != null:
-		game_mode = game_mode_scene.instantiate() as GameMode
-	if game_mode == null:
-		game_mode = DEFAULT_DEATHMATCH_MODE.new() as GameMode
-	add_child(game_mode)
-	game_mode.setup(self)
+	#if game_mode_scene != null:
+		#game_mode = game_mode_scene.instantiate() as GameMode
+	if game_mode:
+		game_mode.setup(self)
+	
 
 	if game_mode is DeathmatchMode:
 		var dm := game_mode as DeathmatchMode
