@@ -58,12 +58,6 @@ func shoot(aim_ray: Dictionary) -> void:
 	play_effects(muzzle_pos)
 	show_tracer(muzzle_pos, local_hit_point)
 
-	print("cam pos ",owner_player.camera.global_position)
-	print("origin ", aim_origin)
-	print("dir ", aim_direction)
-	print("muzzle ", muzzle_pos)
-	print("local hit ", local_hit_point)
-
 	shot_requested.emit(aim_origin, aim_direction)
 
 
