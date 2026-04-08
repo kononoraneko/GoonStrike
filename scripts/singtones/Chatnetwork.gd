@@ -42,19 +42,24 @@ func send_admin_command(text: String) -> void:
 	if text.is_empty():
 		return
 	if multiplayer.is_server():
-		_rpc_admin_command(text, 1)
+		_rpc_admin_command(text)
 	else:
-		_rpc_admin_command.rpc_id(1, text, multiplayer.get_unique_id())
+		_rpc_admin_command.rpc_id(1, text)
 
+
+func sync_shared_to_peer(peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	if peer_id == 1:
+		_rpc_sync_shared_movement(shared_speed, shared_jump)
+	else:
+		_rpc_sync_shared_movement.rpc_id(peer_id, shared_speed, shared_jump)
 
 func apply_shared_movement_to_player(player: OnlinePlayer) -> void:
 	if shared_speed > 0.0:
 		player.movement.speed = shared_speed
 	if shared_jump > 0.0:
 		player.movement.jump_velocity = shared_jump
-
-
-
 
 
 @rpc("any_peer", "reliable")
@@ -78,9 +83,14 @@ func _rpc_broadcast_system(text: String) -> void:
 
 
 @rpc("any_peer", "reliable")
-func _rpc_admin_command(text: String, sender_id: int) -> void:
+func _rpc_admin_command(text: String) -> void:
 	if not multiplayer.is_server():
 		return
+
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id == 0:
+		sender_id = 1
+
 	if not _is_op(sender_id):
 		_rpc_console_feedback.rpc_id(sender_id, "Нет прав: только op")
 		return

@@ -12,7 +12,12 @@ var current_weapon: Weapon = null
 var owner_player: OnlinePlayer
 
 func _ready() -> void:
-	owner_player = get_parent() as OnlinePlayer
+	_ensure_owner_player()
+
+
+func _ensure_owner_player() -> void:
+	if owner_player == null:
+		owner_player = get_parent() as OnlinePlayer
 	assert(owner_player != null, "WeaponHolder must be child of OnlinePlayer")
 
 
@@ -37,6 +42,7 @@ func drop_weapon() -> void:
 
 ## Стрельба — делегируется текущему оружию.
 func try_shoot(aim_ray: Dictionary) -> void:
+	_ensure_owner_player()
 	if owner_player.is_dead:
 		return
 	if current_weapon == null:
@@ -47,12 +53,14 @@ func try_shoot(aim_ray: Dictionary) -> void:
 
 ## Оружие сообщает о выстреле через сигнал — WeaponHolder отправляет на сервер.
 func _on_shot_requested(aim_origin: Vector3, aim_direction: Vector3) -> void:
+	_ensure_owner_player()
 	if owner_player.is_multiplayer_authority():
 		rpc_id(1, "_server_receive_shot", aim_origin, aim_direction)
 
 
 @rpc("any_peer", "reliable")
 func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
+	_ensure_owner_player()
 	if not multiplayer.is_server():
 		return
 	var sender_id := multiplayer.get_remote_sender_id()
@@ -92,6 +100,7 @@ func _broadcast_shot(hit_point: Vector3, hit_success: bool, shooter_id: int) -> 
 # ── приватные ──────────────────────────────────────────────────────────────
 
 func _set_weapon(data: WeaponData) -> void:
+	_ensure_owner_player()
 	drop_weapon()
 	var instance := data.weapon_scene.instantiate() as Weapon
 	if instance == null:

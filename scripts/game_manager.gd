@@ -16,6 +16,7 @@ const DEFAULT_DEATHMATCH_MODE := preload("res://scripts/game_modes/deathmatch_mo
 @onready var hud_manager: HUDManager = $HUDManager
 
 @onready var game_mode: GameMode = $DeathmatchMode
+var _shared_sync_sent: Dictionary = {}
 
 
 func _ready() -> void:
@@ -56,6 +57,7 @@ func _on_player_connected(id: int, _info: Dictionary) -> void:
 
 func _on_player_disconnected(id: int, info: Dictionary) -> void:
 	_despawn_player(id, info)
+	_shared_sync_sent.erase(id)
 	game_mode.on_player_despawned(id, info)
 
 
@@ -68,6 +70,9 @@ func _spawn(id: int) -> void:
 		return
 
 	_wire_player_events(player)
+	if multiplayer.is_server() and not _shared_sync_sent.has(id):
+		ChatNetwork.sync_shared_to_peer(id)
+		_shared_sync_sent[id] = true
 	player_spawned.emit(id, Lobby.players[id])
 	game_mode.on_player_spawned(id, player, Lobby.players[id])
 
