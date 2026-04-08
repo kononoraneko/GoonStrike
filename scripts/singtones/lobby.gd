@@ -22,7 +22,7 @@ const MAX_CONNECTIONS := 20
 var players: Dictionary = {}
 
 ## Информация локального игрока — меняется до подключения
-var local_info: Dictionary = {"name": "Player"}
+var local_info: Dictionary = {"name": "Player", "op": false}
 
 # ── Инициализация ─────────────────────────────────────────────────────────
 
@@ -57,9 +57,26 @@ func create_game() -> Error:
 	if err != OK:
 		return err
 	multiplayer.multiplayer_peer = peer
+	local_info["name"] = "host"
+	local_info["op"] = true
 	_add_player(1, local_info)
 	return OK
 
+
+func set_player_op(peer_id: int, is_op: bool) -> void:
+	if not multiplayer.is_server():
+		return
+	_rpc_set_player_op.rpc(peer_id, is_op)
+
+
+@rpc("authority", "reliable", "call_local")
+func _rpc_set_player_op(peer_id: int, is_op: bool) -> void:
+	if players.has(peer_id):
+		var info: Dictionary = players[peer_id]
+		info["op"] = is_op
+		players[peer_id] = info
+	if multiplayer.get_unique_id() == peer_id:
+		local_info["op"] = is_op
 
 func disconnect_game() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
@@ -133,5 +150,8 @@ func _rpc_register_player(info: Dictionary) -> void:
 
 
 func _add_player(id: int, info: Dictionary) -> void:
-	players[id] = info
-	player_connected.emit(id, info)
+	var normalized: Dictionary = info.duplicate(true)
+	if not normalized.has("op"):
+		normalized["op"] = false
+	players[id] = normalized
+	player_connected.emit(id, normalized)
