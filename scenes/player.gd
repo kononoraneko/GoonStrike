@@ -34,9 +34,11 @@ var is_dead: bool = false
 # ── жизненный цикл ────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	add_to_group("online_players")
 	name_label.text = player_info.get("name", "Player")
 	aim_component.setup(skeleton, marker_up, marker_center, marker_down)
 	health_component.reset_health()
+	ChatNetwork.apply_shared_movement_to_player(self)
 	set_alive_state()
 
 
