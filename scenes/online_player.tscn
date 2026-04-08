@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dbxqqcnwkvl1o"]
 
-[ext_resource type="Script" uid="uid://eedgvk0u0hei" path="res://scenes/player.gd" id="1_im60l"]
+[ext_resource type="Script" uid="uid://eedgvk0u0hei" path="res://scripts/player.gd" id="1_im60l"]
 [ext_resource type="Script" uid="uid://ura6g40j0xgy" path="res://scripts/components/movement_component.gd" id="6_4ukxt"]
 [ext_resource type="Script" uid="uid://derlmu2e80bwa" path="res://scripts/components/aim_component.gd" id="7_dju8u"]
 [ext_resource type="AnimationNodeStateMachine" uid="uid://ckqdehmgnjjsa" path="res://assets/leama/new_animation_node_state_machine.tres" id="7_htroi"]

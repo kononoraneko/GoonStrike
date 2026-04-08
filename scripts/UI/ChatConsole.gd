@@ -110,6 +110,11 @@ func _handle_chat(text: String) -> void:
 
 func _handle_console(text: String) -> void:
 	_history.push_front(text)
+
+	if _is_server_command(text):
+		ChatNetwork.send_admin_command(text)
+		return
+
 	var result := ConsoleCommands.execute(text)
 	if result.is_empty():
 		# Не команда в режиме чата — отправляем как сообщение
@@ -117,6 +122,16 @@ func _handle_console(text: String) -> void:
 		message_sent.emit(text)
 	else:
 		print_console(result)
+
+
+func _is_server_command(text: String) -> bool:
+	if not text.begins_with("/"):
+		return false
+	var parts := text.trim_prefix("/").split(" ", false)
+	if parts.is_empty():
+		return false
+	var cmd := parts[0].to_lower()
+	return cmd in ["op", "speed", "jump"]
 
 
 ## Навигация по истории стрелками вверх/вниз.

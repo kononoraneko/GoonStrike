@@ -31,6 +31,7 @@ func create_hud(player: OnlinePlayer) -> void:
 	_hud.chat_console.message_sent.connect(ChatNetwork.send)
 	ChatNetwork.chat_received.connect(_hud.chat_console.print_chat)
 	ChatNetwork.system_received.connect(_hud.chat_console.print_system)
+	ChatNetwork.console_feedback.connect(_hud.chat_console.print_console)
  
 	# Системные события
 	Lobby.player_connected.connect(

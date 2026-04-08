@@ -80,7 +80,6 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 			hit_player = result.collider
 			hit_player.health_component.take_damage(current_weapon.data.damage, owner_player)
 
-	print("server handled shot. hit point: ", hit_point)
 	rpc("_broadcast_shot", hit_point, hit_player != null, sender_id)
 
 
