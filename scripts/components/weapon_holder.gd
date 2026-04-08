@@ -13,6 +13,8 @@ var owner_player: OnlinePlayer
 
 func _ready() -> void:
 	_ensure_owner_player()
+	if not multiplayer.is_server():
+		rpc_id(1, "_request_weapon_sync")
 
 
 func _ensure_owner_player() -> void:
@@ -89,6 +91,21 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 			hit_player.health_component.take_damage(current_weapon.data.damage, owner_player)
 
 	rpc("_broadcast_shot", hit_point, hit_player != null, sender_id)
+
+
+@rpc("any_peer", "reliable")
+func _request_weapon_sync() -> void:
+	if not multiplayer.is_server():
+		return
+	var requester_id := multiplayer.get_remote_sender_id()
+	if requester_id <= 0:
+		return
+	if current_weapon == null or current_weapon.data == null:
+		return
+	var data_path := current_weapon.data.resource_path
+	if data_path.is_empty():
+		return
+	rpc_id(requester_id, "equip_from_pickup", NodePath(), data_path)
 
 
 @rpc("any_peer", "reliable", "call_local")
