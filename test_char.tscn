@@ -1,13 +1,6 @@
-[gd_scene format=3 uid="uid://drq5sxmo4htrx"]
+[gd_scene format=3 uid="uid://0ukxfg566coh"]
 
-[ext_resource type="PackedScene" uid="uid://toqxjudej7db" path="res://scenes/characters/base_player.tscn" id="1_iepen"]
-[ext_resource type="PackedScene" uid="uid://naujvxq5706b" path="res://scenes/characters/lain_model.res" id="2_6me5d"]
-[ext_resource type="AnimationNodeStateMachine" uid="uid://ckqdehmgnjjsa" path="res://assets/leama/new_animation_node_state_machine.tres" id="2_x6xrw"]
-[ext_resource type="PackedScene" uid="uid://bsx0hs4soaco5" path="res://scenes/riffle.tscn" id="5_yp0r5"]
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_x6xrw"]
-radius = 0.3696289
-height = 1.6083984
+[ext_resource type="PackedScene" uid="uid://naujvxq5706b" path="res://scenes/characters/lain_model.res" id="1_8rvaq"]
 
 [sub_resource type="Animation" id="Animation_8rvaq"]
 resource_name = "Erika Archer"
@@ -7040,163 +7033,14 @@ _data = {
 &"walking backwards": SubResource("Animation_euvlp")
 }
 
-[node name="base_player" unique_id=909074154 instance=ExtResource("1_iepen")]
+[node name="Node3D" type="Node3D" unique_id=2108141588]
 
-[node name="CollisionShape3D" parent="." index="0" unique_id=1414048419]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8041992, 0)
-shape = SubResource("CapsuleShape3D_x6xrw")
-
-[node name="Label3D" parent="." index="1" unique_id=645377243]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
-
-[node name="Camera3D" parent="." index="2" unique_id=292611893]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3638998, 0)
-
-[node name="ModelHands" parent="Camera3D" index="0" unique_id=635666049 instance=ExtResource("2_6me5d")]
-transform = Transform3D(-0.99777126, 0, -0.066726595, 0, 1, 0, 0.066726595, 0, -0.99777126, 3.4969112e-08, -1.3638998, 0.009480737)
-
-[node name="GeneralSkeleton" parent="Camera3D/ModelHands" index="0" unique_id=988209765]
-bones/1/rotation = Quaternion(-0.11155552, -0.33995065, -0.032599885, 0.9332343)
-bones/2/rotation = Quaternion(0.06922237, -1.4023584e-05, -0.0020059345, 0.99759924)
-bones/3/rotation = Quaternion(0.14417057, -0.00011971248, -0.006600314, 0.98953086)
-bones/4/rotation = Quaternion(0.14338943, -0.000735435, -0.00645282, 0.9896451)
-bones/5/rotation = Quaternion(0.004092034, 0.065183446, 0.007588212, 0.9978361)
-bones/5/scale = Vector3(0, 0, 0)
-bones/6/rotation = Quaternion(-0.039013367, 0.19096908, 0.092003, 0.9764959)
-bones/6/scale = Vector3(0, 0, 0)
-bones/9/rotation = Quaternion(0.6022932, 0.6655109, 0.31659606, -0.3067658)
-bones/10/rotation = Quaternion(0.22921678, 0.8124286, -0.45869285, 0.2775255)
-bones/11/rotation = Quaternion(0.37973344, -0.59459317, 0.37975997, 0.5983678)
-bones/12/rotation = Quaternion(-0.2822027, -0.23906335, -0.069851205, 0.92646176)
-bones/14/rotation = Quaternion(0.66074544, -0.6146839, -0.21691616, -0.37219146)
-bones/15/rotation = Quaternion(-0.55187535, 0.659713, -0.49486133, 0.12379314)
-bones/16/rotation = Quaternion(0.53545386, 0.4618101, -0.5354629, 0.46184415)
-bones/17/rotation = Quaternion(-0.2830058, -0.3441205, 0.05489214, 0.89357466)
-bones/19/scale = Vector3(0, 0, 0)
-bones/21/scale = Vector3(0, 0, 0)
-bones/23/rotation = Quaternion(0.39516413, 0.07344982, 0.90410256, -0.14508322)
-bones/23/scale = Vector3(0, 0, 0)
-bones/24/rotation = Quaternion(0.0041051162, 0.9823731, -0.18669139, 0.008523484)
-bones/25/rotation = Quaternion(-0.0058275145, 0.724953, -0.6884586, 0.020834502)
-bones/26/rotation = Quaternion(-5.6799463e-09, 1, -5.662441e-07, 3.300954e-08)
-bones/30/rotation = Quaternion(0.04686566, -0.03329498, 0.99719614, 0.04790622)
-bones/30/scale = Vector3(0, 0, 0)
-bones/31/rotation = Quaternion(-0.0081127435, 0.96418357, -0.2650553, -0.005475546)
-bones/32/rotation = Quaternion(-0.056036808, 0.5599954, -0.81383115, -0.14472038)
-bones/33/rotation = Quaternion(7.380393e-08, 1, 2.3435862e-06, 8.006839e-09)
-
-[node name="BoneAttachment3D" type="BoneAttachment3D" parent="Camera3D/ModelHands/GeneralSkeleton" index="6" unique_id=773183285]
-transform = Transform3D(-0.98855394, 0.056635134, -0.13983215, -0.13012137, 0.14897662, 0.98024195, 0.07634796, 0.9872179, -0.13990211, -0.091887005, 1.1477681, 0.2722183)
-bone_name = "hand.R_end_029"
-bone_idx = 18
-
-[node name="weapon_pos" type="Marker3D" parent="Camera3D/ModelHands/GeneralSkeleton/BoneAttachment3D" index="0" unique_id=772115460]
-transform = Transform3D(-0.09359476, -0.19477616, -0.9763721, 0.036876015, 0.9793262, -0.19890028, 0.9949289, -0.0546206, -0.08447686, 0.009667516, -0.037499785, 0.01826942)
-
-[node name="AnimationPlayer" parent="Camera3D/ModelHands" index="1" unique_id=358318340]
-libraries/char = SubResource("AnimationLibrary_q68v1")
-
-[node name="WeaponHolder" parent="." index="7" unique_id=493272097 node_paths=PackedStringArray("weapon_mount", "weapon_mount_arms")]
-weapon_mount = NodePath("../Model/GeneralSkeleton/BoneAttachment3D/weapon_pos")
-weapon_mount_arms = NodePath("../Camera3D/ModelHands/GeneralSkeleton/BoneAttachment3D/weapon_pos")
-
-[node name="AnimationTreeArms" type="AnimationTree" parent="." index="9" unique_id=106790877]
-root_node = NodePath("../Camera3D/ModelHands")
-tree_root = ExtResource("2_x6xrw")
-anim_player = NodePath("../Camera3D/ModelHands/AnimationPlayer")
-parameters/conditions/hit = false
-parameters/conditions/idle = false
-parameters/conditions/moving = false
-parameters/conditions/shoot = false
-parameters/BlendSpace2D/blend_position = Vector2(0, 0)
-
-[node name="AnimationTreeLegs" type="AnimationTree" parent="." index="10" unique_id=1315983456]
-root_node = NodePath("../ModelLegs")
-tree_root = ExtResource("2_x6xrw")
-anim_player = NodePath("../ModelLegs/AnimationPlayer")
-parameters/conditions/hit = false
-parameters/conditions/idle = false
-parameters/conditions/moving = false
-parameters/conditions/shoot = false
-parameters/BlendSpace2D/blend_position = Vector2(0, 0)
-
-[node name="AnimationTree" type="AnimationTree" parent="." index="11" unique_id=1309295961]
-root_node = NodePath("../Model")
-tree_root = ExtResource("2_x6xrw")
-anim_player = NodePath("../Model/AnimationPlayer")
-parameters/conditions/hit = false
-parameters/conditions/idle = false
-parameters/conditions/moving = false
-parameters/conditions/shoot = false
-parameters/BlendSpace2D/blend_position = Vector2(0, 0)
-
-[node name="Model" parent="." index="12" unique_id=641829469 instance=ExtResource("2_6me5d")]
-transform = Transform3D(-0.98873806, 0, -0.1496562, 0, 1, 0, 0.1496562, 0, -0.98873806, 0, 0, 0)
+[node name="Model" parent="." unique_id=635666049 instance=ExtResource("1_8rvaq")]
 
 [node name="GeneralSkeleton" parent="Model" index="0" unique_id=988209765]
-bones/1/rotation = Quaternion(-0.111699075, -0.33978757, -0.032369975, 0.93328446)
-bones/2/rotation = Quaternion(0.068707615, -0.000119572054, -0.0017302297, 0.9976353)
-bones/3/rotation = Quaternion(0.14534372, -0.00011573416, -0.0065302174, 0.98935974)
-bones/4/rotation = Quaternion(0.14388694, -0.00071517815, -0.0063941577, 0.98957324)
-bones/5/rotation = Quaternion(0.0044997814, 0.06515334, 0.0076771695, 0.99783564)
-bones/6/rotation = Quaternion(-0.037179776, 0.19079083, 0.092299156, 0.9765743)
-bones/9/rotation = Quaternion(0.60224015, 0.66554266, 0.3169382, -0.3064473)
-bones/10/rotation = Quaternion(0.22928719, 0.81241524, -0.4583371, 0.27809343)
-bones/11/rotation = Quaternion(0.3796159, -0.59466857, 0.37964243, 0.598442)
-bones/12/rotation = Quaternion(-0.28186125, -0.23965186, -0.06967494, 0.9264269)
-bones/14/rotation = Quaternion(0.66074544, -0.6146839, -0.21691616, -0.37219146)
-bones/15/rotation = Quaternion(-0.5518086, 0.65969825, -0.49486452, 0.12415621)
-bones/16/rotation = Quaternion(0.53545386, 0.4618101, -0.5354629, 0.46184415)
-bones/17/rotation = Quaternion(-0.282868, -0.3448016, 0.056092784, 0.8932811)
-bones/23/rotation = Quaternion(0.39487252, 0.073394194, 0.90430385, -0.14464995)
-bones/24/rotation = Quaternion(0.003465327, 0.98244345, -0.1862888, 0.00946492)
-bones/25/rotation = Quaternion(-0.0061897603, 0.7251781, -0.6882305, 0.020427551)
-bones/26/rotation = Quaternion(-5.6799463e-09, 1, -5.662441e-07, 3.300954e-08)
-bones/30/rotation = Quaternion(0.0470176, -0.032862663, 0.99720323, 0.04790889)
-bones/31/rotation = Quaternion(-0.008011498, 0.96414983, -0.26517546, -0.00574423)
-bones/32/rotation = Quaternion(-0.056481466, 0.55999744, -0.81374073, -0.14504729)
-bones/33/rotation = Quaternion(7.105071e-08, 1, -0.00018544888, 1.4602739e-09)
-
-[node name="BoneAttachment3D" type="BoneAttachment3D" parent="Model/GeneralSkeleton" index="6" unique_id=870130652]
-transform = Transform3D(-0.9884196, 0.057707578, -0.1403436, -0.13071805, 0.14590786, 0.9806242, 0.077066645, 0.9876139, -0.13667472, -0.09208838, 1.1469189, 0.27213985)
-bone_name = "hand.R_end_029"
-bone_idx = 18
-
-[node name="weapon_pos" type="Marker3D" parent="Model/GeneralSkeleton/BoneAttachment3D" index="0" unique_id=881247158]
-transform = Transform3D(-0.09359476, -0.19477616, -0.9763721, 0.036876015, 0.9793262, -0.19890028, 0.9949289, -0.0546206, -0.08447686, 0.009667516, -0.037499785, 0.01826942)
-
-[node name="pose_up" type="Marker3D" parent="Model/GeneralSkeleton" index="7" unique_id=1945297831]
-transform = Transform3D(0.86160225, -0.14931937, -0.4851243, 0.50721306, 0.21673295, 0.8341233, -0.019408405, -0.96474385, 0.26247442, 0.0031951289, 0.95296705, -0.0032092123)
-
-[node name="pose_down" type="Marker3D" parent="Model/GeneralSkeleton" index="8" unique_id=1889973568]
-transform = Transform3D(0.88159734, -0.24351618, -0.40433338, -0.43949285, -0.11109393, -0.89135, 0.1721391, 0.96351355, -0.20496386, 0.0031951289, 0.95296705, -0.0032092123)
-
-[node name="pose_center" type="Marker3D" parent="Model/GeneralSkeleton" index="9" unique_id=1765122515]
-transform = Transform3D(0.73513913, -0.08549211, -0.6725036, 0.14031081, 0.9897238, 0.027560282, 0.66323686, -0.114620194, 0.7395802, 0.0031951289, 0.95296705, -0.0032092123)
-
-[node name="ModelLegs" parent="." index="13" unique_id=1424585879 instance=ExtResource("2_6me5d")]
-transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 0, 0, 0.4)
-
-[node name="GeneralSkeleton" parent="ModelLegs" index="0" unique_id=988209765]
-bones/6/rotation = Quaternion(-0.027573232, 0.1903549, 0.09328443, 0.97688425)
 bones/6/scale = Vector3(0, 0, 0)
-bones/10/scale = Vector3(1, 0, 0)
-bones/15/scale = Vector3(0, 0, 0)
 
-[node name="BoneAttachment3D" type="BoneAttachment3D" parent="ModelLegs/GeneralSkeleton" index="6" unique_id=1437373793]
-transform = Transform3D(0, 0, 0, 0, 0, 0, 0, 0, 0, -0.11774593, 1.1718758, 0.008033231)
-bone_name = "hand.R_end_029"
-bone_idx = 18
-
-[node name="weapon_pos" parent="ModelLegs/GeneralSkeleton/BoneAttachment3D" index="0"]
-transform = Transform3D(-0.09359476, -0.19477616, -0.9763721, 0.036876015, 0.9793262, -0.19890028, 0.9949289, -0.0546206, -0.08447686, 0.009667516, -0.037499785, 0.01826942)
-
-[node name="Riffle" parent="ModelLegs/GeneralSkeleton/BoneAttachment3D" index="1" unique_id=1743520868 instance=ExtResource("5_yp0r5")]
-transform = Transform3D(-0.09359476, -0.19477616, -0.9763721, 0.03687601, 0.97932625, -0.19890028, 0.9949289, -0.054620605, -0.08447686, 0.009667516, -0.037499785, 0.01826942)
-
-[node name="AnimationPlayer" parent="ModelLegs" index="1" unique_id=358318340]
+[node name="AnimationPlayer" parent="Model" index="1" unique_id=358318340]
 libraries/char = SubResource("AnimationLibrary_q68v1")
 
-[editable path="Camera3D/ModelHands"]
 [editable path="Model"]
-[editable path="ModelLegs"]

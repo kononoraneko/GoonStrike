@@ -1,13 +1,16 @@
 [gd_scene format=3 uid="uid://pim0xaimmmtq"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_exvtx"]
-transparency = 1
-albedo_color = Color(1, 1, 1, 0.1882353)
+[ext_resource type="Shader" uid="uid://dw30faejyujvi" path="res://scenes/weapons/ar-15_spawner.gdshader" id="1_5b3ou"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_5b3ou"]
-material = SubResource("StandardMaterial3D_exvtx")
-radius = 0.1
-height = 0.2
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_64514"]
+render_priority = 0
+shader = ExtResource("1_5b3ou")
+shader_parameter/flash_color = Color(1, 0.7, 0.3, 1)
+shader_parameter/flash_intensity = 3.0
+shader_parameter/flash_speed = 25.0
+shader_parameter/scale_modifier = 1.0
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_pfi5h"]
 
 [node name="TestFlash" type="OmniLight3D" unique_id=494239092]
 light_color = Color(1, 1, 0.023529412, 1)
@@ -15,5 +18,12 @@ light_size = 0.1
 shadow_enabled = true
 omni_range = 3.1707392
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=953300647]
-mesh = SubResource("SphereMesh_5b3ou")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=447581350]
+transform = Transform3D(0.093991965, 0, -0.08549913, 0, 0.12706137, 0, 0.08549913, 0, 0.093991965, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_64514")
+mesh = SubResource("PlaneMesh_pfi5h")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=902974442]
+transform = Transform3D(0.09399196, 0, -0.08549912, -0.08549912, -5.554025e-09, -0.09399195, -3.7372843e-09, 0.12706135, -4.108517e-09, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_64514")
+mesh = SubResource("PlaneMesh_pfi5h")

@@ -7,12 +7,15 @@ class_name WeaponHolder extends Node
 signal weapon_changed(new_weapon: Weapon)
 
 @export var weapon_mount: Node3D   # точка крепления оружия (например $model/hand_R)
+@export var weapon_mount_arms: Node3D   # точка крепления оружия (например $model/hand_R)
 
 var current_weapon: Weapon = null
 var owner_player: OnlinePlayer
 
 func _ready() -> void:
 	_ensure_owner_player()
+	if not multiplayer.is_server():
+		rpc_id(1, "_request_weapon_sync")
 
 
 func _ensure_owner_player() -> void:
@@ -91,6 +94,21 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 	rpc("_broadcast_shot", hit_point, hit_player != null, sender_id)
 
 
+@rpc("any_peer", "reliable")
+func _request_weapon_sync() -> void:
+	if not multiplayer.is_server():
+		return
+	var requester_id := multiplayer.get_remote_sender_id()
+	if requester_id <= 0:
+		return
+	if current_weapon == null or current_weapon.data == null:
+		return
+	var data_path := current_weapon.data.resource_path
+	if data_path.is_empty():
+		return
+	rpc_id(requester_id, "equip_from_pickup", NodePath(), data_path)
+
+
 @rpc("any_peer", "reliable", "call_local")
 func _broadcast_shot(hit_point: Vector3, hit_success: bool, shooter_id: int) -> void:
 	if current_weapon != null:
@@ -107,7 +125,7 @@ func _set_weapon(data: WeaponData) -> void:
 		push_error("WeaponHolder: weapon_scene is not a Weapon node")
 		return
 	instance.data = data
-	(weapon_mount if weapon_mount else owner_player).add_child(instance)
+	(weapon_mount_arms if weapon_mount_arms and is_multiplayer_authority() else weapon_mount if weapon_mount else owner_player).add_child(instance)
 	instance.shot_requested.connect(_on_shot_requested)
 	current_weapon = instance
 	weapon_changed.emit(current_weapon)
