@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://c4jwyinsdd4is" path="res://ui/GameHUD.tscn" id="5_uuk04"]
 [ext_resource type="Script" uid="uid://diporw6jj81sm" path="res://scripts/game_modes/deathmatch_mode.gd" id="8_1bjbq"]
 [ext_resource type="PackedScene" uid="uid://drq5sxmo4htrx" path="res://scenes/characters/lain_character.tscn" id="8_3jdlx"]
+[ext_resource type="PackedScene" uid="uid://0ukxfg566coh" path="res://test_char.tscn" id="9_1bjbq"]
 [ext_resource type="Resource" uid="uid://c72m5b0d6gfbg" path="res://resources/ar-15_data.res" id="9_8givd"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vkhxg"]
@@ -218,3 +219,6 @@ script = ExtResource("2_vkhxg")
 player_scene = ExtResource("8_3jdlx")
 spawn_points_root = NodePath("../SpawnPoints")
 metadata/_custom_type_script = "uid://6cbm3vor7sfv"
+
+[node name="Node3D" parent="." unique_id=2108141588 instance=ExtResource("9_1bjbq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7399468, 1.6420987, -3.2294178)

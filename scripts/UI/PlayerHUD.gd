@@ -18,8 +18,8 @@ class_name PlayerHUD extends Control
 
 @onready var hp_bar:      ProgressBar = $HBoxContainer/HPPanel/VBoxContainer/HPBar
 @onready var hp_label:    Label       = $HBoxContainer/HPPanel/VBoxContainer/HPLabel
-@onready var weapon_icon: TextureRect = $HBoxContainer/WeaponPanel/VBoxContainer/WeaponIcon
-@onready var weapon_label:Label       = $HBoxContainer/WeaponPanel/VBoxContainer/WeaponLabel
+@onready var weapon_icon: TextureRect = $HBoxContainer/VBoxContainer/WeaponIcon
+@onready var weapon_label:Label       = $HBoxContainer/VBoxContainer/WeaponLabel
 
 ## Устанавливается при спавне локального игрока.
 var player: OnlinePlayer

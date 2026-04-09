@@ -7,6 +7,7 @@ class_name WeaponHolder extends Node
 signal weapon_changed(new_weapon: Weapon)
 
 @export var weapon_mount: Node3D   # точка крепления оружия (например $model/hand_R)
+@export var weapon_mount_arms: Node3D   # точка крепления оружия (например $model/hand_R)
 
 var current_weapon: Weapon = null
 var owner_player: OnlinePlayer
@@ -124,7 +125,7 @@ func _set_weapon(data: WeaponData) -> void:
 		push_error("WeaponHolder: weapon_scene is not a Weapon node")
 		return
 	instance.data = data
-	(weapon_mount if weapon_mount else owner_player).add_child(instance)
+	(weapon_mount_arms if weapon_mount_arms and is_multiplayer_authority() else weapon_mount if weapon_mount else owner_player).add_child(instance)
 	instance.shot_requested.connect(_on_shot_requested)
 	current_weapon = instance
 	weapon_changed.emit(current_weapon)

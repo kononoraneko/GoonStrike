@@ -3,10 +3,12 @@
 [ext_resource type="Script" uid="uid://bkfdhn7kegdg1" path="res://scripts/components/rifle.gd" id="1_0g5ae"]
 [ext_resource type="ArrayMesh" uid="uid://b3e5oticon8yp" path="res://assets/res/ar-15.res" id="1_bqpgu"]
 [ext_resource type="ArrayMesh" uid="uid://wuxuvibptu55" path="res://assets/res/ar-15_magazine.res" id="2_0g5ae"]
+[ext_resource type="Resource" uid="uid://c72m5b0d6gfbg" path="res://resources/ar-15_data.res" id="2_kdssw"]
 [ext_resource type="Script" uid="uid://ykbae8t1q877" path="res://scripts/components/SpreadComponent.gd" id="4_qlvgl"]
 
 [node name="Riffle" type="Node3D" unique_id=1143071610]
 script = ExtResource("1_0g5ae")
+data = ExtResource("2_kdssw")
 
 [node name="AR-15_AR15_0" type="MeshInstance3D" parent="." unique_id=2050916496]
 transform = Transform3D(-0.11169428, -1.0430813e-07, 0.9937426, 0.9338126, 0.3420203, 0.10495831, -0.3398801, 0.9396926, -0.0382016, -0.014276063, 0.12817231, -0.017177958)

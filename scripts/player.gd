@@ -145,11 +145,18 @@ func _update_visibility() -> void:
 			return
 		camera.current = true
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-		visible = false
+		#visible = false
 	elif name == "1":
 		visible = false
 	else:
 		visible = true
+	
+	if $ModelLegs:
+		$ModelLegs.visible = is_multiplayer_authority()
+	if $Camera3D/ModelHands:
+		$Camera3D/ModelHands.visible = is_multiplayer_authority()
+	if $Model:
+		$Model.visible = !is_multiplayer_authority()
 
 
 # ── RPC (роутинг к компонентам) ───────────────────────────────────────────
