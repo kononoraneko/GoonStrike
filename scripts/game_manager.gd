@@ -165,4 +165,4 @@ func _resolve_player_name(peer_id: int) -> String:
 	return str(peer_id)
 
 func _on_server_disconnected() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	SceneRouter.go_main_menu_with_error("Потеряно соединение с сервером")
