@@ -18,18 +18,23 @@ static func open(parent: Node) -> CanvasLayer:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	get_tree().paused = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 	resume_btn.pressed.connect(_on_resume)
 	settings_btn.pressed.connect(_on_settings_pressed)
 	lobby_btn.pressed.connect(_on_go_lobby)
 	menu_btn.pressed.connect(_on_go_menu)
 
+	resume_btn.grab_focus()
 	lobby_btn.visible = not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
 
 
+func request_close() -> void:
+	_on_resume()
+
+
 func _on_resume() -> void:
-	get_tree().paused = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	queue_free()
 
 
@@ -38,11 +43,13 @@ func _on_settings_pressed() -> void:
 
 
 func _on_go_lobby() -> void:
-	get_tree().paused = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	Lobby.disconnect_game()
 	SceneRouter.go_main_menu()
+	queue_free()
 
 
 func _on_go_menu() -> void:
-	get_tree().paused = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	SceneRouter.go_main_menu()
+	queue_free()

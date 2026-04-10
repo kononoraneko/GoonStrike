@@ -13,6 +13,7 @@ func _ready() -> void:
 
 func go_main_menu() -> void:
 	Lobby.disconnect_game()
+	_cleanup_overlays()
 	_go_to(MAIN_MENU_SCENE)
 
 
@@ -54,3 +55,12 @@ func _resolve_current_scene_path() -> String:
 	if current_scene == null:
 		return ""
 	return current_scene.scene_file_path
+
+func _cleanup_overlays() -> void:
+	var overlay_paths := {
+		"res://scenes/ui/pause_menu.tscn": true,
+		"res://scenes/settings/settings_screen.tscn": true,
+	}
+	for child in get_tree().root.get_children():
+		if overlay_paths.has(child.scene_file_path):
+			child.queue_free()

@@ -79,10 +79,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("shoot"):
 		weapon_holder.try_shoot(get_aim_ray())
 
-	if event.is_action_pressed("ui_cancel"):
-		Input.set_mouse_mode(
-			Input.MOUSE_MODE_CAPTURED if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE
-			else Input.MOUSE_MODE_VISIBLE)
 
 
 func get_shoot_direction() -> Vector3:
@@ -103,7 +99,12 @@ func get_aim_ray() -> Dictionary:
 
 
 func _is_ui_input_blocked() -> bool:
-	return get_viewport().gui_get_focus_owner() != null
+	if get_viewport().gui_get_focus_owner() != null:
+		return true
+	for child in get_tree().root.get_children():
+		if child.scene_file_path == "res://scenes/ui/pause_menu.tscn":
+			return true
+	return false
 
 
 func _build_idle_command(tick: int) -> Dictionary:
