@@ -28,8 +28,8 @@ grow_vertical = 2
 [node name="NameEdit" type="LineEdit" parent="VBoxContainer" unique_id=1930361350]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-text = "Name"
-placeholder_text = "Name"
+text = "Player"
+placeholder_text = "Player name"
 
 [node name="IpEdit" type="LineEdit" parent="VBoxContainer" unique_id=1893836777]
 layout_mode = 2
@@ -42,7 +42,7 @@ size_flags_horizontal = 8
 
 [node name="HostButton" type="Button" parent="VBoxContainer/ConnectionButtons" unique_id=1443061313]
 layout_mode = 2
-text = "Host"
+text = "Запустить бокал-хост"
 
 [node name="JoinButton" type="Button" parent="VBoxContainer/ConnectionButtons" unique_id=2095729204]
 layout_mode = 2

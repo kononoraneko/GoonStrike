@@ -22,6 +22,10 @@ ChatNetwork="*uid://dvan28lalj7ii"
 ConsoleCommands="*uid://becjmouqvepai"
 Settings="*uid://bykfefh1tqrrg"
 
+[display]
+
+window/vsync/vsync_mode=2
+
 [input]
 
 move_forward={
