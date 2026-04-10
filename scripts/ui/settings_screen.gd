@@ -1,4 +1,3 @@
-class_name SettingsScreen
 extends CanvasLayer
 
 const SETTINGS_PATH := "user://settings.cfg"
@@ -7,9 +6,9 @@ const SETTINGS_PATH := "user://settings.cfg"
 @onready var hair_check: CheckBox = $PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/HairCheck
 @onready var close_button: Button = $PanelContainer/MarginContainer/VBoxContainer/CloseButton
 
-static func open(parent: Node) -> SettingsScreen:
+static func open(parent: Node) -> CanvasLayer:
 	var scene := preload("res://scenes/settings/settings_screen.tscn")
-	var inst := scene.instantiate() as SettingsScreen
+	var inst := scene.instantiate() as CanvasLayer
 	parent.add_child(inst)
 	return inst
 

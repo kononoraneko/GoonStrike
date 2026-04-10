@@ -1,5 +1,7 @@
 extends Control
 
+const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings_screen.gd")
+
 const GAME_SCENE := "res://scenes/game/game_world.tscn"
 
 @onready var player_list: ItemList = $VBoxContainer/PlayerList
@@ -35,7 +37,7 @@ func _refresh_list(_peer_id: int = -1, _player_info: Dictionary = {}) -> void:
 
 
 func _on_settings_pressed() -> void:
-	SettingsScreen.open(get_tree().root)
+	SETTINGS_SCREEN_SCRIPT.open(get_tree().root)
 
 
 func _on_leave_pressed() -> void:

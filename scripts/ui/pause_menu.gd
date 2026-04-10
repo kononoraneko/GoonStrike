@@ -1,6 +1,8 @@
 class_name PauseMenu
 extends CanvasLayer
 
+const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings_screen.gd")
+
 @onready var resume_btn: Button = $ColorRect/CenterContainer/VBoxContainer/ResumeButton
 @onready var settings_btn: Button = $ColorRect/CenterContainer/VBoxContainer/SettingsButton
 @onready var lobby_btn: Button = $ColorRect/CenterContainer/VBoxContainer/LobbyButton
@@ -33,7 +35,7 @@ func _on_resume() -> void:
 
 
 func _on_settings_pressed() -> void:
-	SettingsScreen.open(get_tree().root)
+	SETTINGS_SCREEN_SCRIPT.open(get_tree().root)
 
 
 func _on_go_lobby() -> void:

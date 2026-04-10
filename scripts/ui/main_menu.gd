@@ -1,5 +1,7 @@
 extends Control
 
+const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings_screen.gd")
+
 @onready var name_edit: LineEdit = $VBoxContainer/NameEdit
 @onready var ip_edit: LineEdit = $VBoxContainer/IpRow/IpEdit
 @onready var create_btn: Button = $VBoxContainer/ButtonRow/CreateButton
@@ -73,7 +75,7 @@ func _on_connection_failed() -> void:
 
 
 func _on_settings_pressed() -> void:
-	SettingsScreen.open(get_tree().root)
+	SETTINGS_SCREEN_SCRIPT.open(get_tree().root)
 
 
 func _on_quit_pressed() -> void:
