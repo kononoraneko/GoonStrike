@@ -1,4 +1,3 @@
-class_name PauseMenu
 extends CanvasLayer
 
 const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings_screen.gd")
@@ -8,11 +7,11 @@ const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings_screen.gd")
 @onready var lobby_btn: Button = $ColorRect/CenterContainer/VBoxContainer/LobbyButton
 @onready var menu_btn: Button = $ColorRect/CenterContainer/VBoxContainer/MenuButton
 
-static func open(parent: Node) -> PauseMenu:
+static func open(parent: Node) -> CanvasLayer:
 	for child in parent.get_children():
-		if child is PauseMenu:
+		if child.scene_file_path == "res://scenes/ui/pause_menu.tscn":
 			return child
-	var inst := preload("res://scenes/ui/pause_menu.tscn").instantiate() as PauseMenu
+	var inst := preload("res://scenes/ui/pause_menu.tscn").instantiate() as CanvasLayer
 	parent.add_child(inst)
 	return inst
 
