@@ -46,6 +46,16 @@ sky_material = SubResource("ProceduralSkyMaterial_8rn00")
 background_mode = 2
 sky = SubResource("Sky_uuk04")
 
+[sub_resource type="GDScript" id="GDScript_1bjbq"]
+script/source = "extends DirectionalLight3D
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	visible = !Settings.potato
+	Settings.connect(\"potato_changed\", func(v): visible = !v)
+"
+
 [node name="Game" type="Node3D" unique_id=752645134]
 script = ExtResource("1_8rn00")
 
@@ -195,6 +205,7 @@ environment = SubResource("Environment_3jdlx")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment" unique_id=1492989607]
 transform = Transform3D(0.3893572, -0.77524513, 0.49738908, -0.17171887, 0.46944034, 0.8661053, -0.90493846, -0.42263547, 0.049655758, 0, 3.294276, 0)
 shadow_enabled = true
+script = SubResource("GDScript_1bjbq")
 
 [node name="SpawnPoints" type="Node3D" parent="." unique_id=547486946]
 

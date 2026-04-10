@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://m8r6sdd8yjw6"]
 
-[ext_resource type="Script" uid="uid://denjy3b77sha4" path="res://scripts/UI/ChatConsole.gd" id="1_eicdt"]
+[ext_resource type="Script" uid="uid://denjy3b77sha4" path="res://scripts/ui/ChatConsole.gd" id="1_eicdt"]
 
 [node name="ChatConsole" type="Control" unique_id=1597358457]
 visibility_layer = 4

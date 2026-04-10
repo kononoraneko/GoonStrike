@@ -4,3 +4,4 @@
 addons/godot-git-plugin/windows/~libgit_plugin.windows.editor.x86_64.dll~RFabc999.TMP
 scripts/game_modes/deathmatch_mode.gd.uid
 /addons/godot-git-plugin/windows
+*.uid
