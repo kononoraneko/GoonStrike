@@ -43,3 +43,7 @@ func play_hit() -> void:
  
 func _reset_hit() -> void:
 	anim.set("parameters/conditions/hit", false)
+
+
+func play_reload() -> void:
+	pass

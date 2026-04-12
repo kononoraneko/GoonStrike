@@ -78,8 +78,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		movement.handle_mouse_motion(event)
 		aim_component.aim_angle = movement.rotation_x / 1.5
 
+	#if event.is_action_pressed("shoot"):
+		#weapon_holder.try_shoot(get_aim_ray())
+	#if event.is_action_pressed("reload"):
+		#weapon_holder.try_reload()
+	
 	if event.is_action_pressed("shoot"):
-		weapon_holder.try_shoot(get_aim_ray())
+		weapon_holder.start_shooting()
+	elif event.is_action_released("shoot"):
+		weapon_holder.stop_shooting()
+		
 	if event.is_action_pressed("reload"):
 		weapon_holder.try_reload()
 
