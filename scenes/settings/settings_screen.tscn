@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cnvmw4ueg0ini"]
 
-[ext_resource type="Script" uid="uid://cuw0mdhyi6u55" path="res://scripts/ui/settings_screen.gd" id="1"]
+[ext_resource type="Script" uid="uid://cytcq4ton0nsi" path="res://scripts/ui/settings_screen.gd" id="1"]
 
 [node name="SettingsScreen" type="CanvasLayer" unique_id=2033767502]
 layer = 10
