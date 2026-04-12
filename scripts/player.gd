@@ -37,6 +37,7 @@ func _ready() -> void:
 	add_to_group("online_players")
 	name_label.text = player_info.get("name", "Player")
 	aim_component.setup(skeleton, marker_up, marker_center, marker_down)
+	weapon_holder.weapon_changed.connect(_on_weapon_changed)
 	health_component.reset_health()
 	ChatNetwork.apply_shared_movement_to_player(self)
 	set_alive_state()
@@ -202,3 +203,11 @@ func update_remote_state(pos: Vector3, cmd: Dictionary) -> void:
 func rpc_play_hit_animation() -> void:
 	if not multiplayer.is_server() or is_multiplayer_authority():
 		animation.play_hit()
+
+
+func _on_weapon_changed(weapon: Weapon):
+	if weapon:
+		# Сообщаем аниматору, когда началась или закончилась перезарядка
+		weapon.reload_state_changed.connect(func(reloading):
+			animation.set_reloading(reloading)
+		)
