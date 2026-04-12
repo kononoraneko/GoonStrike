@@ -33,7 +33,6 @@ func _on_close_pressed() -> void:
 func _save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("video", "potato", Settings.potato)
-	cfg.set_value("video", "is_hair_animation", Settings.is_hair_animation)
 	cfg.save(SETTINGS_PATH)
 
 
