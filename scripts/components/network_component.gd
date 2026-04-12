@@ -55,7 +55,7 @@ func process_server_queue() -> void:
 		last_processed_tick = cmd.tick
 		# Корректируем позицию у владельца и обновляем остальных
 		owner_player.rpc_id(owner_player.remote_player_id, "client_correct_state",
-			owner_player.global_transform.origin, last_processed_tick)
+			owner_player.global_transform.origin, owner_player.velocity, last_processed_tick)
 		owner_player.rpc("update_remote_state",
 			owner_player.global_transform.origin, cmd)
 		processed += 1

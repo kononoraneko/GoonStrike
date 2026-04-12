@@ -1,0 +1,136 @@
+[gd_resource type="AnimationNodeBlendTree" format=3 uid="uid://c0sfpaabr8gab"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qn81k"]
+animation = &"char/firing rifle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_n81ot"]
+animation = &"char/hit reaction"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_520md"]
+animation = &"char/rifle aiming idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_7lfg7"]
+animation = &"char/reloading"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_qn81k"]
+break_loop_at_end = true
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_n81ot"]
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_7lfg7"]
+break_loop_at_end = true
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_520md"]
+advance_mode = 2
+advance_condition = &"shoot"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5ki5s"]
+advance_mode = 2
+advance_condition = &"reload"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_6wbj0"]
+advance_mode = 2
+advance_condition = &"hit"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_q106l"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_yi3ks"]
+states/End/position = Vector2(945, 119)
+states/Start/position = Vector2(197, 112)
+"states/char_firing rifle/node" = SubResource("AnimationNodeAnimation_qn81k")
+"states/char_firing rifle/position" = Vector2(760, 7)
+"states/char_hit reaction/node" = SubResource("AnimationNodeAnimation_n81ot")
+"states/char_hit reaction/position" = Vector2(646, 289)
+"states/char_rifle aiming idle/node" = SubResource("AnimationNodeAnimation_520md")
+"states/char_rifle aiming idle/position" = Vector2(624, 119)
+states/reload/node = SubResource("AnimationNodeAnimation_7lfg7")
+states/reload/position = Vector2(842, 209)
+transitions = ["char_hit reaction", "char_rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_qn81k"), "reload", "char_rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_n81ot"), "char_firing rifle", "char_rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_7lfg7"), "char_rifle aiming idle", "char_firing rifle", SubResource("AnimationNodeStateMachineTransition_520md"), "char_rifle aiming idle", "reload", SubResource("AnimationNodeStateMachineTransition_5ki5s"), "char_rifle aiming idle", "char_hit reaction", SubResource("AnimationNodeStateMachineTransition_6wbj0"), "Start", "char_rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_q106l")]
+graph_offset = Vector2(239, -76)
+
+[sub_resource type="AnimationNodeBlend2" id="AnimationNodeBlend2_qn81k"]
+filter_enabled = true
+filters = ["%GeneralSkeleton:Chest", "%GeneralSkeleton:Head", "%GeneralSkeleton:LeftHand", "%GeneralSkeleton:LeftLowerArm", "%GeneralSkeleton:LeftShoulder", "%GeneralSkeleton:LeftUpperArm", "%GeneralSkeleton:Neck", "%GeneralSkeleton:RightHand", "%GeneralSkeleton:RightLowerArm", "%GeneralSkeleton:RightShoulder", "%GeneralSkeleton:RightUpperArm", "%GeneralSkeleton:Spine", "%GeneralSkeleton:UpperChest"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ysuw0"]
+animation = &"char/rifle run"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_dhci1"]
+animation = &"char/run backwards"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_2t7fe"]
+animation = &"char/walking"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_wr52s"]
+animation = &"char/walking backwards"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_0mch6"]
+animation = &"char/strafe"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_lavgn"]
+animation = &"char/strafe (2)"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_mcob3"]
+animation = &"char/strafe right"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_src5t"]
+animation = &"char/strafe left"
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_n81ot"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_ysuw0")
+blend_point_0/pos = Vector2(0, 1)
+blend_point_1/node = SubResource("AnimationNodeAnimation_dhci1")
+blend_point_1/pos = Vector2(0, -1)
+blend_point_2/node = SubResource("AnimationNodeAnimation_2t7fe")
+blend_point_2/pos = Vector2(0, 0.5)
+blend_point_3/node = SubResource("AnimationNodeAnimation_wr52s")
+blend_point_3/pos = Vector2(0, -0.5)
+blend_point_4/node = SubResource("AnimationNodeAnimation_0mch6")
+blend_point_4/pos = Vector2(1, 0)
+blend_point_5/node = SubResource("AnimationNodeAnimation_lavgn")
+blend_point_5/pos = Vector2(-1, 0)
+blend_point_6/node = SubResource("AnimationNodeAnimation_mcob3")
+blend_point_6/pos = Vector2(0.5, 0)
+blend_point_7/node = SubResource("AnimationNodeAnimation_src5t")
+blend_point_7/pos = Vector2(-0.5, 0)
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_dv7cp"]
+animation = &"char/rifle aiming idle"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jegr6"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_au867"]
+advance_mode = 2
+advance_condition = &"moving"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_uo5hx"]
+advance_mode = 2
+advance_condition = &"idle"
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_e7aa4"]
+states/BlendSpace2D/node = SubResource("AnimationNodeBlendSpace2D_n81ot")
+states/BlendSpace2D/position = Vector2(659, 100)
+states/Start/position = Vector2(186, 100)
+"states/char_rifle aiming idle/node" = SubResource("AnimationNodeAnimation_dv7cp")
+"states/char_rifle aiming idle/position" = Vector2(382, 100)
+transitions = ["Start", "char_rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_jegr6"), "char_rifle aiming idle", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_au867"), "BlendSpace2D", "char_rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_uo5hx")]
+graph_offset = Vector2(-67, -31)
+
+[resource]
+graph_offset = Vector2(-385.83255, -48.870407)
+nodes/output/position = Vector2(760, 140)
+nodes/Blend2/node = SubResource("AnimationNodeBlend2_qn81k")
+nodes/Blend2/position = Vector2(340, 20)
+nodes/Locomotion/node = SubResource("AnimationNodeStateMachine_e7aa4")
+nodes/Locomotion/position = Vector2(-40, -80)
+nodes/Action/node = SubResource("AnimationNodeStateMachine_yi3ks")
+nodes/Action/position = Vector2(-40, 240)
+node_connections = [&"output", 0, &"Blend2", &"Blend2", 0, &"Locomotion", &"Blend2", 1, &"Action"]

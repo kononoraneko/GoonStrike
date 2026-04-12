@@ -9,6 +9,8 @@ signal weapon_changed(new_weapon: Weapon)
 @export var weapon_mount: Node3D   # точка крепления оружия (например $model/hand_R)
 @export var weapon_mount_arms: Node3D   # точка крепления оружия (например $model/hand_R)
 
+var is_shooting: bool = false
+
 var current_weapon: Weapon = null
 var owner_player: OnlinePlayer
 
@@ -22,6 +24,30 @@ func _ensure_owner_player() -> void:
 	if owner_player == null:
 		owner_player = get_parent() as OnlinePlayer
 	assert(owner_player != null, "WeaponHolder must be child of OnlinePlayer")
+
+
+func start_shooting() -> void:
+	if current_weapon == null or owner_player.is_dead:
+		return
+	is_shooting = true
+	_fire_loop()
+
+
+func stop_shooting() -> void:
+	is_shooting = false
+
+func _fire_loop() -> void:
+	if not is_shooting or current_weapon == null or owner_player.is_dead:
+		return
+		
+	# Делаем выстрел (или пытаемся)
+	try_shoot(owner_player.get_aim_ray())
+	
+	# Если оружие автоматическое, планируем следующий выстрел
+	if current_weapon.data.is_automatic:
+		get_tree().create_timer(current_weapon.data.fire_rate).timeout.connect(_fire_loop)
+	else:
+		is_shooting = false # Для неавтоматического оружия останавливаем цикл сразу
 
 
 ## Подбор оружия — вызывается сервером через RPC на всех клиентах.
@@ -97,16 +123,6 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 	if aim_origin.distance_to(server_origin) > 3.0:
 		return
 
-	var server_origin := _get_server_shot_origin()
-	var server_direction := _get_server_shot_direction()
-	if server_direction == Vector3.ZERO:
-		return
-
-	if aim_direction.normalized().dot(server_direction) < 0.35:
-		return
-	if aim_origin.distance_to(server_origin) > 3.0:
-		return
-
 	var world := owner_player.get_world_3d()
 	var params := PhysicsRayQueryParameters3D.new()
 	params.from = server_origin
@@ -150,6 +166,43 @@ func _server_request_reload() -> void:
 	if owner_player.is_dead or current_weapon == null:
 		return
 	current_weapon.server_request_reload()
+
+
+func _get_server_shot_origin() -> Vector3:
+	if owner_player.camera:
+		return owner_player.camera.global_transform.origin
+	return owner_player.global_transform.origin + Vector3.UP * 1.5
+
+
+func _get_server_shot_direction() -> Vector3:
+	var forward := -owner_player.global_transform.basis.z
+	var right := owner_player.global_transform.basis.x.normalized()
+	var pitch := owner_player.aim_component.aim_angle * 1.5
+	return forward.rotated(right, pitch).normalized()
+
+
+@rpc("any_peer", "reliable")
+func _server_request_reload() -> void:
+	_ensure_owner_player()
+	if not multiplayer.is_server():
+		return
+	var sender_id = multiplayer.get_remote_sender_id()
+	if sender_id != owner_player.remote_player_id:
+		return
+	if owner_player.is_dead or current_weapon == null:
+		return
+	if current_weapon.server_request_reload():
+		# Говорим всем остальным проиграть анимацию
+		rpc("_broadcast_reload_anim", sender_id)
+
+
+@rpc("any_peer", "reliable")
+func _broadcast_reload_anim(shooter_id: int) -> void:
+	# Владелец уже проигрывает анимацию локально (client prediction)
+	# Сервер не имеет графики. Значит проигрываем только для других клиентов (proxy)
+	if multiplayer.get_unique_id() != shooter_id and not multiplayer.is_server():
+		if owner_player.animation:
+			owner_player.animation.play_reload() # Замени на свой метод анимации
 
 
 func _get_server_shot_origin() -> Vector3:

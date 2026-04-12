@@ -37,6 +37,7 @@ func _ready() -> void:
 	add_to_group("online_players")
 	name_label.text = player_info.get("name", "Player")
 	aim_component.setup(skeleton, marker_up, marker_center, marker_down)
+	weapon_holder.weapon_changed.connect(_on_weapon_changed)
 	health_component.reset_health()
 	ChatNetwork.apply_shared_movement_to_player(self)
 	set_alive_state()
@@ -78,8 +79,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		movement.handle_mouse_motion(event)
 		aim_component.aim_angle = movement.rotation_x / 1.5
 
+	#if event.is_action_pressed("shoot"):
+		#weapon_holder.try_shoot(get_aim_ray())
+	#if event.is_action_pressed("reload"):
+		#weapon_holder.try_reload()
+	
 	if event.is_action_pressed("shoot"):
-		weapon_holder.try_shoot(get_aim_ray())
+		weapon_holder.start_shooting()
+	elif event.is_action_released("shoot"):
+		weapon_holder.stop_shooting()
+		
 	if event.is_action_pressed("reload"):
 		weapon_holder.try_reload()
 
@@ -174,10 +183,11 @@ func process_server_input(cmd: Dictionary) -> void:
 
 
 @rpc("any_peer", "call_local")
-func client_correct_state(server_pos: Vector3, _server_tick: int) -> void:
+func client_correct_state(server_pos: Vector3, server_velocity: Vector3, _server_tick: int) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	global_transform.origin = server_pos
+	velocity = server_velocity
 
 
 @rpc("any_peer")
@@ -193,3 +203,11 @@ func update_remote_state(pos: Vector3, cmd: Dictionary) -> void:
 func rpc_play_hit_animation() -> void:
 	if not multiplayer.is_server() or is_multiplayer_authority():
 		animation.play_hit()
+
+
+func _on_weapon_changed(weapon: Weapon):
+	if weapon:
+		# Сообщаем аниматору, когда началась или закончилась перезарядка
+		weapon.reload_state_changed.connect(func(reloading):
+			animation.set_reloading(reloading)
+		)
