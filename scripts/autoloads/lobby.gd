@@ -81,12 +81,16 @@ func _rpc_set_player_op(peer_id: int, is_op: bool) -> void:
 func disconnect_game() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	players.clear()
+	_loaded_count = 0
+	_loaded_peers.clear()
 
 
 # ── Загрузка сцены ────────────────────────────────────────────────────────
 
 ## Только сервер вызывает — меняет сцену у всех.
 func load_game(scene_path: String) -> void:
+	_loaded_count = 0
+	_loaded_peers.clear()
 	_rpc_load_game.rpc(scene_path)
 
 @rpc("authority", "call_local", "reliable")
@@ -106,10 +110,18 @@ func _rpc_player_loaded() -> void:
 	_all_loaded_check()
 
 var _loaded_count := 0
+var _loaded_peers: Dictionary = {}
 func _all_loaded_check() -> void:
-	_loaded_count += 1
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id <= 0 or not players.has(sender_id):
+		return
+	if _loaded_peers.has(sender_id):
+		return
+	_loaded_peers[sender_id] = true
+	_loaded_count = _loaded_peers.size()
 	if _loaded_count >= players.size():
 		_loaded_count = 0
+		_loaded_peers.clear()
 		all_players_loaded.emit()
 
 signal all_players_loaded
@@ -125,6 +137,8 @@ func _on_peer_connected(id: int) -> void:
 func _on_peer_disconnected(id: int) -> void:
 	if not players.has(id):
 		return
+	_loaded_peers.erase(id)
+	_loaded_count = _loaded_peers.size()
 	var info : Dictionary = players[id].duplicate()
 	players.erase(id)
 	player_disconnected.emit(id, info)
