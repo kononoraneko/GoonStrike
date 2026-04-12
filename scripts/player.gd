@@ -78,6 +78,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("shoot"):
 		weapon_holder.try_shoot(get_aim_ray())
+	if event.is_action_pressed("reload"):
+		weapon_holder.try_reload()
 
 
 

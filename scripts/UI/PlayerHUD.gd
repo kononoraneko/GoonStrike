@@ -20,6 +20,7 @@ class_name PlayerHUD extends Control
 @onready var hp_label:    Label       = $HBoxContainer/HPPanel/VBoxContainer/HPLabel
 @onready var weapon_icon: TextureRect = $HBoxContainer/VBoxContainer/WeaponIcon
 @onready var weapon_label:Label       = $HBoxContainer/VBoxContainer/WeaponLabel
+@onready var ammo_label:  Label       = $HBoxContainer/VBoxContainer/AmmoLabel
 
 ## Устанавливается при спавне локального игрока.
 var player: OnlinePlayer
@@ -55,6 +56,14 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 	if weapon == null or weapon.data == null:
 		weapon_label.text = "—"
 		weapon_icon.texture = null
+		ammo_label.text = "-- / --"
 		return
 	weapon_label.text   = weapon.data.weapon_name
 	weapon_icon.texture = weapon.data.pickup_icon
+	if not weapon.ammo_changed.is_connected(_on_ammo_changed):
+		weapon.ammo_changed.connect(_on_ammo_changed)
+	_on_ammo_changed(weapon.ammo_in_mag, weapon.ammo_reserve)
+
+
+func _on_ammo_changed(in_mag: int, in_reserve: int) -> void:
+	ammo_label.text = "%d / %d" % [in_mag, in_reserve]
