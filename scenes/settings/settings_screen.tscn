@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cnvmw4ueg0ini"]
 
-[ext_resource type="Script" uid="uid://bqidombijs3be" path="res://scripts/ui/settings_screen.gd" id="1"]
+[ext_resource type="Script" uid="uid://cuw0mdhyi6u55" path="res://scripts/ui/settings_screen.gd" id="1"]
 
 [node name="SettingsScreen" type="CanvasLayer" unique_id=2033767502]
 layer = 10
@@ -47,10 +47,6 @@ metadata/_tab_index = 0
 [node name="PotatoCheck" type="CheckBox" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=309622964]
 layout_mode = 2
 text = "Potato mode"
-
-[node name="HairCheck" type="CheckBox" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=1204503622]
-layout_mode = 2
-text = "Hair animation"
 
 [node name="VsyncLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=641839567]
 layout_mode = 2

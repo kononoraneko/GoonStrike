@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c1l0pg4ttjuxi"]
 
-[ext_resource type="Script" uid="uid://c3xi2tui6pbje" path="res://scripts/ui/main_menu.gd" id="1"]
+[ext_resource type="Script" uid="uid://dlsg2a7mul2rs" path="res://scripts/ui/main_menu.gd" id="1"]
 
 [node name="MainMenu" type="Control" unique_id=482925862]
 layout_mode = 3
@@ -52,7 +52,7 @@ layout_mode = 2
 
 [node name="CreateButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1228826462]
 layout_mode = 2
-text = "Создать игру"
+text = "Создать бокал-хост"
 
 [node name="JoinButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1978696484]
 layout_mode = 2
