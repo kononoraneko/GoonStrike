@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://bifl7kpir82p4" path="res://scripts/components/weapon_pickup.gd" id="1_8asc1"]
 [ext_resource type="Resource" uid="uid://c72m5b0d6gfbg" path="res://resources/ar-15_data.res" id="2_ym52l"]
-[ext_resource type="ArrayMesh" uid="uid://b3e5oticon8yp" path="res://assets/res/ar-15.res" id="9_52mvj"]
-[ext_resource type="ArrayMesh" uid="uid://wuxuvibptu55" path="res://assets/res/ar-15_magazine.res" id="10_6ex5o"]
+[ext_resource type="ArrayMesh" uid="uid://b3e5oticon8yp" path="res://assets/models/weapons/ar15/res/ar-15.res" id="9_52mvj"]
+[ext_resource type="ArrayMesh" uid="uid://wuxuvibptu55" path="res://assets/models/weapons/ar15/res/ar-15_magazine.res" id="10_6ex5o"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ixgyf"]
 size = Vector3(1, 1.5653076, 1)

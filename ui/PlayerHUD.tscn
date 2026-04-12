@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://xt16u3vjktvd"]
 
-[ext_resource type="Script" uid="uid://g6ttcmq2qjbb" path="res://scripts/UI/PlayerHUD.gd" id="1_3j41j"]
+[ext_resource type="Script" uid="uid://g6ttcmq2qjbb" path="res://scripts/ui/PlayerHUD.gd" id="1_3j41j"]
 [ext_resource type="Texture2D" uid="uid://bqihe6qwwhn7" path="res://resources/ak-47.png" id="2_3t2gr"]
 
 [node name="PlayerHUD" type="Control" unique_id=1856685360]

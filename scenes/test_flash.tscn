@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://pim0xaimmmtq"]
 
-[ext_resource type="Shader" uid="uid://dw30faejyujvi" path="res://scenes/weapons/ar-15_spawner.gdshader" id="1_5b3ou"]
+[ext_resource type="Shader" uid="uid://dw30faejyujvi" path="res://assets/shaders/muzzle_flash.gdshader" id="1_5b3ou"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_64514"]
 render_priority = 0
