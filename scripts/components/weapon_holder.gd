@@ -74,10 +74,20 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 	if current_weapon == null:
 		return
 
+	var server_origin := _get_server_shot_origin()
+	var server_direction := _get_server_shot_direction()
+	if server_direction == Vector3.ZERO:
+		return
+
+	if aim_direction.normalized().dot(server_direction) < 0.35:
+		return
+	if aim_origin.distance_to(server_origin) > 3.0:
+		return
+
 	var world := owner_player.get_world_3d()
 	var params := PhysicsRayQueryParameters3D.new()
-	params.from = aim_origin
-	params.to = aim_origin + aim_direction * current_weapon.data.range
+	params.from = server_origin
+	params.to = server_origin + server_direction * current_weapon.data.range
 	params.collision_mask = 3
 	params.exclude = [owner_player]
 
@@ -92,6 +102,19 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 			hit_player.health_component.take_damage(current_weapon.data.damage, owner_player)
 
 	rpc("_broadcast_shot", hit_point, hit_player != null, sender_id)
+
+
+func _get_server_shot_origin() -> Vector3:
+	if owner_player.camera:
+		return owner_player.camera.global_transform.origin
+	return owner_player.global_transform.origin + Vector3.UP * 1.5
+
+
+func _get_server_shot_direction() -> Vector3:
+	var forward := -owner_player.global_transform.basis.z
+	var right := owner_player.global_transform.basis.x.normalized()
+	var pitch := owner_player.aim_component.aim_angle * 1.5
+	return forward.rotated(right, pitch).normalized()
 
 
 @rpc("any_peer", "reliable")
