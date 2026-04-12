@@ -50,7 +50,8 @@ func try_shoot(aim_ray: Dictionary) -> void:
 		return
 	if current_weapon == null:
 		return
-	current_weapon.shoot(aim_ray)
+	if not current_weapon.shoot(aim_ray) and current_weapon.ammo_in_mag <= 0:
+		try_reload()
 
 
 func try_reload() -> void:
@@ -114,7 +115,6 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 			hit_player.health_component.take_damage(current_weapon.data.damage, owner_player)
 
 	rpc("_broadcast_shot", hit_point, hit_player != null, sender_id)
-	_sync_weapon_ammo(sender_id)
 
 
 @rpc("any_peer", "reliable")
@@ -122,13 +122,11 @@ func _server_request_reload() -> void:
 	_ensure_owner_player()
 	if not multiplayer.is_server():
 		return
-	var sender_id := multiplayer.get_remote_sender_id()
-	if sender_id != owner_player.remote_player_id:
+	if multiplayer.get_remote_sender_id() != owner_player.remote_player_id:
 		return
 	if owner_player.is_dead or current_weapon == null:
 		return
 	current_weapon.server_request_reload()
-	_sync_weapon_ammo(sender_id)
 
 
 func _get_server_shot_origin() -> Vector3:
