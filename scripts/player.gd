@@ -58,9 +58,11 @@ func _physics_process(delta: float) -> void:
 			animation.update(movement.input_dir)
 		else:
 			global_transform.origin = global_transform.origin.lerp(target_position, 10.0 * delta)
+			velocity = Vector3.ZERO
 			animation.update(movement.input_dir)
 
-	movement.apply_gravity(delta)
+	if multiplayer.is_server() or is_multiplayer_authority():
+		movement.apply_gravity(delta)
 	aim_component.update()
 
 

@@ -40,8 +40,9 @@ func shoot(aim_ray: Dictionary) -> bool:
 
 	can_shoot = false
 	get_tree().create_timer(data.fire_rate).timeout.connect(func(): can_shoot = true)
-	ammo_in_mag -= 1
-	ammo_changed.emit(ammo_in_mag, ammo_reserve)
+	if _should_predict_ammo():
+		ammo_in_mag -= 1
+		ammo_changed.emit(ammo_in_mag, ammo_reserve)
 	
 	var aim_origin: Vector3 = aim_ray["origin"]
 	var aim_direction: Vector3 = aim_ray["direction"]
@@ -133,7 +134,8 @@ func request_reload_local() -> bool:
 		return false
 	is_reloading = true
 	reload_state_changed.emit(true)
-	get_tree().create_timer(data.reload_time).timeout.connect(_finish_reload_local)
+	if _should_predict_ammo():
+		get_tree().create_timer(data.reload_time).timeout.connect(_finish_reload_local)
 	return true
 
 
@@ -158,6 +160,7 @@ func server_consume_shot() -> bool:
 		return false
 	_next_server_shot_time_msec = now + int(data.fire_rate * 1000.0)
 	ammo_in_mag -= 1
+	ammo_changed.emit(ammo_in_mag, ammo_reserve)
 	return true
 
 
@@ -165,6 +168,7 @@ func server_request_reload() -> bool:
 	if not _can_reload():
 		return false
 	is_reloading = true
+	reload_state_changed.emit(true)
 	get_tree().create_timer(data.reload_time).timeout.connect(_finish_reload_local)
 	return true
 
@@ -182,10 +186,7 @@ func _can_shoot_local() -> bool:
 		return false
 	if is_reloading or not can_shoot:
 		return false
-	if ammo_in_mag <= 0:
-		request_reload_local()
-		return false
-	return true
+	return ammo_in_mag > 0
 
 
 func _can_reload() -> bool:
@@ -211,3 +212,7 @@ func _finish_reload_local() -> void:
 	is_reloading = false
 	ammo_changed.emit(ammo_in_mag, ammo_reserve)
 	reload_state_changed.emit(false)
+
+
+func _should_predict_ammo() -> bool:
+	return multiplayer.is_server() or not multiplayer.has_multiplayer_peer()
