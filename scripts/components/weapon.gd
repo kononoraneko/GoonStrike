@@ -203,9 +203,9 @@ func _finish_reload_local() -> void:
 		is_reloading = false
 		reload_state_changed.emit(false)
 		return
-	var max_mag := max(data.magazine_size, 1)
+	var max_mag : int = max(data.magazine_size, 1)
 	var needed := max_mag - ammo_in_mag
-	var loaded := min(needed, ammo_reserve)
+	var loaded : int = min(needed, ammo_reserve)
 	ammo_in_mag += loaded
 	ammo_reserve -= loaded
 	is_reloading = false
