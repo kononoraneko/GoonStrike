@@ -125,7 +125,6 @@ transitions = ["Start", "char_rifle aiming idle", SubResource("AnimationNodeStat
 graph_offset = Vector2(-67, -31)
 
 [resource]
-graph_offset = Vector2(-385.83255, -48.870407)
 nodes/output/position = Vector2(760, 140)
 nodes/Blend2/node = SubResource("AnimationNodeBlend2_qn81k")
 nodes/Blend2/position = Vector2(340, 20)
