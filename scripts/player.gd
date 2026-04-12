@@ -58,9 +58,11 @@ func _physics_process(delta: float) -> void:
 			animation.update(movement.input_dir)
 		else:
 			global_transform.origin = global_transform.origin.lerp(target_position, 10.0 * delta)
+			velocity = Vector3.ZERO
 			animation.update(movement.input_dir)
 
-	movement.apply_gravity(delta)
+	if multiplayer.is_server() or is_multiplayer_authority():
+		movement.apply_gravity(delta)
 	aim_component.update()
 
 
@@ -78,6 +80,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("shoot"):
 		weapon_holder.try_shoot(get_aim_ray())
+	if event.is_action_pressed("reload"):
+		weapon_holder.try_reload()
 
 
 
@@ -170,10 +174,11 @@ func process_server_input(cmd: Dictionary) -> void:
 
 
 @rpc("any_peer", "call_local")
-func client_correct_state(server_pos: Vector3, _server_tick: int) -> void:
+func client_correct_state(server_pos: Vector3, server_velocity: Vector3, _server_tick: int) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	global_transform.origin = server_pos
+	velocity = server_velocity
 
 
 @rpc("any_peer")

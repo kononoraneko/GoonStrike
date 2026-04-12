@@ -49,9 +49,12 @@ func apply_movement(cmd: Dictionary) -> void:
 	var p := owner_player
 	p.velocity.x = cmd["dir"].x * speed
 	p.velocity.z = cmd["dir"].z * speed
+	if cmd.get("rot") is Vector3:
+		var input_rot := cmd["rot"] as Vector3
+		p.rotation.y = input_rot.y
 	if cmd.get("aim") != null:
 		owner_player.aim_component.aim_angle = cmd["aim"]
-	if cmd.get("jump", false):
+	if cmd.get("jump", false) and p.is_on_floor():
 		p.velocity.y += jump_velocity
 	p.move_and_slide()
 

@@ -6,6 +6,7 @@ class_name AnimationComponent extends Node
  
 var _shoot_timer: SceneTreeTimer
 var _hit_timer: SceneTreeTimer
+var _reload_timer: SceneTreeTimer
  
 func update(input_dir: Vector2) -> void:
 	anim.set("parameters/conditions/moving", input_dir != Vector2.ZERO)
@@ -43,3 +44,32 @@ func play_hit() -> void:
  
 func _reset_hit() -> void:
 	anim.set("parameters/conditions/hit", false)
+
+
+func play_reload(duration: float) -> void:
+	if not is_inside_tree():
+		return
+	_set_reload_state(true)
+	if _reload_timer and _reload_timer.timeout.is_connected(_reset_reload):
+		_reload_timer.timeout.disconnect(_reset_reload)
+	_reload_timer = get_tree().create_timer(max(duration, 0.01))
+	_reload_timer.timeout.connect(_reset_reload)
+
+
+func stop_reload() -> void:
+	_set_reload_state(false)
+	if _reload_timer and _reload_timer.timeout.is_connected(_reset_reload):
+		_reload_timer.timeout.disconnect(_reset_reload)
+	_reload_timer = null
+
+
+func _reset_reload() -> void:
+	_set_reload_state(false)
+
+
+func _set_reload_state(state: bool) -> void:
+	anim.set("parameters/conditions/reloading", state)
+	if animLegs:
+		animLegs.set("parameters/conditions/reloading", state)
+	if animArms:
+		animArms.set("parameters/conditions/reloading", state)

@@ -38,6 +38,10 @@ stretch_mode = 5
 layout_mode = 2
 text = "-"
 
+[node name="AmmoLabel" type="Label" parent="HBoxContainer/VBoxContainer" unique_id=1817782101]
+layout_mode = 2
+text = "-- / --"
+
 [node name="HPPanel" type="PanelContainer" parent="HBoxContainer" unique_id=1493703828]
 custom_minimum_size = Vector2(220, 30)
 layout_mode = 2

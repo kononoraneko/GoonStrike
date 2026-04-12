@@ -5,6 +5,8 @@ class_name Weapon extends Node3D
 ## Всю сетевую логику делегирует владельцу через сигналы.
 
 signal shot_requested(aim_origin: Vector3, aim_direction: Vector3)
+signal ammo_changed(current_in_mag: int, current_reserve: int)
+signal reload_state_changed(is_reloading: bool)
 
 @export var data: WeaponData
 
@@ -13,6 +15,10 @@ signal shot_requested(aim_origin: Vector3, aim_direction: Vector3)
 
 var can_shoot := true
 var owner_player: OnlinePlayer
+var ammo_in_mag: int = 0
+var ammo_reserve: int = 0
+var is_reloading: bool = false
+var _next_server_shot_time_msec: int = 0
 
 func _ready() -> void:
 	var node := get_parent()
@@ -23,15 +29,20 @@ func _ready() -> void:
 		node = node.get_parent()
 
 	assert(owner_player != null, "Weapon must be placed inside an OnlinePlayer subtree")
+	_init_ammo_state()
 
 
 ## Вызывается клиентом при нажатии кнопки стрельбы.
 ## Выполняет локальный визуал и отправляет сигнал для RPC.
-func shoot(aim_ray: Dictionary) -> void:
-	if not can_shoot or data == null:
-		return
+func shoot(aim_ray: Dictionary) -> bool:
+	if not _can_shoot_local():
+		return false
+
 	can_shoot = false
 	get_tree().create_timer(data.fire_rate).timeout.connect(func(): can_shoot = true)
+	if _should_predict_ammo():
+		ammo_in_mag -= 1
+		ammo_changed.emit(ammo_in_mag, ammo_reserve)
 	
 	var aim_origin: Vector3 = aim_ray["origin"]
 	var aim_direction: Vector3 = aim_ray["direction"]
@@ -59,6 +70,7 @@ func shoot(aim_ray: Dictionary) -> void:
 	show_tracer(muzzle_pos, local_hit_point)
 
 	shot_requested.emit(aim_origin, aim_direction)
+	return true
 
 
 ## Вызывается у всех клиентов через broadcast (из WeaponHolder / NetworkComponent).
@@ -115,3 +127,92 @@ func show_hit_effect(pos: Vector3) -> void:
 	get_tree().root.add_child(hit_instance)
 	hit_instance.global_position = pos
 	get_tree().create_timer(0.1).timeout.connect(hit_instance.queue_free)
+
+
+func request_reload_local() -> bool:
+	if not _can_reload():
+		return false
+	is_reloading = true
+	reload_state_changed.emit(true)
+	if _should_predict_ammo():
+		get_tree().create_timer(data.reload_time).timeout.connect(_finish_reload_local)
+	return true
+
+
+func apply_ammo_state(new_mag: int, new_reserve: int, reloading: bool) -> void:
+	ammo_in_mag = max(new_mag, 0)
+	ammo_reserve = max(new_reserve, 0)
+	is_reloading = reloading
+	ammo_changed.emit(ammo_in_mag, ammo_reserve)
+	reload_state_changed.emit(is_reloading)
+
+
+func server_consume_shot() -> bool:
+	if data == null:
+		return false
+	if is_reloading:
+		return false
+	if ammo_in_mag <= 0:
+		server_request_reload()
+		return false
+	var now := Time.get_ticks_msec()
+	if now < _next_server_shot_time_msec:
+		return false
+	_next_server_shot_time_msec = now + int(data.fire_rate * 1000.0)
+	ammo_in_mag -= 1
+	ammo_changed.emit(ammo_in_mag, ammo_reserve)
+	return true
+
+
+func server_request_reload() -> bool:
+	if not _can_reload():
+		return false
+	is_reloading = true
+	reload_state_changed.emit(true)
+	get_tree().create_timer(data.reload_time).timeout.connect(_finish_reload_local)
+	return true
+
+
+func _init_ammo_state() -> void:
+	if data == null:
+		return
+	ammo_in_mag = max(data.magazine_size, 1)
+	ammo_reserve = max(data.reserve_ammo, 0)
+	ammo_changed.emit(ammo_in_mag, ammo_reserve)
+
+
+func _can_shoot_local() -> bool:
+	if data == null:
+		return false
+	if is_reloading or not can_shoot:
+		return false
+	return ammo_in_mag > 0
+
+
+func _can_reload() -> bool:
+	if data == null:
+		return false
+	if is_reloading:
+		return false
+	if ammo_in_mag >= max(data.magazine_size, 1):
+		return false
+	return ammo_reserve > 0
+
+
+func _finish_reload_local() -> void:
+	if data == null:
+		is_reloading = false
+		reload_state_changed.emit(false)
+		return
+	var max_mag := max(data.magazine_size, 1)
+	var needed := max_mag - ammo_in_mag
+	var loaded := min(needed, ammo_reserve)
+	ammo_in_mag += loaded
+	ammo_reserve -= loaded
+	is_reloading = false
+	ammo_changed.emit(ammo_in_mag, ammo_reserve)
+	reload_state_changed.emit(false)
+
+
+func _should_predict_ammo() -> bool:
+	return multiplayer.is_server() or not multiplayer.has_multiplayer_peer()
