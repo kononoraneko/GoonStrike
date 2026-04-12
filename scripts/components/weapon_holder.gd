@@ -50,8 +50,18 @@ func try_shoot(aim_ray: Dictionary) -> void:
 		return
 	if current_weapon == null:
 		return
-	#print("try shoot")
-	current_weapon.shoot(aim_ray)
+	if not current_weapon.shoot(aim_ray) and current_weapon.ammo_in_mag <= 0:
+		try_reload()
+
+
+func try_reload() -> void:
+	_ensure_owner_player()
+	if owner_player.is_dead or current_weapon == null:
+		return
+	if not owner_player.is_multiplayer_authority():
+		return
+	if current_weapon.request_reload_local():
+		rpc_id(1, "_server_request_reload")
 
 
 ## Оружие сообщает о выстреле через сигнал — WeaponHolder отправляет на сервер.
@@ -72,6 +82,19 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 	if owner_player.is_dead:
 		return
 	if current_weapon == null:
+		return
+	if not current_weapon.server_consume_shot():
+		_sync_weapon_ammo(sender_id)
+		return
+
+	var server_origin := _get_server_shot_origin()
+	var server_direction := _get_server_shot_direction()
+	if server_direction == Vector3.ZERO:
+		return
+
+	if aim_direction.normalized().dot(server_direction) < 0.35:
+		return
+	if aim_origin.distance_to(server_origin) > 3.0:
 		return
 
 	var server_origin := _get_server_shot_origin()
@@ -118,6 +141,31 @@ func _get_server_shot_direction() -> Vector3:
 
 
 @rpc("any_peer", "reliable")
+func _server_request_reload() -> void:
+	_ensure_owner_player()
+	if not multiplayer.is_server():
+		return
+	if multiplayer.get_remote_sender_id() != owner_player.remote_player_id:
+		return
+	if owner_player.is_dead or current_weapon == null:
+		return
+	current_weapon.server_request_reload()
+
+
+func _get_server_shot_origin() -> Vector3:
+	if owner_player.camera:
+		return owner_player.camera.global_transform.origin
+	return owner_player.global_transform.origin + Vector3.UP * 1.5
+
+
+func _get_server_shot_direction() -> Vector3:
+	var forward := -owner_player.global_transform.basis.z
+	var right := owner_player.global_transform.basis.x.normalized()
+	var pitch := owner_player.aim_component.aim_angle * 1.5
+	return forward.rotated(right, pitch).normalized()
+
+
+@rpc("any_peer", "reliable")
 func _request_weapon_sync() -> void:
 	if not multiplayer.is_server():
 		return
@@ -138,6 +186,15 @@ func _broadcast_shot(hit_point: Vector3, hit_success: bool, shooter_id: int) -> 
 		current_weapon.on_broadcast_shot(hit_point, hit_success, shooter_id)
 
 
+@rpc("any_peer", "reliable", "call_local")
+func _client_sync_ammo(in_mag: int, in_reserve: int, reloading: bool) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	if current_weapon == null:
+		return
+	current_weapon.apply_ammo_state(in_mag, in_reserve, reloading)
+
+
 # ── приватные ──────────────────────────────────────────────────────────────
 
 func _set_weapon(data: WeaponData) -> void:
@@ -150,5 +207,20 @@ func _set_weapon(data: WeaponData) -> void:
 	instance.data = data
 	(weapon_mount_arms if weapon_mount_arms and is_multiplayer_authority() else weapon_mount if weapon_mount else owner_player).add_child(instance)
 	instance.shot_requested.connect(_on_shot_requested)
+	if multiplayer.is_server():
+		instance.ammo_changed.connect(func(_mag, _reserve): _sync_weapon_ammo(owner_player.remote_player_id))
+		instance.reload_state_changed.connect(func(_state): _sync_weapon_ammo(owner_player.remote_player_id))
 	current_weapon = instance
 	weapon_changed.emit(current_weapon)
+
+
+func _sync_weapon_ammo(peer_id: int) -> void:
+	if not multiplayer.is_server() or current_weapon == null:
+		return
+	rpc_id(
+		peer_id,
+		"_client_sync_ammo",
+		current_weapon.ammo_in_mag,
+		current_weapon.ammo_reserve,
+		current_weapon.is_reloading
+	)

@@ -68,7 +68,6 @@ func _sanitize_server_command(cmd: Dictionary) -> Dictionary:
 	var cmd_tick := int(cmd.get("tick", -1))
 	if cmd_tick <= _last_received_tick:
 		return {}
-	_last_received_tick = cmd_tick
 
 	var dir_value = cmd.get("dir", Vector3.ZERO)
 	if not (dir_value is Vector3):
@@ -94,6 +93,8 @@ func _sanitize_server_command(cmd: Dictionary) -> Dictionary:
 	var raw_dir := Vector2.ZERO
 	if raw_value is Vector2:
 		raw_dir = (raw_value as Vector2).limit_length(1.0)
+
+	_last_received_tick = cmd_tick
 
 	return {
 		"tick": cmd_tick,
