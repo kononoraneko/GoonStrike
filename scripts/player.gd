@@ -209,5 +209,6 @@ func _on_weapon_changed(weapon: Weapon):
 	if weapon:
 		# Сообщаем аниматору, когда началась или закончилась перезарядка
 		weapon.reload_state_changed.connect(func(reloading):
-			animation.set_reloading(reloading)
+			var reload_duration := weapon.data.reload_time if reloading and weapon.data else -1.0
+			animation.set_reloading(reloading, reload_duration)
 		)

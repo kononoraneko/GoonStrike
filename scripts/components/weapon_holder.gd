@@ -161,61 +161,23 @@ func _server_request_reload() -> void:
 	_ensure_owner_player()
 	if not multiplayer.is_server():
 		return
-	if multiplayer.get_remote_sender_id() != owner_player.remote_player_id:
-		return
-	if owner_player.is_dead or current_weapon == null:
-		return
-	current_weapon.server_request_reload()
-
-
-func _get_server_shot_origin() -> Vector3:
-	if owner_player.camera:
-		return owner_player.camera.global_transform.origin
-	return owner_player.global_transform.origin + Vector3.UP * 1.5
-
-
-func _get_server_shot_direction() -> Vector3:
-	var forward := -owner_player.global_transform.basis.z
-	var right := owner_player.global_transform.basis.x.normalized()
-	var pitch := owner_player.aim_component.aim_angle * 1.5
-	return forward.rotated(right, pitch).normalized()
-
-
-@rpc("any_peer", "reliable")
-func _server_request_reload() -> void:
-	_ensure_owner_player()
-	if not multiplayer.is_server():
-		return
 	var sender_id = multiplayer.get_remote_sender_id()
 	if sender_id != owner_player.remote_player_id:
 		return
 	if owner_player.is_dead or current_weapon == null:
 		return
 	if current_weapon.server_request_reload():
-		# Говорим всем остальным проиграть анимацию
-		rpc("_broadcast_reload_anim", sender_id)
+		var duration := current_weapon.data.reload_time if current_weapon.data else 0.0
+		rpc("_broadcast_reload_anim", sender_id, duration)
 
 
 @rpc("any_peer", "reliable")
-func _broadcast_reload_anim(shooter_id: int) -> void:
+func _broadcast_reload_anim(shooter_id: int, reload_duration: float) -> void:
 	# Владелец уже проигрывает анимацию локально (client prediction)
 	# Сервер не имеет графики. Значит проигрываем только для других клиентов (proxy)
 	if multiplayer.get_unique_id() != shooter_id and not multiplayer.is_server():
 		if owner_player.animation:
-			owner_player.animation.play_reload() # Замени на свой метод анимации
-
-
-func _get_server_shot_origin() -> Vector3:
-	if owner_player.camera:
-		return owner_player.camera.global_transform.origin
-	return owner_player.global_transform.origin + Vector3.UP * 1.5
-
-
-func _get_server_shot_direction() -> Vector3:
-	var forward := -owner_player.global_transform.basis.z
-	var right := owner_player.global_transform.basis.x.normalized()
-	var pitch := owner_player.aim_component.aim_angle * 1.5
-	return forward.rotated(right, pitch).normalized()
+			owner_player.animation.set_reloading(true, reload_duration)
 
 
 @rpc("any_peer", "reliable")
