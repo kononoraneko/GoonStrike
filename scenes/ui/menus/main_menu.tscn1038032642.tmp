@@ -1,0 +1,114 @@
+[gd_scene format=3 uid="uid://c1l0pg4ttjuxi"]
+
+[ext_resource type="Script" uid="uid://dlsg2a7mul2rs" path="res://scripts/ui/menus/main_menu.gd" id="1_flhq8"]
+
+[node name="MainMenu" type="Control" unique_id=482925862]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_flhq8")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1513630743]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -150.0
+offset_right = 220.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="VBoxContainer" unique_id=1635241494]
+layout_mode = 2
+text = "GoonStrike"
+horizontal_alignment = 1
+
+[node name="NameEdit" type="LineEdit" parent="VBoxContainer" unique_id=1191572895]
+layout_mode = 2
+placeholder_text = "Имя игрока"
+
+[node name="IpRow" type="HBoxContainer" parent="VBoxContainer" unique_id=2041771387]
+layout_mode = 2
+
+[node name="IpLabel" type="Label" parent="VBoxContainer/IpRow" unique_id=1271334015]
+layout_mode = 2
+text = "IP"
+
+[node name="IpEdit" type="LineEdit" parent="VBoxContainer/IpRow" unique_id=1300884240]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "127.0.0.1"
+placeholder_text = "127.0.0.1"
+
+[node name="ButtonRow" type="VBoxContainer" parent="VBoxContainer" unique_id=1223072838]
+layout_mode = 2
+
+[node name="CreateButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1228826462]
+layout_mode = 2
+text = "Создать бокал-хост"
+
+[node name="JoinButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1978696484]
+layout_mode = 2
+text = "Подключиться"
+
+[node name="SettingsButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1620796272]
+layout_mode = 2
+text = "Настройки"
+
+[node name="QuitButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=241744651]
+layout_mode = 2
+text = "Выход"
+
+[node name="ErrorLabel" type="Label" parent="VBoxContainer" unique_id=1976399936]
+visible = false
+modulate = Color(1, 0.36, 0.36, 1)
+layout_mode = 2
+text = "Ошибка"
+autowrap_mode = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=1938323421]
+layout_mode = 2
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer" unique_id=1470575826]
+layout_mode = 2
+selected = 0
+item_count = 2
+popup/item_0/text = "Lain"
+popup/item_0/id = 0
+popup/item_1/text = "Leama"
+popup/item_1/id = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer" unique_id=1175457694]
+layout_mode = 2
+text = "Модель игрока (влияет на всех игроков)"
+
+[node name="ConnectingOverlay" type="ColorRect" parent="." unique_id=106276306]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="CenterContainer" type="CenterContainer" parent="ConnectingOverlay" unique_id=195812900]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="ConnectingOverlay/CenterContainer" unique_id=493591387]
+layout_mode = 2
+text = "Подключение..."
+
+[connection signal="item_selected" from="VBoxContainer/HBoxContainer/OptionButton" to="." method="_on_character_option_button_item_selected"]

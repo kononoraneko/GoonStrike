@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://ckhopkwn46vnc"]
 
-[ext_resource type="Script" uid="uid://bxcrj0v1r6lcy" path="res://scripts/components/weapon.gd" id="1_rwrbs"]
+[ext_resource type="Script" uid="uid://bxcrj0v1r6lcy" path="res://scripts/weapons/weapon.gd" id="1_rwrbs"]
 [ext_resource type="ArrayMesh" uid="uid://bsc0fottfns0o" path="res://assets/models/weapons/barret/res/body3.res" id="1_ti5a0"]
 [ext_resource type="ArrayMesh" uid="uid://dx4qsv050qgvt" path="res://assets/models/weapons/barret/res/body2.res" id="2_ld6kj"]
 [ext_resource type="ArrayMesh" uid="uid://dydx8el5qeux0" path="res://assets/models/weapons/barret/res/body.res" id="3_rwrbs"]
-[ext_resource type="Script" uid="uid://ykbae8t1q877" path="res://scripts/components/SpreadComponent.gd" id="5_bxwwy"]
+[ext_resource type="Script" uid="uid://ykbae8t1q877" path="res://scripts/weapons/spread_component.gd" id="5_bxwwy"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_rwrbs"]
 

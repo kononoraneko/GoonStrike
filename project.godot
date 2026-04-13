@@ -18,10 +18,10 @@ config/icon="res://icon.svg"
 [autoload]
 
 SceneRouter="*res://scripts/autoloads/scene_router.gd"
-Lobby="*uid://scv3wmkatjpv"
-ConsoleCommands="*uid://dpnuwgktne3g1"
-ChatNetwork="*uid://cvxg8ba02s6l"
-Settings="*uid://h4r6oqqsy8e8"
+ChatNetwork="*uid://dvan28lalj7ii"
+Lobby="*uid://btxoouso5uydi"
+Settings="*uid://bykfefh1tqrrg"
+ConsoleCommands="*uid://becjmouqvepai"
 
 [display]
 

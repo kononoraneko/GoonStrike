@@ -1,7 +1,7 @@
 extends Node
 
-const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
-const LOBBY_SCENE := "res://scenes/ui/lobby.tscn"
+const MAIN_MENU_SCENE := "res://scenes/ui/menus/main_menu.tscn"
+const LOBBY_SCENE := "res://scenes/ui/menus/lobby.tscn"
 
 var _current_scene_path: String = ""
 var _previous_scene_path: String = ""

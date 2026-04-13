@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://toqxjudej7db"]
 
-[ext_resource type="Script" uid="uid://ura6g40j0xgy" path="res://scripts/components/movement_component.gd" id="1_qr6b5"]
-[ext_resource type="Script" uid="uid://dgtpoef808p3r" path="res://scripts/player.gd" id="1_sjg4r"]
-[ext_resource type="Script" uid="uid://derlmu2e80bwa" path="res://scripts/components/aim_component.gd" id="2_sjg4r"]
-[ext_resource type="Script" uid="uid://cjw5y6ylgqk" path="res://scripts/components/network_component.gd" id="3_mfdve"]
-[ext_resource type="Script" uid="uid://dxx82m6a1bxso" path="res://scripts/components/animation_component.gd" id="4_shdl6"]
-[ext_resource type="Script" uid="uid://cpbcm8tv4k1jg" path="res://scripts/components/weapon_holder.gd" id="5_idp2q"]
-[ext_resource type="Script" uid="uid://duvvfdtpc8sqa" path="res://scripts/components/health_component.gd" id="6_k1g8e"]
+[ext_resource type="Script" uid="uid://ura6g40j0xgy" path="res://scripts/player/components/movement_component.gd" id="1_qr6b5"]
+[ext_resource type="Script" uid="uid://dgtpoef808p3r" path="res://scripts/player/player.gd" id="1_sjg4r"]
+[ext_resource type="Script" uid="uid://derlmu2e80bwa" path="res://scripts/player/components/aim_component.gd" id="2_sjg4r"]
+[ext_resource type="Script" uid="uid://cjw5y6ylgqk" path="res://scripts/player/components/network_component.gd" id="3_mfdve"]
+[ext_resource type="Script" uid="uid://dxx82m6a1bxso" path="res://scripts/player/components/animation_component.gd" id="4_shdl6"]
+[ext_resource type="Script" uid="uid://cpbcm8tv4k1jg" path="res://scripts/weapons/weapon_holder.gd" id="5_idp2q"]
+[ext_resource type="Script" uid="uid://duvvfdtpc8sqa" path="res://scripts/player/components/health_component.gd" id="6_k1g8e"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qr6b5"]
 

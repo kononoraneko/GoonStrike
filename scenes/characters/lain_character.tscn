@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://naujvxq5706b" path="res://assets/models/characters/lain/lain_model.res" id="2_6me5d"]
 [ext_resource type="AnimationNodeStateMachine" uid="uid://ckqdehmgnjjsa" path="res://assets/animations/new_animation_node_state_machine.tres" id="2_x6xrw"]
 [ext_resource type="AnimationNodeBlendTree" uid="uid://c0sfpaabr8gab" path="res://assets/animations/blendtree.tres" id="3_yp0r5"]
-[ext_resource type="PackedScene" uid="uid://bsx0hs4soaco5" path="res://scenes/weapons/riffle.tscn" id="5_yp0r5"]
+[ext_resource type="PackedScene" uid="uid://bsx0hs4soaco5" path="res://scenes/weapons/rifle.tscn" id="5_yp0r5"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_x6xrw"]
 radius = 0.18652344
