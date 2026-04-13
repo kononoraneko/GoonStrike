@@ -15,21 +15,21 @@ var _chat_disconnected_cb: Callable
  
  
 func create_hud(player: OnlinePlayer) -> void:
-	if _hud != null:
-		_disconnect_hud_signals()
-		_hud.queue_free()
- 
 	if hud_scene == null:
 		push_error("HUDManager: hud_scene is not set")
 		return
- 
+
+	var gm: GameManager = get_parent() as GameManager
+	if _hud != null:
+		_local_player_id = player.remote_player_id
+		_hud.setup(player, gm)
+		return
+
 	_hud = hud_scene.instantiate() as GameHUD
 	_local_player_id = player.remote_player_id
 	add_child(_hud)
- 
-	# Инициализируем HUD — он сам подпишется на сигналы игрока
-	_hud.setup(player)
- 
+	_hud.setup(player, gm)
+
 	# Подключаем чат: отправка → сеть, получение → HUD
 	_hud.chat_console.message_sent.connect(ChatNetwork.send)
 	ChatNetwork.chat_received.connect(_hud.chat_console.print_chat)
@@ -50,12 +50,16 @@ func create_hud(player: OnlinePlayer) -> void:
 		#ChatNetwork.chat_received.get_connections().size())
 	#print("message_sent connections: ", 
 		#_hud.chat_console.message_sent.get_connections().size())
-	var gm: GameManager = get_parent()
 	gm.round_started.connect(_on_round_started)
 	gm.round_ended.connect(_on_round_ended)
 	gm.team_score_changed.connect(_on_team_score_changed)
 	gm.round_time_updated.connect(_on_round_time_updated)
- 
+
+
+## Локальный персонаж убран (смерть), но UI и чат остаются до респавна.
+func freeze_for_local_death() -> void:
+	if _hud != null:
+		_hud.player_hud.unbind_player()
 
 
 func remove_hud(id: int) -> void:
@@ -67,6 +71,17 @@ func remove_hud(id: int) -> void:
 
 
 func _disconnect_hud_signals() -> void:
+	var gm: GameManager = get_parent() as GameManager
+	if gm != null:
+		if gm.round_started.is_connected(_on_round_started):
+			gm.round_started.disconnect(_on_round_started)
+		if gm.round_ended.is_connected(_on_round_ended):
+			gm.round_ended.disconnect(_on_round_ended)
+		if gm.team_score_changed.is_connected(_on_team_score_changed):
+			gm.team_score_changed.disconnect(_on_team_score_changed)
+		if gm.round_time_updated.is_connected(_on_round_time_updated):
+			gm.round_time_updated.disconnect(_on_round_time_updated)
+
 	if _hud == null:
 		return
 	if _hud.chat_console and _hud.chat_console.message_sent.is_connected(ChatNetwork.send):
@@ -86,14 +101,17 @@ func _disconnect_hud_signals() -> void:
 
 
 func _on_round_started(round_number: int) -> void:
-	_hud.show_label("Раунд %d" % round_number, 2.0)
+	if _hud:
+		_hud.show_label("Раунд %d" % round_number, 2.0)
 
-func _on_round_ended(winning_team: int) -> void:
-	var name := ""
-	_hud.show_label("Раунд окончен", 2.0)
+func _on_round_ended(_winning_team: int) -> void:
+	if _hud:
+		_hud.show_label("Раунд окончен", 2.0)
 
 func _on_team_score_changed(team: int, score: int) -> void:
-	_hud.update_team_score(team, score)
+	if _hud:
+		_hud.update_team_score(team, score)
 
 func _on_round_time_updated(seconds_left: float) -> void:
-	_hud.set_timer(seconds_left)
+	if _hud:
+		_hud.set_timer(seconds_left)

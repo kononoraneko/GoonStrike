@@ -58,8 +58,8 @@ func _resolve_current_scene_path() -> String:
 
 func _cleanup_overlays() -> void:
 	var overlay_paths := {
-		"res://scenes/ui/pause_menu.tscn": true,
-		"res://scenes/settings/settings_screen.tscn": true,
+		ScenePaths.PAUSE_MENU: true,
+		ScenePaths.SETTINGS_SCREEN: true,
 	}
 	for child in get_tree().root.get_children():
 		if overlay_paths.has(child.scene_file_path):

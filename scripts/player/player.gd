@@ -79,11 +79,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		movement.handle_mouse_motion(event)
 		aim_component.aim_angle = movement.rotation_x / 1.5
 
-	#if event.is_action_pressed("shoot"):
-		#weapon_holder.try_shoot(get_aim_ray())
-	#if event.is_action_pressed("reload"):
-		#weapon_holder.try_reload()
-	
 	if event.is_action_pressed("shoot"):
 		weapon_holder.start_shooting()
 	elif event.is_action_released("shoot"):
@@ -115,7 +110,7 @@ func _is_ui_input_blocked() -> bool:
 	if get_viewport().gui_get_focus_owner() != null:
 		return true
 	for child in get_tree().root.get_children():
-		if child.scene_file_path == "res://scenes/ui/pause_menu.tscn":
+		if child.scene_file_path == ScenePaths.PAUSE_MENU:
 			return true
 	return false
 
@@ -155,12 +150,10 @@ func _update_visibility() -> void:
 	if is_multiplayer_authority():
 		if multiplayer.is_server():
 			visible = false
-			transform.origin.y += 10
 			return
 		camera.current = true
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-		#visible = false
-	elif name == "1":
+	elif remote_player_id == 1 and not is_multiplayer_authority():
 		visible = false
 	else:
 		visible = true

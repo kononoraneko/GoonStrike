@@ -17,7 +17,9 @@ var owner_player: OnlinePlayer
 func _ready() -> void:
 	_ensure_owner_player()
 	if not multiplayer.is_server():
-		rpc_id(1, "_request_weapon_sync")
+		var gm := get_tree().get_first_node_in_group("game_manager") as GameManager
+		if gm:
+			gm.server_weapon_sync_request.rpc_id(1, owner_player.remote_player_id)
 
 
 func _ensure_owner_player() -> void:
@@ -50,14 +52,19 @@ func _fire_loop() -> void:
 		is_shooting = false # Для неавтоматического оружия останавливаем цикл сразу
 
 
-## Подбор оружия — вызывается сервером через RPC на всех клиентах.
-@rpc("any_peer", "reliable", "call_local")
-func equip_from_pickup(_pickup_path: NodePath, data_path: String) -> void:
+## Локальная установка оружия по пути к WeaponData (без RPC по пути к узлу).
+func equip_weapon_data_local(data_path: String) -> void:
 	var data := load(data_path) as WeaponData
 	if data == null or data.weapon_scene == null:
 		push_error("WeaponHolder: invalid WeaponData at " + data_path)
 		return
 	_set_weapon(data)
+
+
+## Подбор оружия — вызывается сервером через RPC на всех клиентах.
+@rpc("any_peer", "reliable", "call_local")
+func equip_from_pickup(_pickup_path: NodePath, data_path: String) -> void:
+	equip_weapon_data_local(data_path)
 
 
 ## Сброс оружия (выбросить или умереть).
@@ -180,21 +187,6 @@ func _broadcast_reload_anim(shooter_id: int, reload_duration: float) -> void:
 			owner_player.animation.set_reloading(true, reload_duration)
 
 
-@rpc("any_peer", "reliable")
-func _request_weapon_sync() -> void:
-	if not multiplayer.is_server():
-		return
-	var requester_id := multiplayer.get_remote_sender_id()
-	if requester_id <= 0:
-		return
-	if current_weapon == null or current_weapon.data == null:
-		return
-	var data_path := current_weapon.data.resource_path
-	if data_path.is_empty():
-		return
-	rpc_id(requester_id, "equip_from_pickup", NodePath(), data_path)
-
-
 @rpc("any_peer", "reliable", "call_local")
 func _broadcast_shot(hit_point: Vector3, hit_success: bool, shooter_id: int) -> void:
 	if current_weapon != null:
@@ -212,6 +204,14 @@ func _client_sync_ammo(in_mag: int, in_reserve: int, reloading: bool) -> void:
 
 # ── приватные ──────────────────────────────────────────────────────────────
 
+func _get_weapon_parent_node() -> Node3D:
+	if weapon_mount_arms and is_multiplayer_authority():
+		return weapon_mount_arms
+	if weapon_mount:
+		return weapon_mount
+	return owner_player
+
+
 func _set_weapon(data: WeaponData) -> void:
 	_ensure_owner_player()
 	drop_weapon()
@@ -220,7 +220,8 @@ func _set_weapon(data: WeaponData) -> void:
 		push_error("WeaponHolder: weapon_scene is not a Weapon node")
 		return
 	instance.data = data
-	(weapon_mount_arms if weapon_mount_arms and is_multiplayer_authority() else weapon_mount if weapon_mount else owner_player).add_child(instance)
+	instance.owner_player = owner_player
+	_get_weapon_parent_node().add_child(instance)
 	instance.shot_requested.connect(_on_shot_requested)
 	if multiplayer.is_server():
 		instance.ammo_changed.connect(func(_mag, _reserve): _sync_weapon_ammo(owner_player.remote_player_id))

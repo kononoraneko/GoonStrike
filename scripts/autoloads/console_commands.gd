@@ -57,19 +57,19 @@ class CommandEntry:
 				if min_val != max_val:
 					new_val = clampf(new_val, min_val, max_val)
 
-		if "." in property:
-			var parts := property.split(".")
-			var obj: Object = target
-			for i in range(parts.size() - 1):
-				obj = obj.get(parts[i])
-			obj.set(parts[-1], new_val)
-		else:
-			target.set(property, new_val)
-		
 		if _setter.is_valid():
 			_setter.call(new_val)
+		elif target != null:
+			if "." in property:
+				var parts := property.split(".")
+				var obj: Object = target
+				for i in range(parts.size() - 1):
+					obj = obj.get(parts[i])
+				obj.set(parts[-1], new_val)
+			else:
+				target.set(property, new_val)
 		else:
-			target.set(property, new_val)
+			return "[color=red]Команда не настроена (нет target и setter)[/color]"
 		return "[color=lime]%s[/color] = [b]%s[/b]" % [name, str(new_val)]
 
 

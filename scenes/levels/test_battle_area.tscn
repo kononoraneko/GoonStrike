@@ -5,8 +5,6 @@
 [ext_resource type="Script" uid="uid://6cbm3vor7sfv" path="res://scripts/player/player_spawner.gd" id="2_vkhxg"]
 [ext_resource type="Script" uid="uid://cnrs6403rx5bq" path="res://scripts/ui/hud/hud_manager.gd" id="4_8rn00"]
 [ext_resource type="PackedScene" uid="uid://c4jwyinsdd4is" path="res://scenes/ui/hud/game_hud.tscn" id="5_uuk04"]
-[ext_resource type="Resource" uid="uid://17r72uoa641f" path="res://resources/barret.res" id="6_3jdlx"]
-[ext_resource type="Script" uid="uid://diporw6jj81sm" path="res://scripts/game/game_modes/deathmatch_mode.gd" id="8_1bjbq"]
 [ext_resource type="PackedScene" uid="uid://b6pjl6awvp1ne" path="res://scenes/characters/leama_character.tscn" id="8_3jdlx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vkhxg"]
@@ -49,10 +47,11 @@ sky = SubResource("Sky_uuk04")
 script/source = "extends DirectionalLight3D
 
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	visible = !Settings.potato
-	Settings.connect(\"potato_changed\", func(v): visible = !v)
+	visible = !Settings.is_potato_mode()
+	Settings.potato_mode_changed.connect(func(active: bool) -> void:
+		visible = not active
+	)
 "
 
 [node name="Game" type="Node3D" unique_id=752645134]
@@ -220,12 +219,52 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.050339, 0.100000024, 30.2
 [node name="SpawnPoint4" type="Marker3D" parent="SpawnPoints" unique_id=1698309174 groups=["spawn_points"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.450338, 3.1999998, 5.079609)
 
-[node name="DeathmatchMode" type="Node" parent="." unique_id=1655166509]
-script = ExtResource("8_1bjbq")
-default_weapon = ExtResource("6_3jdlx")
+[node name="TeamSpawns" type="Node3D" parent="." unique_id=1655166508]
+
+[node name="Alpha" type="Node3D" parent="TeamSpawns" unique_id=1655166507]
+
+[node name="A1" type="Marker3D" parent="TeamSpawns/Alpha" unique_id=1655166506]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+
+[node name="A2" type="Marker3D" parent="TeamSpawns/Alpha" unique_id=1655166505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.829, 1.7, -0.414)
+
+[node name="A3" type="Marker3D" parent="TeamSpawns/Alpha" unique_id=972619881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4168954, 1.7, -2.6871269)
+
+[node name="A4" type="Marker3D" parent="TeamSpawns/Alpha" unique_id=1928646708]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0766182, 1.7, -2.2751067)
+
+[node name="A5" type="Marker3D" parent="TeamSpawns/Alpha" unique_id=903404671]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.271832, 1.7, -0.5073612)
+
+[node name="A6" type="Marker3D" parent="TeamSpawns/Alpha" unique_id=700997625]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6564884, 1.7, -1.9057744)
+
+[node name="Bravo" type="Node3D" parent="TeamSpawns" unique_id=1655166504]
+
+[node name="B1" type="Marker3D" parent="TeamSpawns/Bravo" unique_id=1655166503]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.050339, 0.100000024, 30.27961)
+
+[node name="B2" type="Marker3D" parent="TeamSpawns/Bravo" unique_id=1655166502]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.456, 0.1, 30.201)
+
+[node name="B3" type="Marker3D" parent="TeamSpawns/Bravo" unique_id=1608789725]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5980625, 0.1, 33.167793)
+
+[node name="B4" type="Marker3D" parent="TeamSpawns/Bravo" unique_id=1095466136]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5980625, 0.1, 32.167793)
+
+[node name="B5" type="Marker3D" parent="TeamSpawns/Bravo" unique_id=532069770]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.8473015, 0.1, 28.610834)
+
+[node name="B6" type="Marker3D" parent="TeamSpawns/Bravo" unique_id=1667493655]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.437746, 0.1, 29.3271)
 
 [node name="PlayerSpawner" type="Node3D" parent="." unique_id=595228408]
 script = ExtResource("2_vkhxg")
 player_scene = ExtResource("8_3jdlx")
 spawn_points_root = NodePath("../SpawnPoints")
+team_alpha_spawn_root = NodePath("../TeamSpawns/Alpha")
+team_bravo_spawn_root = NodePath("../TeamSpawns/Bravo")
 metadata/_custom_type_script = "uid://6cbm3vor7sfv"

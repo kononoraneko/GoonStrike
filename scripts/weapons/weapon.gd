@@ -21,14 +21,15 @@ var is_reloading: bool = false
 var _next_server_shot_time_msec: int = 0
 
 func _ready() -> void:
-	var node := get_parent()
-	while node != null:
-		if node is OnlinePlayer:
-			owner_player = node
-			break
-		node = node.get_parent()
+	if owner_player == null:
+		var node := get_parent()
+		while node != null:
+			if node is OnlinePlayer:
+				owner_player = node
+				break
+			node = node.get_parent()
 
-	assert(owner_player != null, "Weapon must be placed inside an OnlinePlayer subtree")
+	assert(owner_player != null, "Weapon must be child of OnlinePlayer or owner_player set before add_child")
 	_init_ammo_state()
 
 
@@ -100,24 +101,7 @@ func play_effects(muzzle_pos: Vector3) -> void:
 
 
 func show_tracer(from: Vector3, to: Vector3) -> void:
-	var mesh := ImmediateMesh.new()
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color.ORANGE
-	material.emission_enabled = true
-	material.emission = Color.ORANGE
-	material.emission_energy_multiplier = 5.0
-
-	var line := MeshInstance3D.new()
-	line.mesh = mesh
-	line.material_override = material
-	get_tree().root.add_child(line)
-
-	mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
-	mesh.surface_add_vertex(from)
-	mesh.surface_add_vertex(to)
-	mesh.surface_end()
-
-	get_tree().create_timer(0.1).timeout.connect(line.queue_free)
+	TracerBeamVfx.spawn(get_tree().root, from, to, 0.09, Color(1.0, 0.52, 0.12, 1.0))
 
 
 func show_hit_effect(pos: Vector3) -> void:
@@ -152,15 +136,17 @@ func server_consume_shot() -> bool:
 		return false
 	if is_reloading:
 		return false
-	if ammo_in_mag <= 0:
+	var ammo_mode := ChatNetwork.sv_ammo_mode
+	if ammo_mode != 1 and ammo_in_mag <= 0:
 		server_request_reload()
 		return false
 	var now := Time.get_ticks_msec()
 	if now < _next_server_shot_time_msec:
 		return false
 	_next_server_shot_time_msec = now + int(data.fire_rate * 1000.0)
-	ammo_in_mag -= 1
-	ammo_changed.emit(ammo_in_mag, ammo_reserve)
+	if ammo_mode != 1:
+		ammo_in_mag -= 1
+		ammo_changed.emit(ammo_in_mag, ammo_reserve)
 	return true
 
 
@@ -186,6 +172,8 @@ func _can_shoot_local() -> bool:
 		return false
 	if is_reloading or not can_shoot:
 		return false
+	if ChatNetwork.sv_ammo_mode == 1:
+		return true
 	return ammo_in_mag > 0
 
 
@@ -194,8 +182,12 @@ func _can_reload() -> bool:
 		return false
 	if is_reloading:
 		return false
+	if ChatNetwork.sv_ammo_mode == 1:
+		return false
 	if ammo_in_mag >= max(data.magazine_size, 1):
 		return false
+	if ChatNetwork.sv_ammo_mode == 2:
+		return true
 	return ammo_reserve > 0
 
 
@@ -205,10 +197,13 @@ func _finish_reload_local() -> void:
 		reload_state_changed.emit(false)
 		return
 	var max_mag : int = max(data.magazine_size, 1)
-	var needed := max_mag - ammo_in_mag
-	var loaded : int = min(needed, ammo_reserve)
-	ammo_in_mag += loaded
-	ammo_reserve -= loaded
+	if ChatNetwork.sv_ammo_mode == 2:
+		ammo_in_mag = max_mag
+	else:
+		var needed := max_mag - ammo_in_mag
+		var loaded : int = min(needed, ammo_reserve)
+		ammo_in_mag += loaded
+		ammo_reserve -= loaded
 	is_reloading = false
 	ammo_changed.emit(ammo_in_mag, ammo_reserve)
 	reload_state_changed.emit(false)

@@ -8,10 +8,6 @@ class_name TeamGameMode extends GameMode
 # ── Сигналы ───────────────────────────────────────────────────────────────
 
 signal player_team_assigned(player_id: int, team: int)
-signal team_score_changed(team: int, score: int)
-signal round_started(round_number: int)
-signal round_ended(winning_team: int)    ## -1 = ничья
-signal match_finished(winning_team: int, score: int)
 
 # ── Команды ───────────────────────────────────────────────────────────────
 
@@ -102,8 +98,17 @@ func _end_round(winning_team: int) -> void:
 		_team_scores[winning_team] = int(_team_scores.get(winning_team, 0)) + 1
 		team_score_changed.emit(winning_team, _team_scores[winning_team])
 		_broadcast_score()
-	round_ended.emit(winning_team)
+	if multiplayer.is_server():
+		_rpc_sync_scores.rpc(_team_scores[Team.ALPHA], _team_scores[Team.BRAVO])
 	_on_round_ended_internal(winning_team)
+	round_ended.emit(winning_team)
+
+
+## Отправить текущие командные очки конкретному клиенту (для поздних входов).
+func sync_scores_to_peer(peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	_rpc_sync_scores.rpc_id(peer_id, _team_scores[Team.ALPHA], _team_scores[Team.BRAVO])
 
 
 ## Вызвать из подкласса, чтобы начать следующий раунд.
@@ -120,7 +125,7 @@ func _on_round_started_internal(_round: int) -> void:
 	pass
 
 
-## Вызывается по завершении раунда, до сигнала round_ended.
+## Вызывается по завершении раунда (перед round_ended сигналом).
 func _on_round_ended_internal(_winning_team: int) -> void:
 	pass
 
@@ -141,13 +146,12 @@ func on_game_started() -> void:
 func on_player_spawned(id: int, player: OnlinePlayer, info: Dictionary) -> void:
 	if not multiplayer.is_server():
 		return
-	# Авто-балансировка при первом появлении
 	if auto_balance and not _player_teams.has(id):
 		var team := _pick_balanced_team()
 		assign_team(id, team)
-	# Синхронизируем команду новому игроку
-	for pid in _player_teams.keys():
-		_rpc_sync_team.rpc_id(id, pid, _player_teams[pid])
+	if not GameManager.is_host_spectator(id):
+		for pid in _player_teams.keys():
+			_rpc_sync_team.rpc_id(id, pid, _player_teams[pid])
 	_on_player_spawned_team(id, player, info)
 
 
@@ -197,16 +201,15 @@ func _broadcast_score() -> void:
 	ChatNetwork.send_system(msg)
 
 
-func _resolve_player_name(peer_id: int) -> String:
-	var info: Dictionary = Lobby.players.get(peer_id, {}) as Dictionary
-	if info.has("name"):
-		return str(info["name"])
-	return str(peer_id)
-
-
-# ── RPC: синхронизация команд ─────────────────────────────────────────────
+# ── RPC: синхронизация команд и очков ────────────────────────────────────
 
 @rpc("authority", "reliable", "call_local")
 func _rpc_sync_team(player_id: int, team: int) -> void:
 	_player_teams[player_id] = team
 	player_team_assigned.emit(player_id, team)
+
+
+@rpc("authority", "reliable")
+func _rpc_sync_scores(alpha: int, bravo: int) -> void:
+	_team_scores[Team.ALPHA] = alpha
+	_team_scores[Team.BRAVO] = bravo

@@ -27,7 +27,10 @@ var player: OnlinePlayer
 
 
 func setup(p: OnlinePlayer) -> void:
+	if player != null and is_instance_valid(player) and player != p:
+		unbind_player()
 	player = p
+	visible = true
 
 	# ── HP ──────────────────────────────────────────────────────────────
 	var hc := player.health_component
@@ -43,7 +46,23 @@ func setup(p: OnlinePlayer) -> void:
 	_on_weapon_changed(wh.current_weapon)
 
 
+func unbind_player() -> void:
+	if player != null and is_instance_valid(player):
+		var hc := player.health_component
+		if hc.health_changed.is_connected(_on_health_changed):
+			hc.health_changed.disconnect(_on_health_changed)
+		var wh := player.weapon_holder
+		if wh.weapon_changed.is_connected(_on_weapon_changed):
+			wh.weapon_changed.disconnect(_on_weapon_changed)
+		if wh.current_weapon != null and wh.current_weapon.ammo_changed.is_connected(_on_ammo_changed):
+			wh.current_weapon.ammo_changed.disconnect(_on_ammo_changed)
+	player = null
+	visible = false
+
+
 func _on_health_changed(current_hp: int) -> void:
+	if player == null or not is_instance_valid(player):
+		return
 	hp_bar.value  = current_hp
 	hp_label.text = "%d / %d" % [current_hp, player.health_component.max_health]
 

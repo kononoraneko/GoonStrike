@@ -112,9 +112,9 @@ func _random_cone(dir: Vector3, half_angle_rad: float) -> Vector3:
 
 
 func _restart_reset_timer() -> void:
-	if _reset_timer != null and not _reset_timer.is_queued_for_deletion():
-		# Нельзя отменить SceneTreeTimer напрямую — просто перезапишем
-		pass
+	if _reset_timer != null and is_instance_valid(_reset_timer):
+		if _reset_timer.timeout.is_connected(_on_pattern_reset):
+			_reset_timer.timeout.disconnect(_on_pattern_reset)
 	_reset_timer = get_tree().create_timer(_data.pattern_reset_time)
 	_reset_timer.timeout.connect(_on_pattern_reset, CONNECT_ONE_SHOT)
 

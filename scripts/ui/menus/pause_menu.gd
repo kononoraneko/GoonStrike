@@ -9,7 +9,7 @@ const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings/settings_scre
 
 static func open(parent: Node) -> CanvasLayer:
 	for child in parent.get_children():
-		if child.scene_file_path == "res://scenes/ui/menus/pause_menu.tscn":
+		if child.scene_file_path == ScenePaths.PAUSE_MENU:
 			return child
 	var inst := preload("res://scenes/ui/menus/pause_menu.tscn").instantiate() as CanvasLayer
 	parent.add_child(inst)

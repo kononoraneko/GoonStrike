@@ -69,4 +69,5 @@ func handle_mouse_motion(event: InputEventMouseMotion) -> void:
 	owner_player.rotate_y(-event.relative.x * mouse_sensitivity)
 	rotation_x -= event.relative.y * mouse_sensitivity
 	rotation_x = clamp(rotation_x, -1.5, 1.5)
-	owner_player.get_node("Camera3D").rotation.x = rotation_x
+	if owner_player.camera:
+		owner_player.camera.rotation.x = rotation_x

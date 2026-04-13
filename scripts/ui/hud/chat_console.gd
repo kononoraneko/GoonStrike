@@ -46,6 +46,12 @@ func setup(p: OnlinePlayer) -> void:
 	player = p
 
 
+func _sender_display_name() -> String:
+	if player != null and is_instance_valid(player):
+		return str(player.player_info.get("name", "?"))
+	return str(Lobby.local_info.get("name", "?"))
+
+
 # ── Публичное API ─────────────────────────────────────────────────────────
 
 ## Добавить системное сообщение (сервер, события).
@@ -118,7 +124,7 @@ func _handle_console(text: String) -> void:
 	var result : String = ConsoleCommands.execute(text)
 	if result.is_empty():
 		# Не команда в режиме чата — отправляем как сообщение
-		print_chat(player.player_info.get("name", "?"), text)
+		print_chat(_sender_display_name(), text)
 		message_sent.emit(text)
 	else:
 		print_console(result)
@@ -131,7 +137,7 @@ func _is_server_command(text: String) -> bool:
 	if parts.is_empty():
 		return false
 	var cmd := parts[0].to_lower()
-	return cmd in ["op", "speed", "jump"]
+	return cmd in ["op", "speed", "jump", "sv_ammo", "round_time", "round_limit"]
 
 
 ## Навигация по истории стрелками вверх/вниз.

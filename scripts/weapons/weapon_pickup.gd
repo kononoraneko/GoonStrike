@@ -30,8 +30,9 @@ func _on_body_entered(body: Node3D) -> void:
 	var player := body as OnlinePlayer
 	is_picked_up = true
 
-	# Передаём оружие игроку и скрываем пикап у всех
-	player.weapon_holder.rpc("equip_from_pickup", get_path(), weapon_data.resource_path)
+	var gm := get_tree().get_first_node_in_group("game_manager") as GameManager
+	if gm:
+		gm.rpc_equip_weapon_data.rpc(player.remote_player_id, weapon_data.resource_path)
 	rpc("_hide_pickup")
 
 

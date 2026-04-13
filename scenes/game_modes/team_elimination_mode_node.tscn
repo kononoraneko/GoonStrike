@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://c8teamelimnode01"]
+
+[ext_resource type="Script" path="res://scripts/game/game_modes/elimination_mode.gd" id="1_elim"]
+[ext_resource type="Resource" uid="uid://c72m5b0d6gfbg" path="res://resources/ar-15_data.res" id="2_wpn"]
+
+[node name="TeamEliminationMode" type="Node"]
+script = ExtResource("1_elim")
+default_weapon = ExtResource("2_wpn")

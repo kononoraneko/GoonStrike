@@ -35,6 +35,27 @@ size_flags_vertical = 3
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer" unique_id=1315652650]
 layout_mode = 2
 
+[node name="SessionLabel" type="Label" parent="VBoxContainer" unique_id=1996074726]
+layout_mode = 2
+text = "Сессия: —"
+
+[node name="HostSessionBox" type="VBoxContainer" parent="VBoxContainer" unique_id=1996074725]
+layout_mode = 2
+
+[node name="MapLabel" type="Label" parent="VBoxContainer/HostSessionBox" unique_id=1996074724]
+layout_mode = 2
+text = "Карта"
+
+[node name="MapOption" type="OptionButton" parent="VBoxContainer/HostSessionBox" unique_id=1996074723]
+layout_mode = 2
+
+[node name="ModeLabel" type="Label" parent="VBoxContainer/HostSessionBox" unique_id=1996074722]
+layout_mode = 2
+text = "Режим"
+
+[node name="ModeOption" type="OptionButton" parent="VBoxContainer/HostSessionBox" unique_id=1996074721]
+layout_mode = 2
+
 [node name="ChatPlaceholder" type="RichTextLabel" parent="VBoxContainer" unique_id=1996074727]
 custom_minimum_size = Vector2(0, 180)
 layout_mode = 2

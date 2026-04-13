@@ -1,6 +1,5 @@
 extends Node
 
-const PAUSE_MENU_PATH := "res://scenes/ui/pause_menu.tscn"
 const PAUSE_MENU_SCRIPT := preload("res://scripts/ui/menus/pause_menu.gd")
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -9,7 +8,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	var root := get_tree().root
 	for child in root.get_children():
-		if child.scene_file_path == PAUSE_MENU_PATH:
+		if child.scene_file_path == ScenePaths.PAUSE_MENU:
 			if child.has_method("request_close"):
 				child.request_close()
 			else:

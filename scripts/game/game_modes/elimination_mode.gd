@@ -8,22 +8,37 @@ class_name TeamEliminationMode extends TeamGameMode
 
 # ── Настройки ─────────────────────────────────────────────────────────────
 
-@export var round_limit:      int   = 12       ## Раундов для победы в матче
-@export var round_duration:   float = 120.0    ## Секунд на раунд
-@export var round_end_delay:  float = 3.0      ## Пауза после раунда
-@export var respawn_on_start: bool  = true     ## Заспавнить всех в начале раунда
+@export var round_limit:      int   = 12
+@export var round_duration:   float = 120.0
+@export var round_end_delay:  float = 3.0
+@export var respawn_on_start: bool  = true
 
 @export var default_weapon: WeaponData
 
+
+func get_round_timer_duration() -> float:
+	return round_duration
+
+
+func should_spawn_on_player_connected() -> bool:
+	return true
+
 # ── Внутреннее состояние ──────────────────────────────────────────────────
 
-## Игроки, живые в текущем раунде (peer_id → true)
+## peer_id → true (только играющие пиры, без хоста-спектатора)
 var _alive_this_round: Dictionary = {}
+## Клиентская копия (заполняется через RPC)
+var _alive_client_cache: Dictionary = {}
 
-## Живой ли раунд (принимаем ли смерти)
 var _round_active: bool = false
 
-var _round_timer: SceneTreeTimer = null
+var _round_timer_seq: int = 0
+
+
+func get_alive_peers() -> Dictionary:
+	if multiplayer.is_server():
+		return _alive_this_round.duplicate()
+	return _alive_client_cache.duplicate()
 
 
 # ── Переопределения TeamGameMode ──────────────────────────────────────────
@@ -35,18 +50,25 @@ func _on_round_started_internal(round_number: int) -> void:
 	_alive_this_round.clear()
 	_round_active = true
 
-	# Заспавнить / вернуть всех игроков
 	if respawn_on_start:
 		for id in Lobby.players.keys():
+			if GameManager.is_host_spectator(id):
+				continue
 			_alive_this_round[id] = true
 			game_manager.schedule_respawn(id, 0.0)
+
+	_push_alive_to_clients()
 
 	var msg := "[%d] Раунд %d начался" % [round_limit, round_number]
 	ChatNetwork.send_system(msg)
 
-	# Таймер раунда
-	_round_timer = get_tree().create_timer(round_duration)
-	_round_timer.timeout.connect(_on_round_timeout)
+	_round_timer_seq += 1
+	var seq := _round_timer_seq
+	get_tree().create_timer(round_duration).timeout.connect(func():
+		if seq != _round_timer_seq or not _round_active:
+			return
+		_on_round_timeout()
+	)
 
 
 func _on_round_ended_internal(winning_team: int) -> void:
@@ -54,38 +76,41 @@ func _on_round_ended_internal(winning_team: int) -> void:
 		return
 
 	_round_active = false
+	_alive_this_round.clear()
+	_push_alive_to_clients()
 
 	var winner_name := get_team_name(winning_team) if winning_team != Team.NONE else "Ничья"
 	ChatNetwork.send_system("[Round] %s побеждает раунд" % winner_name)
 
-	# Проверка победы в матче
-	for team in [Team.ALPHA, Team.BRAVO]:
-		if get_team_score(team) >= round_limit:
-			match_finished.emit(team, get_team_score(team))
+	for team_id in [Team.ALPHA, Team.BRAVO]:
+		if get_team_score(team_id) >= round_limit:
+			team_match_finished.emit(team_id, get_team_score(team_id))
 			var match_msg := "[Match] %s выигрывает матч (%d раундов)!" % [
-				get_team_name(team), get_team_score(team)
+				get_team_name(team_id), get_team_score(team_id)
 			]
 			ChatNetwork.send_system(match_msg)
 			return
 
-	# Следующий раунд через паузу
 	get_tree().create_timer(round_end_delay).timeout.connect(_start_next_round)
 
 
 func _on_player_spawned_team(id: int, player: OnlinePlayer, _info: Dictionary) -> void:
+	super._on_player_spawned_team(id, player, _info)
 	if not multiplayer.is_server():
 		return
-	if default_weapon != null:
-		player.weapon_holder.rpc("equip_from_pickup", NodePath(), default_weapon.resource_path)
+	if _round_active and not GameManager.is_host_spectator(id):
+		_alive_this_round[id] = true
+		_push_alive_to_clients()
+	if default_weapon != null and not GameManager.is_host_spectator(id):
+		game_manager.rpc_equip_weapon_data.rpc(id, default_weapon.resource_path)
 
 
-func _on_player_died_team(victim_id: int, attacker_id: int) -> void:
+func _on_player_died_team(victim_id: int, _attacker_id: int) -> void:
 	if not multiplayer.is_server():
 		return
 
 	_alive_this_round.erase(victim_id)
-	# В этом режиме не возрождаем в середине раунда
-	# game_manager.schedule_respawn — НЕ вызываем
+	_push_alive_to_clients()
 
 	if not _round_active:
 		return
@@ -94,7 +119,10 @@ func _on_player_died_team(victim_id: int, attacker_id: int) -> void:
 
 
 func _on_player_despawned_team(id: int, _info: Dictionary) -> void:
+	if not multiplayer.is_server():
+		return
 	_alive_this_round.erase(id)
+	_push_alive_to_clients()
 
 
 # ── Логика окончания раунда ───────────────────────────────────────────────
@@ -104,12 +132,11 @@ func _check_round_end() -> void:
 	var alive_bravo := _count_alive(Team.BRAVO)
 
 	if alive_alpha == 0 and alive_bravo == 0:
-		_end_round(Team.NONE)                 # ничья
+		_end_round(Team.NONE)
 	elif alive_alpha == 0:
 		_end_round(Team.BRAVO)
 	elif alive_bravo == 0:
 		_end_round(Team.ALPHA)
-	# Иначе — раунд продолжается
 
 
 func _count_alive(team: int) -> int:
@@ -123,7 +150,6 @@ func _count_alive(team: int) -> int:
 func _on_round_timeout() -> void:
 	if not _round_active:
 		return
-	# По истечению времени: победа команды с большим числом выживших
 	var alive_alpha := _count_alive(Team.ALPHA)
 	var alive_bravo := _count_alive(Team.BRAVO)
 
@@ -135,3 +161,20 @@ func _on_round_timeout() -> void:
 		_end_round(Team.BRAVO)
 	else:
 		_end_round(Team.NONE)
+
+
+# ── Alive state sync ─────────────────────────────────────────────────────
+
+func _push_alive_to_clients() -> void:
+	if not multiplayer.is_server():
+		return
+	var packed := _alive_this_round.duplicate(true)
+	for p in multiplayer.get_peers():
+		_rpc_sync_alive.rpc_id(p, packed)
+
+
+@rpc("authority", "reliable")
+func _rpc_sync_alive(state: Dictionary) -> void:
+	if multiplayer.is_server():
+		return
+	_alive_client_cache = state.duplicate(true)

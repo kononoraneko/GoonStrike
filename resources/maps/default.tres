@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MapData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://bh4xfwogosio8" path="res://scenes/game/game_world.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+id = "default"
+display_name = "Test Area"
+game_world_scene = ExtResource("2_scene")
+supported_mode_ids = PackedStringArray("dm", "team_elim")

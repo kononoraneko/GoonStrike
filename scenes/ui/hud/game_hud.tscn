@@ -5,8 +5,80 @@
 [ext_resource type="PackedScene" uid="uid://m8r6sdd8yjw6" path="res://scenes/ui/hud/chat_console.tscn" id="2_b8fo0"]
 
 [node name="GameHUD" type="CanvasLayer" unique_id=2020260338]
+layer = 10
 script = ExtResource("1_igm77")
+
+[node name="RoundTimerLabel" type="Label" parent="." unique_id=210001]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_top = 8.0
+offset_right = 80.0
+offset_bottom = 36.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RoundBannerLabel" type="Label" parent="." unique_id=210002]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -40.0
+offset_right = 280.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 32
+text = "Раунд"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="PlayerHUD" parent="." unique_id=1807842638 instance=ExtResource("2_8wvdd")]
 
 [node name="ChatConsole" parent="." unique_id=1597358457 instance=ExtResource("2_b8fo0")]
+
+[node name="ScoreboardPanel" type="ColorRect" parent="." unique_id=210003]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.08, 0.08, 0.1, 0.82)
+
+[node name="MarginContainer" type="MarginContainer" parent="ScoreboardPanel" unique_id=210004]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 96
+theme_override_constants/margin_top = 80
+theme_override_constants/margin_right = 96
+theme_override_constants/margin_bottom = 80
+
+[node name="VBox" type="VBoxContainer" parent="ScoreboardPanel/MarginContainer" unique_id=210005]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="ScoreTitle" type="Label" parent="ScoreboardPanel/MarginContainer/VBox" unique_id=210006]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Игроки"
+
+[node name="PlayerList" type="ItemList" parent="ScoreboardPanel/MarginContainer/VBox" unique_id=210007]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
