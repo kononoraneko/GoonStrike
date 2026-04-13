@@ -115,7 +115,7 @@ func _handle_console(text: String) -> void:
 		ChatNetwork.send_admin_command(text)
 		return
 
-	var result := ConsoleCommands.execute(text)
+	var result : String = ConsoleCommands.execute(text)
 	if result.is_empty():
 		# Не команда в режиме чата — отправляем как сообщение
 		print_chat(player.player_info.get("name", "?"), text)

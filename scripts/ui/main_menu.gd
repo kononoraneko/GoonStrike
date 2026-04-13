@@ -38,7 +38,7 @@ func _on_name_text_changed(new_text: String) -> void:
 func _on_create_pressed() -> void:
 	if _is_waiting_connection:
 		return
-	var err := Lobby.create_game()
+	var err : Error = Lobby.create_game()
 	if err != OK:
 		show_error("Не удалось создать сервер: %d" % err)
 		return
@@ -49,7 +49,7 @@ func _on_join_pressed() -> void:
 	if _is_waiting_connection:
 		return
 	var ip := ip_edit.text.strip_edges()
-	var err := Lobby.join_game(ip)
+	var err : Error = Lobby.join_game(ip)
 	if err != OK:
 		show_error("Не удалось начать подключение: %d" % err)
 		return
@@ -101,3 +101,7 @@ func show_error(msg: String) -> void:
 		if is_instance_valid(error_label):
 			error_label.hide()
 	)
+
+
+func _on_character_option_button_item_selected(index: int) -> void:
+	Settings.selected_char = index

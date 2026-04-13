@@ -5,9 +5,9 @@
 [ext_resource type="Script" uid="uid://6cbm3vor7sfv" path="res://scripts/PlayerSpawner.gd" id="2_vkhxg"]
 [ext_resource type="Script" uid="uid://cnrs6403rx5bq" path="res://scripts/HUDManager.gd" id="4_8rn00"]
 [ext_resource type="PackedScene" uid="uid://c4jwyinsdd4is" path="res://ui/GameHUD.tscn" id="5_uuk04"]
+[ext_resource type="Resource" uid="uid://17r72uoa641f" path="res://resources/barret.res" id="6_3jdlx"]
 [ext_resource type="Script" uid="uid://diporw6jj81sm" path="res://scripts/game_modes/deathmatch_mode.gd" id="8_1bjbq"]
 [ext_resource type="PackedScene" uid="uid://b6pjl6awvp1ne" path="res://scenes/characters/leama_character.tscn" id="8_3jdlx"]
-[ext_resource type="Resource" uid="uid://c72m5b0d6gfbg" path="res://resources/ar-15_data.res" id="9_8givd"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vkhxg"]
 albedo_texture = ExtResource("1_6lluh")
@@ -222,7 +222,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.450338, 3.1999998, 5.0796
 
 [node name="DeathmatchMode" type="Node" parent="." unique_id=1655166509]
 script = ExtResource("8_1bjbq")
-default_weapon = ExtResource("9_8givd")
+default_weapon = ExtResource("6_3jdlx")
 
 [node name="PlayerSpawner" type="Node3D" parent="." unique_id=595228408]
 script = ExtResource("2_vkhxg")

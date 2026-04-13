@@ -6,6 +6,10 @@ signal died(victim_id: int, attacker_id: int)
 @export var max_health: int = 100
 var health: int = max_health
 
+## Внешний фильтр урона. Сигнатура: func(attacker_id: int, victim_id: int) -> bool
+## Если не задан — урон всегда проходит.
+var damage_filter: Callable = Callable()
+
 var owner_player: OnlinePlayer
 
 
@@ -20,7 +24,9 @@ func take_damage(amount: int, attacker: OnlinePlayer) -> void:
 		return
 	if health <= 0:
 		return
-
+	if damage_filter.is_valid():
+		if not damage_filter.call(attacker.remote_player_id, owner_player.remote_player_id):
+			return 
 	health -= amount
 	if health <= 0:
 		health = 0

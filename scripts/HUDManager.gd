@@ -50,8 +50,14 @@ func create_hud(player: OnlinePlayer) -> void:
 		#ChatNetwork.chat_received.get_connections().size())
 	#print("message_sent connections: ", 
 		#_hud.chat_console.message_sent.get_connections().size())
+	var gm: GameManager = get_parent()
+	gm.round_started.connect(_on_round_started)
+	gm.round_ended.connect(_on_round_ended)
+	gm.team_score_changed.connect(_on_team_score_changed)
+	gm.round_time_updated.connect(_on_round_time_updated)
  
- 
+
+
 func remove_hud(id: int) -> void:
 	if id == _local_player_id and _hud != null:
 		_disconnect_hud_signals()
@@ -77,3 +83,17 @@ func _disconnect_hud_signals() -> void:
 		Lobby.player_disconnected.disconnect(_chat_disconnected_cb)
 	_chat_connected_cb = Callable()
 	_chat_disconnected_cb = Callable()
+
+
+func _on_round_started(round_number: int) -> void:
+	_hud.show_label("Раунд %d" % round_number, 2.0)
+
+func _on_round_ended(winning_team: int) -> void:
+	var name := ""
+	_hud.show_label("Раунд окончен", 2.0)
+
+func _on_team_score_changed(team: int, score: int) -> void:
+	_hud.update_team_score(team, score)
+
+func _on_round_time_updated(seconds_left: float) -> void:
+	_hud.set_timer(seconds_left)

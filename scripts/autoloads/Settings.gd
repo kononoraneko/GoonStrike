@@ -1,5 +1,10 @@
 extends Node
 
+var characters = {0:"res://scenes/characters/lain_character.tscn", 
+					1:"res://scenes/characters/leama_character.tscn"}
+
+var selected_char = 0
+
 @export var potato :bool = true:
 	set(val):
 		potato_changed.emit(val)

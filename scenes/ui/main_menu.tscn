@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c1l0pg4ttjuxi"]
 
-[ext_resource type="Script" uid="uid://dlsg2a7mul2rs" path="res://scripts/ui/main_menu.gd" id="1"]
+[ext_resource type="Script" uid="uid://c3xi2tui6pbje" path="res://scripts/ui/main_menu.gd" id="1"]
 
 [node name="MainMenu" type="Control" unique_id=482925862]
 layout_mode = 3
@@ -73,6 +73,22 @@ layout_mode = 2
 text = "Ошибка"
 autowrap_mode = 3
 
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=1938323421]
+layout_mode = 2
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer" unique_id=1470575826]
+layout_mode = 2
+selected = 0
+item_count = 2
+popup/item_0/text = "Lain"
+popup/item_0/id = 0
+popup/item_1/text = "Leama"
+popup/item_1/id = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer" unique_id=1175457694]
+layout_mode = 2
+text = "Модель игрока (влияет на всех игроков)"
+
 [node name="ConnectingOverlay" type="ColorRect" parent="." unique_id=106276306]
 visible = false
 layout_mode = 1
@@ -94,3 +110,5 @@ grow_vertical = 2
 [node name="Label" type="Label" parent="ConnectingOverlay/CenterContainer" unique_id=493591387]
 layout_mode = 2
 text = "Подключение..."
+
+[connection signal="item_selected" from="VBoxContainer/HBoxContainer/OptionButton" to="." method="_on_character_option_button_item_selected"]

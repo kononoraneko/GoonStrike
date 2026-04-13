@@ -8,6 +8,13 @@ signal player_spawned(id: int, info: Dictionary)
 signal player_despawned(id: int, info: Dictionary)
 signal player_died(victim_id: int, attacker_id: int)
 
+signal round_started(round_number: int)
+signal round_ended(winning_team: int)
+signal team_score_changed(team: int, score: int)
+signal round_time_updated(seconds_left: float)
+
+var _round_end_time: float = 0.0
+
 const DEFAULT_DEATHMATCH_MODE := preload("res://scripts/game_modes/deathmatch_mode.gd")
 
 #@export var game_mode_scene: PackedScene
@@ -28,12 +35,20 @@ func _ready() -> void:
 	Lobby.server_disconnected.connect(_on_server_disconnected)
 	Lobby.all_players_loaded.connect(start_game)
 
+	spawner.player_scene = load(Settings.characters[Settings.selected_char])
+
 	# Спавним уже подключённых (пришли раньше смены сцены)
 	for id in Lobby.players:
 		_spawn(id)
 
 	# Сообщаем серверу что мы загрузились
 	Lobby.notify_loaded()
+
+
+func _process(delta: float) -> void:
+	if _round_end_time > 0.0:
+		var left := _round_end_time - Time.get_ticks_msec() / 1000.0
+		round_time_updated.emit(maxf(left, 0.0))
 
 
 func _setup_game_mode() -> void:
@@ -47,6 +62,29 @@ func _setup_game_mode() -> void:
 		var dm := game_mode as DeathmatchMode
 		dm.score_changed.connect(_on_score_changed)
 		dm.match_finished.connect(_on_match_finished)
+
+	# Командные режимы — переизлучаем через GameManager
+	if game_mode is TeamGameMode:
+		var tm := game_mode as TeamGameMode
+		tm.round_started.connect(_on_round_started)
+		tm.round_ended.connect(_on_round_ended)
+		tm.team_score_changed.connect(team_score_changed.emit)   # просто пробрасываем
+		tm.match_finished.connect(_on_team_match_finished)
+
+
+func _on_round_started(round_number: int) -> void:
+	round_started.emit(round_number)
+	if game_mode is TeamEliminationMode:
+		var te := game_mode as TeamEliminationMode
+		_round_end_time = Time.get_ticks_msec() / 1000.0 + te.round_duration
+
+func _on_round_ended(winning_team: int) -> void:
+	_round_end_time = 0.0
+	round_ended.emit(winning_team)
+
+func _on_team_match_finished(winning_team: int, score: int) -> void:
+	var name := (game_mode as TeamGameMode).get_team_name(winning_team)
+	ChatNetwork.send_system("[Match] Победа: %s (%d)" % [name, score])
 
 
 # ── Спавн / деспавн ───────────────────────────────────────────────────────

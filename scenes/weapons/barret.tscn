@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://ckhopkwn46vnc"]
+
+[ext_resource type="Script" uid="uid://bxcrj0v1r6lcy" path="res://scripts/components/weapon.gd" id="1_rwrbs"]
+[ext_resource type="ArrayMesh" uid="uid://bsc0fottfns0o" path="res://assets/models/weapons/barret/res/body3.res" id="1_ti5a0"]
+[ext_resource type="ArrayMesh" uid="uid://dx4qsv050qgvt" path="res://assets/models/weapons/barret/res/body2.res" id="2_ld6kj"]
+[ext_resource type="ArrayMesh" uid="uid://dydx8el5qeux0" path="res://assets/models/weapons/barret/res/body.res" id="3_rwrbs"]
+[ext_resource type="Script" uid="uid://ykbae8t1q877" path="res://scripts/components/SpreadComponent.gd" id="5_bxwwy"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_rwrbs"]
+
+[node name="Barret" type="Node3D" unique_id=1878364746]
+script = ExtResource("1_rwrbs")
+
+[node name="Object_2" type="MeshInstance3D" parent="." unique_id=1234936032]
+transform = Transform3D(0.07, 0, 0, 0, 0.07, -3.059797e-09, 0, 3.059797e-09, 0.07, 0.09943798, 2.6226843e-09, -0.08622497)
+mesh = ExtResource("1_ti5a0")
+
+[node name="Object_3" type="MeshInstance3D" parent="." unique_id=1478369521]
+transform = Transform3D(0.07, 0, 0, 0, 0.07, -3.059797e-09, 0, 3.059797e-09, 0.07, 0.09943798, 2.6226843e-09, -0.08622497)
+mesh = ExtResource("2_ld6kj")
+
+[node name="Object_4" type="MeshInstance3D" parent="." unique_id=1451228314]
+transform = Transform3D(0.07, 0, 0, 0, 0.07, -3.059797e-09, 0, 3.059797e-09, 0.07, 0.09943798, 2.6226843e-09, -0.08622497)
+mesh = ExtResource("3_rwrbs")
+
+[node name="Muzzle" type="Marker3D" parent="." unique_id=57515294]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.76291835, 0, 0.1090316)
+
+[node name="SpreadComponent" type="Node" parent="." unique_id=1622625296]
+script = ExtResource("5_bxwwy")
+metadata/_custom_type_script = "uid://ykbae8t1q877"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=448152779]
+visible = false
+mesh = SubResource("QuadMesh_rwrbs")
