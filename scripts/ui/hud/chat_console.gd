@@ -1,45 +1,41 @@
-## ChatConsole.gd
-## Чат + консоль команд в одном окне.
-## Структура сцены:
-##
-## ChatConsole  (Control, Layer=3, скрипт: ChatConsole.gd)
-## └── Panel  (якорь: bottom-right, size=(360,280), offset bottom:-20 right:-20)
-##     └── VBoxContainer  (fill, margins=8px)
-##         ├── Header  (HBoxContainer)
-##         │   ├── TitleLabel  (Label, text="ЧАТ")
-##         │   └── ModeBtn     (Button, text="[ ]  консоль")
-##         ├── Log  (RichTextLabel, bbcode=true, size_flags_v=EXPAND, scroll_follow=true)
-##         └── InputRow  (HBoxContainer)
-##             ├── Prefix  (Label, text="›", visible=false)  ← показывается в режиме консоли
-##             └── Input   (LineEdit, size_flags_h=EXPAND, placeholder="Написать...")
+## ChatConsole.gd  –  CS-style chat
+## Floating messages появляются снизу и плавно гаснут.
+## T → открыть панель, Escape/клик в сторону → закрыть.
 
 class_name ChatConsole extends Control
 
-signal message_sent(text: String)   # для отправки в сеть
+signal message_sent(text: String)
 
 enum Mode { CHAT, CONSOLE }
 
-@onready var log_box:    RichTextLabel = $Panel/VBoxContainer/Log
-@onready var input_line: LineEdit      = $Panel/VBoxContainer/InputRow/Input
-@onready var prefix_lbl: Label         = $Panel/VBoxContainer/InputRow/Prefix
-@onready var mode_btn:   Button        = $Panel/VBoxContainer/Header/ModeBtn
-@onready var title_lbl:  Label         = $Panel/VBoxContainer/Header/TitleLabel
+# ── Настройки ──────────────────────────────────────────────────────────
+const MSG_STAY_TIME  := 5.0    # сек. сообщение остаётся видимым
+const MSG_FADE_IN    := 0.15   # скорость появления
+const MSG_FADE_OUT   := 0.4    # скорость исчезновения
+const MAX_FLOAT_MSGS := 8      # максимум строк одновременно на экране
 
-var current_mode: Mode = Mode.CHAT
+# ── Ноды ───────────────────────────────────────────────────────────────
+@onready var messages_layer : Control       = $MessagesLayer
+@onready var msg_vbox       : VBoxContainer = $MessagesLayer/VBoxContainer
+@onready var chat_panel     : Panel         = $ChatPanel
+@onready var log_box        : RichTextLabel = $ChatPanel/VBoxContainer/Log
+@onready var input_line     : LineEdit      = $ChatPanel/VBoxContainer/InputRow/Input
+@onready var prefix_lbl     : Label         = $ChatPanel/VBoxContainer/InputRow/Prefix
 
-# История команд (стрелки вверх/вниз)
-var _history: Array[String] = []
-var _history_idx: int = -1
-
-# Кому принадлежит этот HUD
-var player: OnlinePlayer
+# ── Состояние ──────────────────────────────────────────────────────────
+var current_mode : Mode = Mode.CHAT
+var _history     : Array[String] = []
+var _history_idx : int = -1
+var _full_log    : Array[String] = []   # вся история (bbcode) для панели
+var _chat_open   : bool = false
+var player       : OnlinePlayer
 
 
 func _ready() -> void:
-	mode_btn.pressed.connect(_toggle_mode)
 	input_line.text_submitted.connect(_on_submitted)
 	input_line.gui_input.connect(_on_input_gui)
-	_apply_mode()
+	input_line.focus_exited.connect(_close_chat)
+	chat_panel.visible = false
 
 
 func setup(p: OnlinePlayer) -> void:
@@ -52,78 +48,105 @@ func _sender_display_name() -> String:
 	return str(Lobby.local_info.get("name", "?"))
 
 
-# ── Публичное API ─────────────────────────────────────────────────────────
+# ── Публичное API ──────────────────────────────────────────────────────
 
-## Добавить системное сообщение (сервер, события).
 func print_system(text: String) -> void:
-	_append("[color=gray][система] %s[/color]" % text)
+	_post("[color=gray][система] %s[/color]" % text)
 
-
-## Добавить сообщение от игрока.
 func print_chat(sender_name: String, text: String) -> void:
-	_append("[color=yellow][b]%s[/b][/color]: %s" % [sender_name, text])
+	_post("[color=yellow][b]%s[/b][/color]: %s" % [sender_name, text])
 
-
-## Добавить ответ консоли.
 func print_console(text: String) -> void:
-	_append("[color=cyan]>[/color] %s" % text)
+	_post("[color=cyan]>[/color] %s" % text)
 
 
-# ── UI события ────────────────────────────────────────────────────────────
+# ── Внутренняя логика ──────────────────────────────────────────────────
 
-func _toggle_mode() -> void:
-	current_mode = Mode.CONSOLE if current_mode == Mode.CHAT else Mode.CHAT
-	_apply_mode()
-
-
-func _apply_mode() -> void:
-	match current_mode:
-		Mode.CHAT:
-			title_lbl.text = "ЧАТ"
-			mode_btn.text  = "[  ]  консоль"
-			prefix_lbl.visible = false
-			input_line.placeholder_text = "Написать... (Enter)"
-		Mode.CONSOLE:
-			title_lbl.text = "КОНСОЛЬ"
-			mode_btn.text  = "[✓]  консоль"
-			prefix_lbl.visible = true
-			input_line.placeholder_text = "/команда [значение]"
+## Центральная точка: добавить сообщение в лог и отобразить нужным способом.
+func _post(bbcode: String) -> void:
+	_full_log.append(bbcode)
+	if _chat_open:
+		# Панель открыта — пишем сразу в лог
+		log_box.append_text(bbcode + "\n")
+	else:
+		# Панель закрыта — создаём плавающую строку
+		_spawn_floating(bbcode)
 
 
-func _on_submitted(text: String) -> void:
-	text = text.strip_edges()
+func _spawn_floating(bbcode: String) -> void:
+	# Убираем самое старое если экран забит
+	while msg_vbox.get_child_count() >= MAX_FLOAT_MSGS:
+		msg_vbox.get_child(0).queue_free()
+
+	var lbl := RichTextLabel.new()
+	lbl.bbcode_enabled          = true
+	lbl.fit_content             = true
+	lbl.scroll_active           = false
+	lbl.mouse_filter            = Control.MOUSE_FILTER_IGNORE
+	lbl.custom_minimum_size     = Vector2(360, 0)
+	lbl.modulate.a              = 0.0
+	msg_vbox.add_child(lbl)
+	lbl.append_text(bbcode)
+
+	# Tween привязан к lbl — автоматически остановится при queue_free()
+	var tw := lbl.create_tween()
+	tw.tween_property(lbl, "modulate:a", 1.0, MSG_FADE_IN)
+	tw.tween_interval(MSG_STAY_TIME)
+	tw.tween_property(lbl, "modulate:a", 0.0, MSG_FADE_OUT)
+	tw.tween_callback(lbl.queue_free)
+
+
+func _open_chat() -> void:
+	if _chat_open:
+		return
+	_chat_open = true
+	# Перестраиваем лог из полной истории
+	log_box.clear()
+	for line in _full_log:
+		log_box.append_text(line + "\n")
+	messages_layer.visible = false
+	chat_panel.visible     = true
+	input_line.grab_focus()
+
+
+func _close_chat() -> void:
+	if not _chat_open:
+		return
+	_chat_open             = false
+	chat_panel.visible     = false
+	messages_layer.visible = true
+	_history_idx           = -1
+
+
+# ── Обработка ввода ────────────────────────────────────────────────────
+
+func _on_submitted(raw: String) -> void:
+	var text := raw.strip_edges()
 	input_line.clear()
 	_history_idx = -1
+	_close_chat()          # закрываем ДО обработки — чтобы print_chat → _spawn_floating
 	if text.is_empty():
 		return
-
 	match current_mode:
-		Mode.CHAT:
-			_handle_chat(text)
-		Mode.CONSOLE:
-			_handle_console(text)
+		Mode.CHAT:    _handle_chat(text)
+		Mode.CONSOLE: _handle_console(text)
 
 
 func _handle_chat(text: String) -> void:
-	# Команды работают и в режиме чата если начинаются с /
 	if text.begins_with("/"):
 		_handle_console(text)
 		return
 	_history.push_front(text)
-	#print_chat(player.player_info.get("name", "?"), text)
 	message_sent.emit(text)
 
 
 func _handle_console(text: String) -> void:
 	_history.push_front(text)
-
 	if _is_server_command(text):
 		ChatNetwork.send_admin_command(text)
 		return
-
-	var result : String = ConsoleCommands.execute(text)
+	var result: String = ConsoleCommands.execute(text)
 	if result.is_empty():
-		# Не команда в режиме чата — отправляем как сообщение
 		print_chat(_sender_display_name(), text)
 		message_sent.emit(text)
 	else:
@@ -136,11 +159,10 @@ func _is_server_command(text: String) -> bool:
 	var parts := text.trim_prefix("/").split(" ", false)
 	if parts.is_empty():
 		return false
-	var cmd := parts[0].to_lower()
-	return cmd in ["op", "speed", "jump", "sv_ammo", "round_time", "round_limit"]
+	return parts[0].to_lower() in ["op", "speed", "jump", "sv_ammo", "round_time", "round_limit"]
 
 
-## Навигация по истории стрелками вверх/вниз.
+## Навигация по истории стрелками.
 func _on_input_gui(event: InputEvent) -> void:
 	if event is not InputEventKey or not event.pressed:
 		return
@@ -155,16 +177,10 @@ func _on_input_gui(event: InputEvent) -> void:
 			input_line.text = _history[_history_idx] if _history_idx >= 0 else ""
 			input_line.caret_column = input_line.text.length()
 		KEY_ESCAPE:
-			input_line.release_focus()
+			input_line.release_focus()   # → focus_exited → _close_chat()
 
-
-func _append(bbcode: String) -> void:
-	log_box.append_text(bbcode + "\n")
-
-
-# ── Захват клавиши T для открытия чата ───────────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("open_chat"):   # добавь action "open_chat" → T
-		input_line.grab_focus()
+	if event.is_action_pressed("open_chat"):
+		_open_chat()
 		get_viewport().set_input_as_handled()

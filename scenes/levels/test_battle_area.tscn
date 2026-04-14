@@ -1,9 +1,9 @@
 [gd_scene format=4 uid="uid://bhtilu7nd7oyb"]
 
 [ext_resource type="Texture2D" uid="uid://by1mn4xk51ucp" path="res://assets/dev_textures/black/texture_01.png" id="1_6lluh"]
-[ext_resource type="Script" uid="uid://h1vw5vub82yx" path="res://scripts/game/game_manager.gd" id="1_8rn00"]
-[ext_resource type="Script" uid="uid://6cbm3vor7sfv" path="res://scripts/player/player_spawner.gd" id="2_vkhxg"]
-[ext_resource type="Script" uid="uid://cnrs6403rx5bq" path="res://scripts/ui/hud/hud_manager.gd" id="4_8rn00"]
+[ext_resource type="Script" uid="uid://dhgsw53ljjal0" path="res://scripts/game/game_manager.gd" id="1_8rn00"]
+[ext_resource type="Script" uid="uid://b3robkvfyts2h" path="res://scripts/player/player_spawner.gd" id="2_vkhxg"]
+[ext_resource type="Script" uid="uid://iiaw8yyyqcjp" path="res://scripts/ui/hud/hud_manager.gd" id="4_8rn00"]
 [ext_resource type="PackedScene" uid="uid://c4jwyinsdd4is" path="res://scenes/ui/hud/game_hud.tscn" id="5_uuk04"]
 [ext_resource type="PackedScene" uid="uid://b6pjl6awvp1ne" path="res://scenes/characters/leama_character.tscn" id="8_3jdlx"]
 
@@ -195,7 +195,6 @@ mesh = SubResource("ArrayMesh_3bb8p")
 [node name="HUDManager" type="CanvasLayer" parent="." unique_id=1838474413]
 script = ExtResource("4_8rn00")
 hud_scene = ExtResource("5_uuk04")
-metadata/_custom_type_script = "uid://cnrs6403rx5bq"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1217715579]
 environment = SubResource("Environment_3jdlx")
@@ -267,4 +266,3 @@ player_scene = ExtResource("8_3jdlx")
 spawn_points_root = NodePath("../SpawnPoints")
 team_alpha_spawn_root = NodePath("../TeamSpawns/Alpha")
 team_bravo_spawn_root = NodePath("../TeamSpawns/Bravo")
-metadata/_custom_type_script = "uid://6cbm3vor7sfv"

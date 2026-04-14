@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="CharactersRegistry" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="CharactersRegistry" format=3 uid="uid://7tlwcq0ybufj"]
 
-[ext_resource type="Script" path="res://scripts/data/characters_registry.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://b5kjptqgklmss" path="res://scripts/data/character_data.gd" id="1_i6ios"]
+[ext_resource type="Script" uid="uid://b5e03mc5443d2" path="res://scripts/data/characters_registry.gd" id="1_script"]
 [ext_resource type="Resource" path="res://resources/characters/lain.tres" id="2_lain"]
 [ext_resource type="Resource" path="res://resources/characters/leama.tres" id="3_leama"]
 
 [resource]
 script = ExtResource("1_script")
-characters = [ExtResource("2_lain"), ExtResource("3_leama")]
+characters = Array[ExtResource("1_i6ios")]([ExtResource("2_lain"), ExtResource("3_leama")])

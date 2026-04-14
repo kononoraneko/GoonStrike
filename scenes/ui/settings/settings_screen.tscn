@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://cnvmw4ueg0ini"]
 
-[ext_resource type="Script" uid="uid://cytcq4ton0nsi" path="res://scripts/ui/settings/settings_screen.gd" id="1"]
+[ext_resource type="Script" uid="uid://6brl251rvfft" path="res://scripts/ui/settings/settings_screen.gd" id="1"]
 
-[node name="SettingsScreen" type="CanvasLayer"]
+[node name="SettingsScreen" type="CanvasLayer" unique_id=693862850]
 layer = 10
 script = ExtResource("1")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="ColorRect" parent="." unique_id=2067020528]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -14,7 +14,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.82)
 
-[node name="PanelContainer" type="PanelContainer" parent="."]
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=1787314999]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -25,117 +25,117 @@ offset_top = -220.0
 offset_right = 280.0
 offset_bottom = 220.0
 
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1667746551]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=468912077]
 layout_mode = 2
 
-[node name="TabContainer" type="TabContainer" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="TabContainer" type="TabContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=552009759]
 layout_mode = 2
 size_flags_vertical = 3
 current_tab = 0
 
-[node name="Графика" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer"]
+[node name="Графика" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer" unique_id=1167429986]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="ResolutionRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика"]
+[node name="ResolutionRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=711958332]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ResolutionRow"]
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ResolutionRow" unique_id=1023503878]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Разрешение (окно)"
 
-[node name="ResolutionOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ResolutionRow"]
+[node name="ResolutionOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ResolutionRow" unique_id=888360141]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="WindowModeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика"]
+[node name="WindowModeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=766126138]
 layout_mode = 2
 
-[node name="Label2" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/WindowModeRow"]
+[node name="Label2" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/WindowModeRow" unique_id=1611422482]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Режим окна"
 
-[node name="WindowModeOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/WindowModeRow"]
+[node name="WindowModeOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/WindowModeRow" unique_id=2007820549]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VsyncRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика"]
+[node name="VsyncRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=1694956695]
 layout_mode = 2
 
-[node name="Label3" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/VsyncRow"]
+[node name="Label3" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/VsyncRow" unique_id=916653060]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Вертикальная синхронизация"
 
-[node name="VsyncOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/VsyncRow"]
+[node name="VsyncOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/VsyncRow" unique_id=72124723]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MsaaRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика"]
+[node name="MsaaRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=1879116328]
 layout_mode = 2
 
-[node name="Label4" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/MsaaRow"]
+[node name="Label4" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/MsaaRow" unique_id=643986892]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Сглаживание (MSAA)"
 
-[node name="MsaaOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/MsaaRow"]
+[node name="MsaaOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/MsaaRow" unique_id=111254126]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ShadowRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика"]
+[node name="ShadowRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=634581647]
 layout_mode = 2
 
-[node name="Label5" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ShadowRow"]
+[node name="Label5" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ShadowRow" unique_id=758136509]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Качество теней"
 
-[node name="ShadowOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ShadowRow"]
+[node name="ShadowOption" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика/ShadowRow" unique_id=2120848998]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="PotatoHint" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика"]
+[node name="PotatoHint" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=755587885]
 layout_mode = 2
-autowrap_mode = 2
 text = "Режим минимальной графики: команда /potato в игровой консоли (чат → режим консоли). Повторный /potato false откатывает настройки."
+autowrap_mode = 2
 
-[node name="ApplyGraphicsButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика"]
+[node name="ApplyGraphicsButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Графика" unique_id=493533905]
 layout_mode = 2
 text = "Применить настройки графики"
 
-[node name="Звук" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer"]
+[node name="Звук" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer" unique_id=1906371501]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="AudioLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Звук"]
+[node name="AudioLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Звук" unique_id=1124420173]
 layout_mode = 2
 text = "Master/Music/SFX (позже)"
 
-[node name="Управление" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer"]
+[node name="Управление" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer" unique_id=518353040]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="ControlsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Управление"]
+[node name="ControlsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TabContainer/Управление" unique_id=1383553951]
 layout_mode = 2
 text = "Keybinds (позже)"
 
-[node name="CloseButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="CloseButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=32136987]
 layout_mode = 2
 text = "Закрыть"

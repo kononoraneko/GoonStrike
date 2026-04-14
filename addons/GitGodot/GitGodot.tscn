@@ -123,7 +123,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_cht1j")
-text = "implement-scenerouter-and-ui-screens"
+text = "codex"
 
 [node name="Label3" type="Label" parent="Push_Container2" unique_id=163907710]
 layout_mode = 2
@@ -134,7 +134,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_cht1j")
-text = "some little changes"
+text = "added barrett riffle"
 
 [node name="Pull_Container" type="VBoxContainer" parent="." unique_id=1654908570]
 layout_mode = 2

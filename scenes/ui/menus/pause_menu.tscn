@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://pr7ip3smidu7"]
 
-[ext_resource type="Script" uid="uid://c2dbhaenkpp58" path="res://scripts/ui/menus/pause_menu.gd" id="1_5p30d"]
+[ext_resource type="Script" uid="uid://fuxd8c52w3m" path="res://scripts/ui/menus/pause_menu.gd" id="1_5p30d"]
 
 [node name="PauseMenu" type="CanvasLayer" unique_id=426515196]
 layer = 5

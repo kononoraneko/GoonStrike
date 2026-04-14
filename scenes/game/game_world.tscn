@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bh4xfwogosio8"]
 
 [ext_resource type="PackedScene" uid="uid://bhtilu7nd7oyb" path="res://scenes/levels/test_battle_area.tscn" id="1"]
-[ext_resource type="Script" uid="uid://b67mju2tcvwq8" path="res://scripts/ui/menus/pause_handler.gd" id="1_q0j28"]
+[ext_resource type="Script" uid="uid://dxff4frj2dsjw" path="res://scripts/ui/menus/pause_handler.gd" id="1_q0j28"]
 
 [node name="GameWorld" type="Node" unique_id=998455197]
 

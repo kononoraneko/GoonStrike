@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="CharacterData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="CharacterData" format=3 uid="uid://dnr1rlh14yhti"]
 
-[ext_resource type="Script" path="res://scripts/data/character_data.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://b5kjptqgklmss" path="res://scripts/data/character_data.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://drq5sxmo4htrx" path="res://scenes/characters/lain_character.tscn" id="2_scene"]
 
 [resource]

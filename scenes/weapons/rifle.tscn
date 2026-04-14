@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://bsx0hs4soaco5"]
 
 [ext_resource type="ArrayMesh" uid="uid://b3e5oticon8yp" path="res://assets/models/weapons/ar15/res/ar-15.res" id="1_bqpgu"]
-[ext_resource type="Script" uid="uid://bxcrj0v1r6lcy" path="res://scripts/weapons/weapon.gd" id="1_dwsvr"]
+[ext_resource type="Script" uid="uid://dib4g2dyreh4x" path="res://scripts/weapons/weapon.gd" id="1_dwsvr"]
 [ext_resource type="ArrayMesh" uid="uid://wuxuvibptu55" path="res://assets/models/weapons/ar15/res/ar-15_magazine.res" id="2_0g5ae"]
-[ext_resource type="Script" uid="uid://ykbae8t1q877" path="res://scripts/weapons/spread_component.gd" id="4_qlvgl"]
+[ext_resource type="Script" uid="uid://dqalq8ye2xk2d" path="res://scripts/weapons/spread_component.gd" id="4_qlvgl"]
 
 [node name="Riffle" type="Node3D" unique_id=1143071610]
 script = ExtResource("1_dwsvr")
@@ -20,4 +20,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35308608, 3.7252903e-09, 0.
 
 [node name="SpreadComponent" type="Node" parent="." unique_id=785024660]
 script = ExtResource("4_qlvgl")
-metadata/_custom_type_script = "uid://ykbae8t1q877"

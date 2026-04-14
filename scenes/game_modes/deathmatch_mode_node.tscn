@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://c8dmnode01dm01"]
+[gd_scene format=3 uid="uid://u01cvihc3vb5"]
 
-[ext_resource type="Script" path="res://scripts/game/game_modes/deathmatch_mode.gd" id="1_dm"]
+[ext_resource type="Script" uid="uid://br1nygx80btln" path="res://scripts/game/game_modes/deathmatch_mode.gd" id="1_dm"]
 [ext_resource type="Resource" uid="uid://c72m5b0d6gfbg" path="res://resources/ar-15_data.res" id="2_wpn"]
 
-[node name="DeathmatchMode" type="Node"]
+[node name="DeathmatchMode" type="Node" unique_id=128883435]
 script = ExtResource("1_dm")
 default_weapon = ExtResource("2_wpn")
