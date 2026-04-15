@@ -148,7 +148,7 @@ func _spawn(id: int) -> void:
 
 	_wire_player_events(player)
 	if multiplayer.is_server() and not _shared_sync_sent.has(id):
-		ChatNetwork.sync_shared_to_peer(id)
+		ServerConfig.sync_to_peer(id)
 		_shared_sync_sent[id] = true
 	player_spawned.emit(id, Lobby.players[id])
 

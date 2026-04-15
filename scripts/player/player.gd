@@ -39,7 +39,7 @@ func _ready() -> void:
 	aim_component.setup(skeleton, marker_up, marker_center, marker_down)
 	weapon_holder.weapon_changed.connect(_on_weapon_changed)
 	health_component.reset_health()
-	ChatNetwork.apply_shared_movement_to_player(self)
+	ServerConfig.apply_movement_to_player(self)
 	set_alive_state()
 
 

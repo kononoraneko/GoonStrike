@@ -22,6 +22,7 @@ ConsoleCommands="*uid://cjrmr6pyo4okb"
 Lobby="*uid://scv3wmkatjpv"
 SceneRouter="*uid://gwthxny73e75"
 Settings="*uid://h4r6oqqsy8e8"
+ServerConfig="*uid://cnetct2cyaq0"
 
 [input]
 

@@ -9,30 +9,30 @@
 
 class_name SpreadComponent extends Node
 
-# Текущий bloom-конус (только для режима BLOOM)
 var _current_bloom: float = 0.0
-
-# Позиция в паттерне (только для режима PATTERN)
 var _pattern_index: int = 0
 var _reset_timer: SceneTreeTimer = null
-
-# Ссылка на данные — берём из родителя при первом вызове
 var _data: SpreadPattern = null
 
 
+## Вызывается из Weapon._ready() сразу после того, как data назначена.
+## Кэширует паттерн — больше не лезем к родителю каждый кадр/выстрел.
+func init(pattern: SpreadPattern) -> void:
+	_data = pattern
+	reset()
+
+
 func _process(delta: float) -> void:
-	# Bloom постепенно восстанавливается
-	if _data and _data.mode == SpreadPattern.SpreadMode.BLOOM:
-		_current_bloom = move_toward(_current_bloom, 0.0, _data.bloom_recovery * delta)
+	# Ранний выход: bloom нужен только в режиме BLOOM
+	if _data == null or _data.mode != SpreadPattern.SpreadMode.BLOOM:
+		return
+	_current_bloom = move_toward(_current_bloom, 0.0, _data.bloom_recovery * delta)
 
 
 ## Вызывается из Weapon.shoot() вместо прямой передачи direction.
-## is_moving и is_airborne берёт caller из MovementComponent владельца.
 func apply(base_direction: Vector3, is_moving: bool, is_airborne: bool) -> Vector3:
-	_data = _get_pattern()
 	if _data == null:
 		return base_direction
-
 	match _data.mode:
 		SpreadPattern.SpreadMode.RANDOM:
 			return _apply_random(base_direction, is_moving, is_airborne)
@@ -40,7 +40,6 @@ func apply(base_direction: Vector3, is_moving: bool, is_airborne: bool) -> Vecto
 			return _apply_bloom(base_direction, is_moving, is_airborne)
 		SpreadPattern.SpreadMode.PATTERN:
 			return _apply_pattern(base_direction)
-
 	return base_direction
 
 
@@ -66,14 +65,14 @@ func reset() -> void:
 
 func _apply_random(dir: Vector3, is_moving: bool, is_airborne: bool) -> Vector3:
 	var angle := _data.base_spread
-	if is_moving:  angle *= _data.move_multiplier
+	if is_moving:   angle *= _data.move_multiplier
 	if is_airborne: angle *= _data.air_multiplier
 	return _random_cone(dir, deg_to_rad(angle))
 
 
 func _apply_bloom(dir: Vector3, is_moving: bool, is_airborne: bool) -> Vector3:
 	var angle := _data.base_spread + _current_bloom
-	if is_moving:  angle *= _data.move_multiplier
+	if is_moving:   angle *= _data.move_multiplier
 	if is_airborne: angle *= _data.air_multiplier
 	return _random_cone(dir, deg_to_rad(angle))
 
@@ -85,9 +84,7 @@ func _apply_pattern(dir: Vector3) -> Vector3:
 	# offset.x — горизонтальное отклонение (yaw), offset.y — вертикальное (pitch)
 	var right := dir.cross(Vector3.UP).normalized()
 	var up    := right.cross(dir).normalized()
-	var rotated := dir.rotated(up,    deg_to_rad(offset.x))
-	rotated       = rotated.rotated(right, deg_to_rad(offset.y))
-	return rotated.normalized()
+	return dir.rotated(up, deg_to_rad(offset.x)).rotated(right, deg_to_rad(offset.y)).normalized()
 
 
 # ── Утилиты ───────────────────────────────────────────────────────────────
@@ -96,18 +93,13 @@ func _apply_pattern(dir: Vector3) -> Vector3:
 func _random_cone(dir: Vector3, half_angle_rad: float) -> Vector3:
 	if half_angle_rad <= 0.0:
 		return dir
-
-	# Случайный азимут и радиус в плоскости конуса
 	var angle  := randf() * TAU
-	# Квадратный корень для равномерного распределения по площади круга
 	var radius := sqrt(randf()) * tan(half_angle_rad)
-
 	var right := dir.cross(Vector3.UP)
 	if right.length_squared() < 0.001:
 		right = dir.cross(Vector3.RIGHT)
 	right = right.normalized()
 	var up := right.cross(dir).normalized()
-
 	return (dir + right * cos(angle) * radius + up * sin(angle) * radius).normalized()
 
 
@@ -121,10 +113,3 @@ func _restart_reset_timer() -> void:
 
 func _on_pattern_reset() -> void:
 	_pattern_index = 0
-
-
-func _get_pattern() -> SpreadPattern:
-	var weapon := get_parent() as Weapon
-	if weapon and weapon.data:
-		return weapon.data.spread_pattern
-	return null
