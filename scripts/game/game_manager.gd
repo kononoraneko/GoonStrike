@@ -13,21 +13,35 @@ signal round_ended(winning_team: int)
 signal team_score_changed(team: int, score: int)
 signal round_time_updated(seconds_left: float)
 signal match_stats_updated
+signal money_changed(peer_id: int, amount: int)
+signal buy_availability_changed(availability: Dictionary)
 
 const HOST_PEER_ID := 1
 const WORLD_PICKUP_SCENE: PackedScene = preload("res://scenes/weapons/pickup_scene.tscn")
-const DROP_FORWARD_OFFSET := 1.1
-const DROP_UP_OFFSET := 0.6
+const DROP_FORWARD_OFFSET := 0.85
+const DROP_UP_OFFSET := 0.35
 const PICKUP_RAY_MAX_DISTANCE := 3.5
-const PICKUP_RAY_COLLISION_MASK := 3
+const PICKUP_RAY_COLLISION_MASK := 0xFFFFFFFF
 const _PICKUP_MAX_AIM_DOT := 0.906
 const _PICKUP_MAX_ORIGIN_DIST := 3.0
+const _PROXIMITY_PICKUP_MAX_DIST := 2.6
+const _PROXIMITY_HINT_POS_EPS := 2.0
+const _DROP_INTERACT_COOLDOWN_MSEC := 500
+
+const STARTING_MONEY   := 800
+const ROUND_WIN_BONUS  := 3250
+const ROUND_LOSS_BONUS := 1900
+const KILL_REWARD       := 300
+const MAX_MONEY         := 16000
 
 var _round_end_time: float = 0.0
+## peer_id → int (текущие деньги игрока; сервер — источник истины).
+var _player_money: Dictionary = {}
 ## peer_id → { "k", "d", "a" } — ведётся на сервере, реплицируется на клиенты.
 var _match_stats: Dictionary = {}
 ## Уникальный id для дропнутых пикапов (RPC по пути узла на клиенте ненадёжен).
 var _next_world_pickup_id: int = 0
+var _last_buy_availability: Dictionary = {}
 
 @onready var spawner: PlayerSpawner = $PlayerSpawner
 @onready var hud_manager: HUDManager = $HUDManager
@@ -71,6 +85,10 @@ func _process(_delta: float) -> void:
 	if _round_end_time > 0.0:
 		var left := _round_end_time - Time.get_ticks_msec() / 1000.0
 		round_time_updated.emit(maxf(left, 0.0))
+	var buy_state := get_local_buy_availability()
+	if buy_state != _last_buy_availability:
+		_last_buy_availability = buy_state
+		buy_availability_changed.emit(buy_state)
 
 
 func _install_game_mode_from_lobby() -> void:
@@ -99,6 +117,10 @@ func _setup_game_mode() -> void:
 
 
 func _on_round_started(round_number: int) -> void:
+	if multiplayer.is_server() and round_number > 1 and game_mode is TeamEliminationMode:
+		_clear_world_weapon_pickups_local()
+		if multiplayer.has_multiplayer_peer():
+			_rpc_clear_world_weapon_pickups.rpc()
 	round_started.emit(round_number)
 	var duration := game_mode.get_round_timer_duration()
 	if duration > 0.0:
@@ -112,6 +134,7 @@ func _on_round_ended(winning_team: int) -> void:
 	_round_end_time = 0.0
 	round_ended.emit(winning_team)
 	if multiplayer.is_server():
+		_award_round_money(winning_team)
 		for p in multiplayer.get_peers():
 			_rpc_client_round_ended.rpc_id(p, winning_team)
 
@@ -162,12 +185,17 @@ func _spawn(id: int) -> void:
 	player_spawned.emit(id, Lobby.players[id])
 
 	if not is_host_spectator(id):
-		game_mode.on_player_spawned(id, player, Lobby.players[id])
+		player.reset_dm_loadout_tracking()
+		game_mode.on_player_spawned(id, player, Lobby.players[id], had_existing)
 		player.set_alive_state()
 		if multiplayer.is_server():
 			player.health_component.reset_health()
 
 	if multiplayer.is_server() and not is_host_spectator(id):
+		if not _player_money.has(id):
+			_set_money(id, STARTING_MONEY)
+		else:
+			_set_money(id, get_player_money(id))
 		if game_mode != null and game_mode is TeamGameMode:
 			var tm := game_mode as TeamGameMode
 			tm.sync_scores_to_peer(id)
@@ -176,7 +204,7 @@ func _spawn(id: int) -> void:
 				_sync_late_join_round_state.rpc_id(id, tm.get_current_round(), remaining)
 
 	if multiplayer.is_server() and multiplayer.has_multiplayer_peer():
-		_late_join_sync_session_state_to_peer(id)
+		call_deferred("_late_join_sync_session_state_to_peer", id)
 
 	if id == multiplayer.get_unique_id():
 		hud_manager.create_hud(player)
@@ -202,6 +230,8 @@ func _on_player_died(victim_id: int, attacker_id: int, assist_id: int = 0) -> vo
 		return
 
 	_record_kill_death_assist(victim_id, attacker_id, assist_id)
+	if attacker_id > 0 and attacker_id != victim_id and not is_host_spectator(attacker_id):
+		_add_money(attacker_id, KILL_REWARD)
 	match_stats_updated.emit()
 	_rpc_sync_match_stats.rpc(_pack_match_stats_for_net())
 	_broadcast_killfeed(victim_id, attacker_id)
@@ -235,6 +265,8 @@ func _rpc_respawn_player(peer_id: int) -> void:
 func start_game() -> void:
 	for pid in Lobby.players.keys():
 		_ensure_match_stat_entry(int(pid))
+		if multiplayer.is_server() and not is_host_spectator(int(pid)):
+			_set_money(int(pid), STARTING_MONEY)
 	game_mode.on_game_started()
 	var mode_name := GameModeCatalog.display_name(Lobby.selected_mode_id)
 	var msg := "[%s] Матч начался" % mode_name
@@ -345,6 +377,130 @@ func get_kill_counts_dict_for_board() -> Dictionary:
 	return out
 
 
+# ── Economy ─────────────────────────────────────────────────────────────────
+
+func get_player_money(peer_id: int) -> int:
+	return int(_player_money.get(peer_id, 0))
+
+
+func _set_money(peer_id: int, amount: int) -> void:
+	amount = clampi(amount, 0, MAX_MONEY)
+	_player_money[peer_id] = amount
+	money_changed.emit(peer_id, amount)
+	if multiplayer.is_server():
+		if peer_id == 1:
+			_rpc_sync_money(amount)
+		else:
+			_rpc_sync_money.rpc_id(peer_id, amount)
+
+
+func _add_money(peer_id: int, delta: int) -> void:
+	var cur := get_player_money(peer_id)
+	_set_money(peer_id, cur + delta)
+
+
+func _award_round_money(winning_team: int) -> void:
+	if not multiplayer.is_server():
+		return
+	if not (game_mode is TeamGameMode):
+		return
+	var tm := game_mode as TeamGameMode
+	for pid in Lobby.players.keys():
+		var id := int(pid)
+		if is_host_spectator(id):
+			continue
+		var team := tm.get_team(id)
+		if team == TeamGameMode.Team.NONE:
+			continue
+		if team == winning_team:
+			_add_money(id, ROUND_WIN_BONUS)
+		else:
+			_add_money(id, ROUND_LOSS_BONUS)
+
+
+func is_economy_mode() -> bool:
+	return game_mode is TeamEliminationMode
+
+
+func get_local_buy_availability() -> Dictionary:
+	var state := {
+		"can_open_menu": false,
+		"can_buy_now": false,
+		"reason_code": "unknown",
+		"hint_text": "",
+	}
+	if game_mode == null:
+		state.reason_code = "no_mode"
+		return state
+	var id := multiplayer.get_unique_id()
+	if is_host_spectator(id):
+		state.reason_code = "spectator"
+		return state
+	var pl := spawner.get_player(id)
+	if pl == null:
+		state.reason_code = "no_player"
+		return state
+	if pl.is_dead:
+		state.reason_code = "dead"
+		return state
+	if game_mode.can_player_buy(pl):
+		state.can_open_menu = true
+		state.can_buy_now = true
+		state.reason_code = "allowed"
+		state.hint_text = game_mode.get_buy_menu_status_hint(pl)
+		return state
+	state.reason_code = "rules_blocked"
+	state.hint_text = game_mode.get_buy_menu_status_hint(pl)
+	return state
+
+
+## Локальное зеркало правил покупки (состояние с сервера / синхронизация). Решение о покупке — только rpc_request_buy на сервере.
+func can_local_player_buy() -> bool:
+	return bool(get_local_buy_availability().get("can_buy_now", false))
+
+
+func get_local_buy_menu_status_hint() -> String:
+	return String(get_local_buy_availability().get("hint_text", ""))
+
+
+## Меню не открываем без локального «можно купить» (те же правила, что game_mode.can_player_buy на сервере).
+func can_open_buy_menu() -> bool:
+	return bool(get_local_buy_availability().get("can_open_menu", false))
+
+
+@rpc("authority", "reliable")
+func _rpc_sync_money(amount: int) -> void:
+	var local_id := multiplayer.get_unique_id()
+	_player_money[local_id] = amount
+	money_changed.emit(local_id, amount)
+
+
+@rpc("any_peer", "reliable")
+func rpc_request_buy(weapon_path: String) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id == 0:
+		sender_id = 1
+	var pl := spawner.get_player(sender_id)
+	if pl == null or pl.is_dead:
+		return
+	# Единственная доверенная проверка: клиент лишь запрашивает.
+	if not game_mode.can_player_buy(pl):
+		return
+	var data := load(weapon_path) as WeaponData
+	if data == null:
+		return
+	if is_economy_mode():
+		var cur := get_player_money(sender_id)
+		if cur < data.price:
+			return
+		_add_money(sender_id, -data.price)
+	if pl.weapon_holder.has_primary_weapon() and game_mode.should_drop_weapon_on_buy_replace():
+		_server_drop_player_weapon(pl)
+	rpc_equip_weapon_data.rpc(sender_id, weapon_path)
+
+
 # ── Round sync RPCs ────────────────────────────────────────────────────────
 
 @rpc("authority", "reliable")
@@ -378,7 +534,8 @@ func _rpc_client_round_ended(winning_team: int) -> void:
 # каждую модель не нужны — достаточно одного запроса дропа текущего слота.
 #
 # Безопасность:
-# - server_request_drop_weapon / server_request_use_pickup: на сервере
+# - server_request_drop_weapon / server_request_use_pickup /
+#   server_request_proximity_pickup: на сервере
 #   multiplayer.get_remote_sender_id() == peer_id — нельзя дропнуть/подобрать
 #   за другого игрока.
 # - Подбор: клиент шлёт луч прицела; сервер сверяет его с своим состоянием
@@ -458,15 +615,40 @@ func server_request_use_pickup(peer_id: int, aim_origin: Vector3, aim_direction:
 	var pl := spawner.get_player(peer_id)
 	if pl == null or pl.is_dead:
 		return
+	if Time.get_ticks_msec() < pl.interact_cooldown_until_msec:
+		return
 	if not _pickup_client_aim_matches_server(pl, aim_origin, aim_direction):
 		return
 	var aim := _get_server_pickup_aim(pl)
 	var origin: Vector3 = aim["origin"]
 	var direction: Vector3 = aim["direction"]
-	var pickup := _find_weapon_pickup_along_ray(origin, direction, pl)
+	var pickup := _find_weapon_pickup_along_ray(origin, direction)
 	if pickup == null:
 		return
 	_server_handle_primary_pickup(pl, pickup, true)
+
+
+@rpc("any_peer", "reliable")
+func server_request_proximity_pickup(peer_id: int, network_pickup_id: int, client_pickup_pos: Vector3, data_path: String) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id != peer_id:
+		return
+	var pl := spawner.get_player(peer_id)
+	if pl == null or pl.is_dead:
+		return
+	if Time.get_ticks_msec() < pl.interact_cooldown_until_msec:
+		return
+	var pickup := _resolve_pickup_from_client_hint(network_pickup_id, client_pickup_pos, data_path)
+	if pickup == null:
+		return
+	if pl.global_position.distance_to(pickup.global_position) > _PROXIMITY_PICKUP_MAX_DIST:
+		return
+	# Только пустой слот — без свапа (свап только по лучу + use, иначе цепочка подбор/выброс).
+	if pl.weapon_holder.has_primary_weapon():
+		return
+	_server_handle_primary_pickup(pl, pickup, false)
 
 
 @rpc("any_peer", "reliable")
@@ -501,6 +683,7 @@ func _server_drop_player_weapon(player: OnlinePlayer) -> bool:
 	var data_path := String(snapshot.get("data_path", ""))
 	if data_path.is_empty():
 		return false
+	player.interact_cooldown_until_msec = Time.get_ticks_msec() + _DROP_INTERACT_COOLDOWN_MSEC
 	_spawn_world_pickup(player, data_path, int(snapshot.get("ammo_in_mag", 0)), int(snapshot.get("ammo_reserve", 0)))
 	rpc_clear_primary_weapon.rpc(player.remote_player_id)
 	return true
@@ -542,14 +725,40 @@ func _server_handle_primary_pickup(player: OnlinePlayer, pickup: WeaponPickup, r
 	return true
 
 
+func _compute_safe_drop_spawn(player: OnlinePlayer) -> Dictionary:
+	var forward := (-player.global_transform.basis.z).normalized()
+	if forward.length_squared() < 0.0001:
+		forward = Vector3.FORWARD
+	var start: Vector3 = player.global_position + Vector3.UP * 1.0
+	var target: Vector3 = start + forward * DROP_FORWARD_OFFSET + Vector3.UP * DROP_UP_OFFSET
+	var space := get_world_3d().direct_space_state
+	var pq := PhysicsRayQueryParameters3D.new()
+	pq.from = start
+	pq.to = target
+	pq.collision_mask = PICKUP_RAY_COLLISION_MASK
+	pq.exclude = [player]
+	var hit: Dictionary = space.intersect_ray(pq)
+	var wall_hit: bool = not hit.is_empty()
+	var drop_pos: Vector3 = target
+	var wall_normal := Vector3.UP
+	if wall_hit:
+		var hp: Vector3 = hit.get("position", Vector3.ZERO) as Vector3
+		wall_normal = hit.get("normal", Vector3.UP) as Vector3
+		drop_pos = hp + wall_normal * 0.15
+	var linear_vel := Vector3.ZERO
+	if wall_hit:
+		linear_vel = wall_normal * 0.45 + Vector3.UP * 0.35
+	else:
+		linear_vel = forward * 2.0 + Vector3.UP * 0.45
+	return {"position": drop_pos, "linear_velocity": linear_vel}
+
+
 func _spawn_world_pickup(player: OnlinePlayer, data_path: String, ammo_in_mag: int, ammo_reserve: int) -> void:
 	if WORLD_PICKUP_SCENE == null:
 		return
-	var forward := -player.global_transform.basis.z.normalized()
-	if forward == Vector3.ZERO:
-		forward = Vector3.FORWARD
-	var drop_pos := player.global_position + forward * DROP_FORWARD_OFFSET + Vector3.UP * DROP_UP_OFFSET
-	var linear_vel := forward * 2.0 + Vector3.UP * 1.0
+	var spawn := _compute_safe_drop_spawn(player)
+	var drop_pos: Vector3 = spawn["position"]
+	var linear_vel: Vector3 = spawn["linear_velocity"]
 	# Высокоуровневый мультиплеер не реплицирует add_child — иначе пикап есть только
 	# на сервере и клиенты не видят меш. Рассылаем спавн с authority + call_local.
 	if multiplayer.has_multiplayer_peer():
@@ -574,11 +783,17 @@ func _spawn_dropped_pickup_local(data_path: String, ammo_in_mag: int, ammo_reser
 	if pickup == null:
 		return
 	pickup.network_pickup_id = network_pickup_id
+	pickup.freeze = true
 	var parent := _get_world_pickups_root()
 	parent.add_child(pickup)
 	pickup.global_position = drop_pos
 	pickup.setup_world_pickup(data_path, ammo_in_mag, ammo_reserve)
-	pickup.linear_velocity = linear_vel
+	var vel := linear_vel
+	get_tree().create_timer(0.0).timeout.connect(func():
+		if is_instance_valid(pickup):
+			pickup.freeze = false
+			pickup.linear_velocity = vel
+	)
 
 
 @rpc("authority", "reliable", "call_local")
@@ -591,6 +806,17 @@ func rpc_remove_world_pickup(network_pickup_id: int) -> void:
 			return
 
 
+func _clear_world_weapon_pickups_local() -> void:
+	for n in get_tree().get_nodes_in_group("weapon_pickups"):
+		if n is Node:
+			(n as Node).queue_free()
+
+
+@rpc("authority", "reliable")
+func _rpc_clear_world_weapon_pickups() -> void:
+	_clear_world_weapon_pickups_local()
+
+
 func _get_world_pickups_root() -> Node:
 	# Узел Game в уровне — не родитель SpawnPoints; дропы вешаем на корень уровня.
 	var level := get_parent()
@@ -601,6 +827,8 @@ func _get_world_pickups_root() -> Node:
 
 func _late_join_sync_session_state_to_peer(joining_peer_id: int) -> void:
 	if not multiplayer.is_server():
+		return
+	if not multiplayer.has_multiplayer_peer():
 		return
 	var pickup_entries: Array = []
 	for node in get_tree().get_nodes_in_group("weapon_pickups"):
@@ -651,6 +879,28 @@ func _find_pickup_by_network_id(network_pickup_id: int) -> WeaponPickup:
 	return null
 
 
+func _resolve_pickup_from_client_hint(network_pickup_id: int, client_pickup_pos: Vector3, data_path: String) -> WeaponPickup:
+	if network_pickup_id > 0:
+		return _find_pickup_by_network_id(network_pickup_id)
+	if data_path.is_empty():
+		return null
+	var best: WeaponPickup = null
+	var best_d := INF
+	for node in get_tree().get_nodes_in_group("weapon_pickups"):
+		if node is not WeaponPickup:
+			continue
+		var p := node as WeaponPickup
+		if p.network_pickup_id != 0 or not p.is_available():
+			continue
+		if p.get_pickup_data_path() != data_path:
+			continue
+		var d: float = p.global_position.distance_to(client_pickup_pos)
+		if d < best_d and d <= _PROXIMITY_HINT_POS_EPS:
+			best_d = d
+			best = p
+	return best
+
+
 func _get_server_pickup_aim(player: OnlinePlayer) -> Dictionary:
 	var server_origin := player.global_transform.origin + Vector3.UP * 1.5
 	if player.camera:
@@ -675,7 +925,7 @@ func _pickup_client_aim_matches_server(player: OnlinePlayer, aim_origin: Vector3
 	return true
 
 
-func _find_weapon_pickup_along_ray(origin: Vector3, direction: Vector3, exclude_player: OnlinePlayer) -> WeaponPickup:
+func _find_weapon_pickup_along_ray(origin: Vector3, direction: Vector3) -> WeaponPickup:
 	var dir := direction.normalized()
 	if dir == Vector3.ZERO:
 		return null
@@ -684,8 +934,10 @@ func _find_weapon_pickup_along_ray(origin: Vector3, direction: Vector3, exclude_
 	params.from = origin
 	params.to = to
 	params.collision_mask = PICKUP_RAY_COLLISION_MASK
-	if exclude_player:
-		params.exclude = [exclude_player]
+	params.exclude = []
+	for node in get_tree().get_nodes_in_group("online_players"):
+		if node is CollisionObject3D:
+			params.exclude.append(node as CollisionObject3D)
 	var space := get_world_3d().direct_space_state
 	var result := space.intersect_ray(params)
 	if not result:

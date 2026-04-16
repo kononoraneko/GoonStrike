@@ -5,4 +5,5 @@
 
 [node name="TeamEliminationMode" type="Node" unique_id=1127238313]
 script = ExtResource("1_elim")
+buy_requires_buy_zone = true
 default_weapon = ExtResource("2_wpn")

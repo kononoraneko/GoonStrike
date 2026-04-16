@@ -2,8 +2,7 @@ class_name WeaponPickup extends RigidBody3D
 
 ## Лежащий на земле предмет — оружие.
 ## Корень RigidBody3D обеспечивает физику падения после дропа.
-## Подбор — только по лучу прицела на сервере (см. GameManager.server_request_use_pickup).
-## Сервер обрабатывает логику и рассылает всем клиентам команду скрыться.
+## Подбор: луч + use (свап) или зона — только если основной слот пуст (server_request_proximity_pickup).
 
 @export var weapon_data: WeaponData
 @export var auto_pickup_if_slot_empty: bool = true
@@ -11,10 +10,10 @@ class_name WeaponPickup extends RigidBody3D
 ## Статичные пикапы на карте: не падают под гравитацией до подбора.
 @export var spawn_frozen: bool = false
 
-@onready var physics_shape: CollisionShape3D  = $PhysicsShape
-@onready var interact_shape: CollisionShape3D = $Area3D/InteractShape
-@onready var visual_root: Node3D              = $VisualRoot
-@onready var label: Label3D                   = $Label3D
+@onready var physics_shape: CollisionShape3D = $PhysicsShape
+@onready var visual_root: Node3D             = $VisualRoot
+@onready var label: Label3D                  = $Label3D
+var pickup_area: Area3D
 
 var is_picked_up:  bool        = false
 var _game_manager: GameManager = null
@@ -40,6 +39,10 @@ func _ready() -> void:
 
 	if spawn_frozen:
 		freeze = true
+
+	pickup_area = get_node_or_null("PickupArea") as Area3D
+	if pickup_area:
+		pickup_area.body_entered.connect(_on_pickup_proximity_body_entered)
 
 
 func is_available() -> bool:
@@ -87,6 +90,25 @@ func setup_world_pickup(data_path: String, in_mag: int, in_reserve: int) -> void
 		_refresh_world_visual(loaded_data)
 
 
+func _on_pickup_proximity_body_entered(body: Node) -> void:
+	if is_picked_up or _game_manager == null:
+		return
+	if body is not OnlinePlayer:
+		return
+	var pl := body as OnlinePlayer
+	if not pl.is_multiplayer_authority():
+		return
+	if pl.weapon_holder.has_primary_weapon():
+		return
+	_game_manager.server_request_proximity_pickup.rpc_id(
+		1,
+		pl.remote_player_id,
+		network_pickup_id,
+		global_position,
+		get_pickup_data_path()
+	)
+
+
 func _refresh_world_visual(data: WeaponData) -> void:
 	if visual_root == null or data == null or data.weapon_scene == null:
 		return
@@ -118,7 +140,8 @@ func consume_on_server() -> void:
 @rpc("authority", "reliable", "call_local")
 func _hide_pickup() -> void:
 	visible = false
-	if interact_shape:
-		interact_shape.disabled = true
 	if physics_shape:
 		physics_shape.disabled = true
+	var area := get_node_or_null("PickupArea") as Area3D
+	if area:
+		area.monitoring = false

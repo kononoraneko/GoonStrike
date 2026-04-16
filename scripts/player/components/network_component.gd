@@ -58,6 +58,9 @@ func process_server_queue() -> void:
 			owner_player.global_transform.origin, owner_player.velocity, last_processed_tick)
 		owner_player.rpc("update_remote_state",
 			owner_player.global_transform.origin, cmd)
+		var raw2: Vector2 = cmd.get("raw_dir", Vector2.ZERO)
+		if raw2.length() > 0.08 or bool(cmd.get("jump", false)):
+			owner_player.dm_server_mark_movement_for_loadout()
 		processed += 1
 
 

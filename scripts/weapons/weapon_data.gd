@@ -18,6 +18,10 @@ class_name WeaponData extends Resource
 @export_group("Inventory")
 ## Если false — нельзя выбросить (нож и т.п.).
 @export var can_drop: bool = true
+## Цена в меню закупок (0 = бесплатно).
+@export var price: int = 0
+## Категория для меню закупок: pistols, rifles, snipers, smgs, heavy, equipment.
+@export var buy_category: String = "rifles"
 
 @export_group("Sniper scope")
 @export var has_sniper_scope: bool = false

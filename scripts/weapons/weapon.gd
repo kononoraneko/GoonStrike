@@ -4,7 +4,8 @@ class_name Weapon extends Node3D
 ## Weapon не знает про сеть и синглтоны — он только выполняет стрельбу и визуалы.
 ## Всю сетевую логику делегирует владельцу через сигналы.
 
-signal shot_requested(aim_origin: Vector3, aim_direction: Vector3)
+## base_direction — до разброса (прицел); spread_direction — после SpreadComponent (хитскан).
+signal shot_requested(aim_origin: Vector3, base_direction: Vector3, spread_direction: Vector3)
 signal ammo_changed(current_in_mag: int, current_reserve: int)
 signal reload_state_changed(is_reloading: bool)
 
@@ -48,7 +49,8 @@ func shoot(aim_ray: Dictionary) -> bool:
 		ammo_changed.emit(ammo_in_mag, ammo_reserve)
 
 	var aim_origin: Vector3    = aim_ray["origin"]
-	var aim_direction: Vector3 = aim_ray["direction"]
+	var base_direction: Vector3 = aim_ray["direction"].normalized()
+	var spread_direction: Vector3 = base_direction
 
 	if spread:
 		var mv: MovementComponent = owner_player.movement
@@ -57,10 +59,15 @@ func shoot(aim_ray: Dictionary) -> bool:
 			var st := owner_player.sniper_scope_stage
 			var tighter := 1.0 - 0.22 * float(st - 1)
 			spread_scale = data.scope_spread_multiplier * maxf(tighter, 0.45)
-		aim_direction = spread.apply(aim_direction, mv.input_dir != Vector2.ZERO, not owner_player.is_on_floor(), spread_scale)
-		spread.on_shot_fired()
+		spread_direction = spread.apply(base_direction, mv.input_dir != Vector2.ZERO, not owner_player.is_on_floor(), spread_scale)
+		# Хост (listen server): тот же узел оружия — bloom/pattern обновляет WeaponHolder._server_receive_shot,
+		# иначе on_shot_fired вызовется дважды. Клиент и оффлайн — здесь.
+		var host_skip := multiplayer.has_multiplayer_peer() and multiplayer.is_server() \
+			and owner_player.is_multiplayer_authority()
+		if not host_skip:
+			spread.on_shot_fired()
 
-	var local_hit_point := aim_origin + aim_direction * data.range
+	var local_hit_point := aim_origin + spread_direction * data.range
 	var params           := PhysicsRayQueryParameters3D.new()
 	params.from           = aim_origin
 	params.to             = local_hit_point
@@ -74,7 +81,7 @@ func shoot(aim_ray: Dictionary) -> bool:
 	var muzzle_pos := get_global_muzzle_position()
 	play_effects(muzzle_pos)
 	show_tracer(muzzle_pos, local_hit_point)
-	shot_requested.emit(aim_origin, aim_direction)
+	shot_requested.emit(aim_origin, base_direction, spread_direction)
 	return true
 
 

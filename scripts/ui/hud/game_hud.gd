@@ -4,6 +4,8 @@
 
 class_name GameHUD extends CanvasLayer
 
+const BUY_MENU_SCENE: PackedScene = preload("res://scenes/ui/hud/buy_menu.tscn")
+
 @onready var player_hud: PlayerHUD = $PlayerHUD
 @onready var chat_console: ChatConsole = $ChatConsole
 @onready var round_timer_label: Label = $RoundTimerLabel
@@ -15,6 +17,8 @@ class_name GameHUD extends CanvasLayer
 var _game_manager: GameManager
 var _banner_timer: SceneTreeTimer
 var _score_signals_ok: bool = false
+var _buy_menu: BuyMenu
+var _money_label: Label
 
 
 func _exit_tree() -> void:
@@ -26,14 +30,18 @@ func _process(_delta: float) -> void:
 	scoreboard_panel.visible = show_sb
 	if show_sb:
 		_refresh_scoreboard()
+	_update_money_hud()
 
 
 func setup(player: OnlinePlayer, game_manager: GameManager) -> void:
 	_game_manager = game_manager
+	_disconnect_score_signals()
 	player_hud.setup(player)
 	chat_console.setup(player)
 	_register_console_commands(player)
 	_connect_score_signals_if_needed()
+	_setup_buy_menu()
+	_setup_money_label()
 
 
 func _connect_score_signals_if_needed() -> void:
@@ -166,6 +174,68 @@ func _hide_banner() -> void:
 func update_team_score(_team: int, _score: int) -> void:
 	if scoreboard_panel.visible:
 		_refresh_scoreboard()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("buy_menu"):
+		if _buy_menu != null:
+			if _buy_menu.visible:
+				_buy_menu.close()
+			else:
+				if _game_manager != null:
+					var buy_state := _game_manager.get_local_buy_availability()
+					if not bool(buy_state.get("can_open_menu", false)):
+						get_viewport().set_input_as_handled()
+						return
+				else:
+					get_viewport().set_input_as_handled()
+					return
+				_buy_menu.open()
+			get_viewport().set_input_as_handled()
+
+
+func _setup_buy_menu() -> void:
+	if _buy_menu != null:
+		_buy_menu.queue_free()
+		_buy_menu = null
+	_buy_menu = BUY_MENU_SCENE.instantiate() as BuyMenu
+	add_child(_buy_menu)
+	_buy_menu.setup(_game_manager)
+
+
+func _setup_money_label() -> void:
+	if _money_label != null:
+		_money_label.queue_free()
+		_money_label = null
+	if _game_manager == null or not _game_manager.is_economy_mode():
+		return
+	_money_label = Label.new()
+	_money_label.add_theme_font_size_override("font_size", 18)
+	_money_label.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4))
+	_money_label.anchors_preset = Control.PRESET_TOP_RIGHT
+	_money_label.anchor_left = 1.0
+	_money_label.anchor_right = 1.0
+	# Шире зона и обрезка — иначе длинная сумма рисуется поверх таймера по центру.
+	_money_label.offset_left = -220.0
+	_money_label.offset_right = -12.0
+	_money_label.offset_top = 36.0
+	_money_label.offset_bottom = 62.0
+	_money_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_money_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_money_label.clip_text = true
+	_money_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_money_label)
+
+
+func _update_money_hud() -> void:
+	if _money_label == null or _game_manager == null:
+		return
+	if not _game_manager.is_economy_mode():
+		return
+	var money := _game_manager.get_player_money(multiplayer.get_unique_id())
+	_money_label.text = "$%d" % money
+	# В меню закупок сумма уже в шапке — не дублируем в углу.
+	_money_label.visible = _buy_menu == null or not _buy_menu.visible
 
 
 func _register_console_commands(player: OnlinePlayer) -> void:

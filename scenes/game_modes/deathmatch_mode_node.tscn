@@ -5,4 +5,8 @@
 
 [node name="DeathmatchMode" type="Node" unique_id=128883435]
 script = ExtResource("1_dm")
+drop_weapon_on_buy_replace = false
+loadout_grace_sec = 8.0
+loadout_requires_stationary = true
+spawn_damage_protection = true
 default_weapon = ExtResource("2_wpn")

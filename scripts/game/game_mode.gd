@@ -33,7 +33,7 @@ func should_spawn_on_player_connected() -> bool:
 	return true
 
 
-func on_player_spawned(_id: int, _player: OnlinePlayer, _info: Dictionary) -> void:
+func on_player_spawned(_id: int, _player: OnlinePlayer, _info: Dictionary, _reposition_existing_pawn: bool = false) -> void:
 	pass
 
 
@@ -48,3 +48,23 @@ func on_player_died(_victim_id: int, _attacker_id: int) -> void:
 ## Для TAB: peer_id → true для живых игроков. Пустой = нет трекинга.
 func get_alive_peers() -> Dictionary:
 	return {}
+
+
+## Можно ли сейчас покупать оружие. Переопределяется в подклассах.
+func is_buy_period() -> bool:
+	return false
+
+
+## Разрешение покупки конкретному игроку (время, зона, DM loadout и т.д.).
+func can_player_buy(_player: OnlinePlayer) -> bool:
+	return is_buy_period()
+
+
+## При смене оружия через меню: выбросить старое на карту или только удалить слот.
+func should_drop_weapon_on_buy_replace() -> bool:
+	return true
+
+
+## Строка для меню закупки: правила, таймер, причина отказа (пусто = нет подсказки).
+func get_buy_menu_status_hint(_player: OnlinePlayer) -> String:
+	return ""

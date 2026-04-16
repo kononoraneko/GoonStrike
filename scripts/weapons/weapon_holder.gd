@@ -25,9 +25,15 @@ func _ready() -> void:
 	ServerConfig.ammo_mode_changed.connect(_on_ammo_mode_changed)
 
 	if not multiplayer.is_server():
-		var gm := get_tree().get_first_node_in_group("game_manager") as GameManager
-		if gm:
-			gm.server_weapon_sync_request.rpc_id(1, owner_player.remote_player_id)
+		call_deferred("_deferred_request_weapon_sync")
+
+
+func _deferred_request_weapon_sync() -> void:
+	if multiplayer.is_server() or not is_instance_valid(owner_player):
+		return
+	var gm := get_tree().get_first_node_in_group("game_manager") as GameManager
+	if gm:
+		gm.server_weapon_sync_request.rpc_id(1, owner_player.remote_player_id)
 
 
 # ── Стрельба ──────────────────────────────────────────────────────────────
@@ -92,12 +98,6 @@ func equip_primary_from_world(data_path: String, ammo_in_mag: int, ammo_reserve:
 	_set_weapon(data, ammo_in_mag, ammo_reserve, true)
 
 
-## Подбор оружия — вызывается сервером через RPC на всех клиентах.
-@rpc("any_peer", "reliable", "call_local")
-func equip_from_pickup(_pickup_path: NodePath, data_path: String) -> void:
-	equip_weapon_data_local(data_path)
-
-
 func drop_weapon() -> void:
 	clear_current_weapon()
 
@@ -134,9 +134,9 @@ func create_drop_snapshot() -> Dictionary:
 
 # ── Обработчики сигналов ──────────────────────────────────────────────────
 
-func _on_shot_requested(aim_origin: Vector3, aim_direction: Vector3) -> void:
+func _on_shot_requested(aim_origin: Vector3, base_direction: Vector3, spread_direction: Vector3) -> void:
 	if owner_player.is_multiplayer_authority():
-		rpc_id(1, "_server_receive_shot", aim_origin, aim_direction)
+		rpc_id(1, "_server_receive_shot", aim_origin, base_direction, spread_direction)
 
 
 ## Обновляем ammo_mode у текущего оружия при изменении серверной настройки.
@@ -148,14 +148,11 @@ func _on_ammo_mode_changed(mode: int) -> void:
 # ── RPC ───────────────────────────────────────────────────────────────────
 
 @rpc("any_peer", "reliable")
-func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
+func _server_receive_shot(aim_origin: Vector3, base_direction: Vector3, spread_direction: Vector3) -> void:
 	if not multiplayer.is_server():
 		return
 	var sender_id := multiplayer.get_remote_sender_id()
 	if sender_id != owner_player.remote_player_id or owner_player.is_dead or current_weapon == null:
-		return
-	if not current_weapon.server_consume_shot():
-		_sync_weapon_ammo(sender_id)
 		return
 
 	var server_origin    := _get_server_shot_origin()
@@ -163,16 +160,30 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 	if server_direction == Vector3.ZERO:
 		return
 
-	# Отклонение направления свыше ~25° — отбрасываем
-	if aim_direction.normalized().dot(server_direction) < _MAX_AIM_DOT:
+	var base_n := base_direction.normalized()
+	var spread_n := spread_direction.normalized()
+	if spread_n == Vector3.ZERO:
 		return
-	# Позиция камеры клиента расходится с серверной более чем на 3 м — отбрасываем
+
+	# Античит: базовый прицел (до разброса) должен совпадать с серверным направлением камеры.
+	if base_n.dot(server_direction) < _MAX_AIM_DOT:
+		return
 	if aim_origin.distance_to(server_origin) > 3.0:
 		return
+	if not _server_spread_deviation_allowed(current_weapon, base_n, spread_n):
+		return
+
+	if not current_weapon.server_consume_shot():
+		_sync_weapon_ammo(sender_id)
+		return
+
+	# Синхронизация bloom/pattern с клиентом (направление берём с клиента).
+	if current_weapon.spread:
+		current_weapon.spread.on_shot_fired()
 
 	var params := PhysicsRayQueryParameters3D.new()
 	params.from           = server_origin
-	params.to             = server_origin + server_direction * current_weapon.data.range
+	params.to             = server_origin + spread_n * current_weapon.data.range
 	params.collision_mask = 3
 	params.exclude        = [owner_player]
 
@@ -187,6 +198,21 @@ func _server_receive_shot(aim_origin: Vector3, aim_direction: Vector3) -> void:
 			hit_player.health_component.take_damage(current_weapon.data.damage, owner_player)
 
 	rpc("_broadcast_shot", hit_point, hit_player != null, sender_id)
+
+
+func _server_spread_deviation_allowed(w: Weapon, base_n: Vector3, spread_n: Vector3) -> bool:
+	var ang := base_n.angle_to(spread_n)
+	var max_deg := 40.0
+	if w.data != null and w.data.spread_pattern != null:
+		var p: SpreadPattern = w.data.spread_pattern
+		var worst := p.base_spread * p.move_multiplier * p.air_multiplier
+		if p.mode == SpreadPattern.SpreadMode.BLOOM:
+			worst += p.bloom_max
+		if p.mode == SpreadPattern.SpreadMode.PATTERN and not p.pattern_points.is_empty():
+			for pt in p.pattern_points:
+				worst = maxf(worst, absf(pt.x) + absf(pt.y))
+		max_deg = clampf(worst + 12.0, 10.0, 88.0)
+	return ang <= deg_to_rad(max_deg)
 
 
 func _get_server_shot_origin() -> Vector3:

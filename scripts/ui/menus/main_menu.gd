@@ -26,7 +26,7 @@ func _ready() -> void:
 
 	name_edit.text = str(Lobby.local_info.get("name", "Player"))
 
-	var pending_error := SceneRouter.consume_pending_error()
+	var pending_error : String = SceneRouter.consume_pending_error()
 	if not pending_error.is_empty():
 		show_error(pending_error)
 

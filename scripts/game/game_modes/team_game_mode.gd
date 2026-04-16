@@ -143,7 +143,7 @@ func on_game_started() -> void:
 	_start_next_round()
 
 
-func on_player_spawned(id: int, player: OnlinePlayer, info: Dictionary) -> void:
+func on_player_spawned(id: int, player: OnlinePlayer, info: Dictionary, reposition_existing_pawn: bool = false) -> void:
 	if not multiplayer.is_server():
 		return
 	if auto_balance and not _player_teams.has(id):
@@ -152,7 +152,7 @@ func on_player_spawned(id: int, player: OnlinePlayer, info: Dictionary) -> void:
 	if not GameManager.is_host_spectator(id):
 		for pid in _player_teams.keys():
 			_rpc_sync_team.rpc_id(id, pid, _player_teams[pid])
-	_on_player_spawned_team(id, player, info)
+	_on_player_spawned_team(id, player, info, reposition_existing_pawn)
 
 
 func on_player_despawned(id: int, info: Dictionary) -> void:
@@ -165,7 +165,7 @@ func on_player_died(victim_id: int, attacker_id: int) -> void:
 
 # ── Хуки с командным контекстом (рекомендуется override вместо on_player_*) ──
 
-func _on_player_spawned_team(_id: int, player: OnlinePlayer, _info: Dictionary) -> void:
+func _on_player_spawned_team(_id: int, player: OnlinePlayer, _info: Dictionary, _reposition_existing_pawn: bool = false) -> void:
 	player.health_component.damage_filter = func(attacker_id: int, victim_id: int) -> bool:
 		return are_enemies(attacker_id, victim_id)
 

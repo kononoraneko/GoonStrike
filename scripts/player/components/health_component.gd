@@ -27,6 +27,8 @@ func take_damage(amount: int, attacker: OnlinePlayer) -> void:
 		return
 	if health <= 0:
 		return
+	if owner_player.is_dm_spawn_protected_from_damage():
+		return
 	if damage_filter.is_valid():
 		var atk_f := attacker.remote_player_id if attacker != null else 0
 		if not damage_filter.call(atk_f, owner_player.remote_player_id):
