@@ -15,6 +15,10 @@ class_name WeaponData extends Resource
 @export var reload_time: float = 1.6         # длительность перезарядки
 @export var spread_pattern: SpreadPattern
 
+@export_group("Inventory")
+## Если false — нельзя выбросить (нож и т.п.).
+@export var can_drop: bool = true
+
 @export_group("Sniper scope")
 @export var has_sniper_scope: bool = false
 ## Если scope_stage_fovs пуст или один элемент — fallback от этого FOV.

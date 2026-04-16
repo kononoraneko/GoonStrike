@@ -18,6 +18,10 @@ const HOST_PEER_ID := 1
 const WORLD_PICKUP_SCENE: PackedScene = preload("res://scenes/weapons/pickup_scene.tscn")
 const DROP_FORWARD_OFFSET := 1.1
 const DROP_UP_OFFSET := 0.6
+const PICKUP_RAY_MAX_DISTANCE := 3.5
+const PICKUP_RAY_COLLISION_MASK := 3
+const _PICKUP_MAX_AIM_DOT := 0.906
+const _PICKUP_MAX_ORIGIN_DIST := 3.0
 
 var _round_end_time: float = 0.0
 ## peer_id → { "k", "d", "a" } — ведётся на сервере, реплицируется на клиенты.
@@ -170,6 +174,9 @@ func _spawn(id: int) -> void:
 			if game_mode.get_round_timer_duration() > 0.0 and _round_end_time > 0.0:
 				var remaining := maxf(_round_end_time - Time.get_ticks_msec() / 1000.0, 0.0)
 				_sync_late_join_round_state.rpc_id(id, tm.get_current_round(), remaining)
+
+	if multiplayer.is_server() and multiplayer.has_multiplayer_peer():
+		_late_join_sync_session_state_to_peer(id)
 
 	if id == multiplayer.get_unique_id():
 		hud_manager.create_hud(player)
@@ -374,9 +381,35 @@ func _rpc_client_round_ended(winning_team: int) -> void:
 # - server_request_drop_weapon / server_request_use_pickup: на сервере
 #   multiplayer.get_remote_sender_id() == peer_id — нельзя дропнуть/подобрать
 #   за другого игрока.
-# - Подбор: сервер реагирует только на Area3D на сервере и has_player_in_range;
-#   слишком большой InteractShape даёт «щедрый» подбор — ограничивайте размер.
+# - Подбор: клиент шлёт луч прицела; сервер сверяет его с своим состоянием
+#   игрока и raycast по миру (стены блокируют).
 # - rpc_* с authority рассылает хост.
+
+@rpc("authority", "reliable")
+func rpc_sync_world_pickups_snapshot(entries: Array) -> void:
+	for raw in entries:
+		if raw is not Dictionary:
+			continue
+		var e: Dictionary = raw as Dictionary
+		var nid := int(e.get("id", 0))
+		if nid <= 0:
+			continue
+		if _find_pickup_by_network_id(nid) != null:
+			continue
+		var path := String(e.get("data_path", ""))
+		if path.is_empty():
+			continue
+		var pos: Vector3 = e.get("pos", Vector3.ZERO) as Vector3
+		var vel: Vector3 = e.get("vel", Vector3.ZERO) as Vector3
+		_spawn_dropped_pickup_local(
+			path,
+			int(e.get("ammo_in_mag", 0)),
+			int(e.get("ammo_reserve", 0)),
+			pos,
+			vel,
+			nid
+		)
+
 
 @rpc("authority", "reliable", "call_local")
 func rpc_equip_weapon_data(peer_id: int, data_path: String) -> void:
@@ -402,17 +435,6 @@ func rpc_clear_primary_weapon(peer_id: int) -> void:
 	pl.weapon_holder.clear_current_weapon()
 
 
-func server_try_auto_pickup(peer_id: int, pickup: WeaponPickup) -> void:
-	if not multiplayer.is_server() or pickup == null:
-		return
-	var pl := spawner.get_player(peer_id)
-	if pl == null or pl.weapon_holder == null:
-		return
-	if pl.weapon_holder.has_primary_weapon():
-		return
-	_server_handle_primary_pickup(pl, pickup, false)
-
-
 @rpc("any_peer", "reliable")
 func server_request_drop_weapon(peer_id: int) -> void:
 	if not multiplayer.is_server():
@@ -427,16 +449,21 @@ func server_request_drop_weapon(peer_id: int) -> void:
 
 
 @rpc("any_peer", "reliable")
-func server_request_use_pickup(peer_id: int) -> void:
+func server_request_use_pickup(peer_id: int, aim_origin: Vector3, aim_direction: Vector3) -> void:
 	if not multiplayer.is_server():
 		return
 	var sender_id := multiplayer.get_remote_sender_id()
 	if sender_id != peer_id:
 		return
 	var pl := spawner.get_player(peer_id)
-	if pl == null:
+	if pl == null or pl.is_dead:
 		return
-	var pickup := _find_best_pickup_for_player(peer_id, pl.global_position)
+	if not _pickup_client_aim_matches_server(pl, aim_origin, aim_direction):
+		return
+	var aim := _get_server_pickup_aim(pl)
+	var origin: Vector3 = aim["origin"]
+	var direction: Vector3 = aim["direction"]
+	var pickup := _find_weapon_pickup_along_ray(origin, direction, pl)
 	if pickup == null:
 		return
 	_server_handle_primary_pickup(pl, pickup, true)
@@ -467,6 +494,9 @@ func server_weapon_sync_request(for_peer_id: int) -> void:
 func _server_drop_player_weapon(player: OnlinePlayer) -> bool:
 	if player == null or player.weapon_holder == null:
 		return false
+	var cw := player.weapon_holder.current_weapon
+	if cw != null and cw.data != null and not cw.data.can_drop:
+		return false
 	var snapshot := player.weapon_holder.create_drop_snapshot()
 	var data_path := String(snapshot.get("data_path", ""))
 	if data_path.is_empty():
@@ -479,7 +509,7 @@ func _server_drop_player_weapon(player: OnlinePlayer) -> bool:
 func _server_handle_primary_pickup(player: OnlinePlayer, pickup: WeaponPickup, requested_via_use: bool) -> bool:
 	if player == null or player.weapon_holder == null or pickup == null:
 		return false
-	if not pickup.is_available() or not pickup.has_player_in_range(player.remote_player_id):
+	if not pickup.is_available():
 		return false
 	var has_weapon := player.weapon_holder.has_primary_weapon()
 	if has_weapon:
@@ -519,7 +549,7 @@ func _spawn_world_pickup(player: OnlinePlayer, data_path: String, ammo_in_mag: i
 	if forward == Vector3.ZERO:
 		forward = Vector3.FORWARD
 	var drop_pos := player.global_position + forward * DROP_FORWARD_OFFSET + Vector3.UP * DROP_UP_OFFSET
-	var linear_vel := forward * 3.0 + Vector3.UP * 2.0
+	var linear_vel := forward * 2.0 + Vector3.UP * 1.0
 	# Высокоуровневый мультиплеер не реплицирует add_child — иначе пикап есть только
 	# на сервере и клиенты не видят меш. Рассылаем спавн с authority + call_local.
 	if multiplayer.has_multiplayer_peer():
@@ -569,19 +599,104 @@ func _get_world_pickups_root() -> Node:
 	return self
 
 
-func _find_best_pickup_for_player(peer_id: int, from_pos: Vector3) -> WeaponPickup:
-	var nearest: WeaponPickup = null
-	var best_dist_sq := INF
+func _late_join_sync_session_state_to_peer(joining_peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var pickup_entries: Array = []
 	for node in get_tree().get_nodes_in_group("weapon_pickups"):
 		if node is not WeaponPickup:
 			continue
-		var pickup := node as WeaponPickup
-		if pickup == null or not pickup.is_available():
+		var p := node as WeaponPickup
+		if p.network_pickup_id <= 0 or not p.is_available():
 			continue
-		if not pickup.has_player_in_range(peer_id):
+		pickup_entries.append({
+			"id": p.network_pickup_id,
+			"data_path": p.get_pickup_data_path(),
+			"ammo_in_mag": p.ammo_in_mag,
+			"ammo_reserve": p.ammo_reserve,
+			"pos": p.global_position,
+			"vel": p.linear_velocity,
+		})
+	rpc_sync_world_pickups_snapshot.rpc_id(joining_peer_id, pickup_entries)
+	for pid in Lobby.players.keys():
+		var holder_id := int(pid)
+		var pl := spawner.get_player(holder_id)
+		if pl == null or pl.weapon_holder == null:
 			continue
-		var dist_sq := pickup.global_position.distance_squared_to(from_pos)
-		if dist_sq < best_dist_sq:
-			best_dist_sq = dist_sq
-			nearest = pickup
-	return nearest
+		if is_host_spectator(holder_id):
+			continue
+		if not pl.weapon_holder.has_primary_weapon():
+			rpc_clear_primary_weapon.rpc_id(joining_peer_id, holder_id)
+			continue
+		var snap := pl.weapon_holder.create_drop_snapshot()
+		var path := String(snap.get("data_path", ""))
+		if path.is_empty():
+			rpc_clear_primary_weapon.rpc_id(joining_peer_id, holder_id)
+			continue
+		rpc_equip_primary_from_world.rpc_id(
+			joining_peer_id,
+			holder_id,
+			path,
+			int(snap.get("ammo_in_mag", 0)),
+			int(snap.get("ammo_reserve", 0))
+		)
+
+
+func _find_pickup_by_network_id(network_pickup_id: int) -> WeaponPickup:
+	if network_pickup_id <= 0:
+		return null
+	for node in get_tree().get_nodes_in_group("weapon_pickups"):
+		if node is WeaponPickup and (node as WeaponPickup).network_pickup_id == network_pickup_id:
+			return node as WeaponPickup
+	return null
+
+
+func _get_server_pickup_aim(player: OnlinePlayer) -> Dictionary:
+	var server_origin := player.global_transform.origin + Vector3.UP * 1.5
+	if player.camera:
+		server_origin = player.camera.global_transform.origin
+	var forward := -player.global_transform.basis.z
+	var right := player.global_transform.basis.x.normalized()
+	var pitch := player.aim_component.aim_angle * 1.5
+	var server_direction := forward.rotated(right, pitch).normalized()
+	return {"origin": server_origin, "direction": server_direction}
+
+
+func _pickup_client_aim_matches_server(player: OnlinePlayer, aim_origin: Vector3, aim_direction: Vector3) -> bool:
+	if aim_direction.length_squared() < 0.0001:
+		return false
+	var aim := _get_server_pickup_aim(player)
+	var server_direction: Vector3 = aim["direction"]
+	var server_origin: Vector3 = aim["origin"]
+	if aim_direction.normalized().dot(server_direction) < _PICKUP_MAX_AIM_DOT:
+		return false
+	if aim_origin.distance_to(server_origin) > _PICKUP_MAX_ORIGIN_DIST:
+		return false
+	return true
+
+
+func _find_weapon_pickup_along_ray(origin: Vector3, direction: Vector3, exclude_player: OnlinePlayer) -> WeaponPickup:
+	var dir := direction.normalized()
+	if dir == Vector3.ZERO:
+		return null
+	var to := origin + dir * PICKUP_RAY_MAX_DISTANCE
+	var params := PhysicsRayQueryParameters3D.new()
+	params.from = origin
+	params.to = to
+	params.collision_mask = PICKUP_RAY_COLLISION_MASK
+	if exclude_player:
+		params.exclude = [exclude_player]
+	var space := get_world_3d().direct_space_state
+	var result := space.intersect_ray(params)
+	if not result:
+		return null
+	var collider: Variant = result.get("collider")
+	if collider is WeaponPickup:
+		return collider as WeaponPickup
+	if collider is Node3D:
+		var n: Node = collider as Node
+		while n:
+			if n is WeaponPickup:
+				return n as WeaponPickup
+			n = n.get_parent()
+	return null

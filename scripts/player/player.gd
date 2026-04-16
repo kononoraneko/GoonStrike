@@ -106,7 +106,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("drop_weapon") and game_manager:
 		game_manager.server_request_drop_weapon.rpc_id(1, remote_player_id)
 	if event.is_action_pressed("use") and game_manager:
-		game_manager.server_request_use_pickup.rpc_id(1, remote_player_id)
+		var aim := get_aim_ray()
+		game_manager.server_request_use_pickup.rpc_id(1, remote_player_id, aim.origin, aim.direction)
 
 
 

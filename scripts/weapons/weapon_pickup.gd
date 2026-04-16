@@ -2,8 +2,8 @@ class_name WeaponPickup extends RigidBody3D
 
 ## Лежащий на земле предмет — оружие.
 ## Корень RigidBody3D обеспечивает физику падения после дропа.
-## Area3D внутри отвечает за зону взаимодействия (подбор).
-## Сервер обрабатывает логику подбора и рассылает всем клиентам команду скрыться.
+## Подбор — только по лучу прицела на сервере (см. GameManager.server_request_use_pickup).
+## Сервер обрабатывает логику и рассылает всем клиентам команду скрыться.
 
 @export var weapon_data: WeaponData
 @export var auto_pickup_if_slot_empty: bool = true
@@ -12,7 +12,6 @@ class_name WeaponPickup extends RigidBody3D
 @export var spawn_frozen: bool = false
 
 @onready var physics_shape: CollisionShape3D  = $PhysicsShape
-@onready var interact_area: Area3D            = $Area3D
 @onready var interact_shape: CollisionShape3D = $Area3D/InteractShape
 @onready var visual_root: Node3D              = $VisualRoot
 @onready var label: Label3D                   = $Label3D
@@ -24,7 +23,6 @@ var network_pickup_id: int = 0
 var weapon_data_path: String = ""
 var ammo_in_mag: int = -1
 var ammo_reserve: int = -1
-var _players_in_range: Dictionary = {}
 
 
 func _ready() -> void:
@@ -40,33 +38,8 @@ func _ready() -> void:
 	if weapon_data:
 		_refresh_world_visual(weapon_data)
 
-	interact_area.body_entered.connect(_on_body_entered)
-	interact_area.body_exited.connect(_on_body_exited)
-
 	if spawn_frozen:
 		freeze = true
-
-
-func _on_body_entered(body: Node3D) -> void:
-	if not multiplayer.is_server() or is_picked_up:
-		return
-	if body is not OnlinePlayer:
-		return
-	var player := body as OnlinePlayer
-	_players_in_range[player.remote_player_id] = true
-	if _game_manager:
-		_game_manager.server_try_auto_pickup(player.remote_player_id, self)
-
-
-func _on_body_exited(body: Node3D) -> void:
-	if body is not OnlinePlayer:
-		return
-	var player := body as OnlinePlayer
-	_players_in_range.erase(player.remote_player_id)
-
-
-func has_player_in_range(player_id: int) -> bool:
-	return _players_in_range.has(player_id)
 
 
 func is_available() -> bool:

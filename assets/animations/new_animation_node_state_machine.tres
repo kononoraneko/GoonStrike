@@ -68,4 +68,4 @@ states/Start/position = Vector2(338, -8)
 "states/rifle aiming idle/node" = SubResource("AnimationNodeAnimation_5k5vh")
 "states/rifle aiming idle/position" = Vector2(476, -83)
 transitions = ["Start", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_w3vaj"), "rifle aiming idle", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_8f0wn"), "BlendSpace2D", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_d5w6b")]
-graph_offset = Vector2(363, -67)
+graph_offset = Vector2(228, -129)
