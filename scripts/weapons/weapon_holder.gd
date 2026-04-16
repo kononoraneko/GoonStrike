@@ -84,6 +84,14 @@ func equip_weapon_data_local(data_path: String) -> void:
 	_set_weapon(data)
 
 
+func equip_primary_from_world(data_path: String, ammo_in_mag: int, ammo_reserve: int) -> void:
+	var data := load(data_path) as WeaponData
+	if data == null or data.weapon_scene == null:
+		push_error("WeaponHolder: invalid world WeaponData at " + data_path)
+		return
+	_set_weapon(data, ammo_in_mag, ammo_reserve, true)
+
+
 ## Подбор оружия — вызывается сервером через RPC на всех клиентах.
 @rpc("any_peer", "reliable", "call_local")
 func equip_from_pickup(_pickup_path: NodePath, data_path: String) -> void:
@@ -91,11 +99,37 @@ func equip_from_pickup(_pickup_path: NodePath, data_path: String) -> void:
 
 
 func drop_weapon() -> void:
+	clear_current_weapon()
+
+
+func clear_current_weapon() -> void:
+	stop_shooting()
 	if current_weapon == null:
+		if owner_player and owner_player.animation:
+			owner_player.animation.set_reloading(false)
 		return
 	current_weapon.queue_free()
 	current_weapon = null
+	if owner_player and owner_player.animation:
+		owner_player.animation.set_reloading(false)
 	weapon_changed.emit(null)
+
+
+func has_primary_weapon() -> bool:
+	return current_weapon != null
+
+
+func create_drop_snapshot() -> Dictionary:
+	if current_weapon == null or current_weapon.data == null:
+		return {}
+	var data_path := current_weapon.data.resource_path
+	if data_path.is_empty():
+		return {}
+	return {
+		"data_path": data_path,
+		"ammo_in_mag": max(current_weapon.ammo_in_mag, 0),
+		"ammo_reserve": max(current_weapon.ammo_reserve, 0),
+	}
 
 
 # ── Обработчики сигналов ──────────────────────────────────────────────────
@@ -214,8 +248,8 @@ func _get_weapon_parent_node() -> Node3D:
 	return owner_player
 
 
-func _set_weapon(data: WeaponData) -> void:
-	drop_weapon()
+func _set_weapon(data: WeaponData, world_mag: int = -1, world_reserve: int = -1, from_world_pickup: bool = false) -> void:
+	clear_current_weapon()
 	var instance := data.weapon_scene.instantiate() as Weapon
 	if instance == null:
 		push_error("WeaponHolder: weapon_scene is not a Weapon node")
@@ -229,6 +263,8 @@ func _set_weapon(data: WeaponData) -> void:
 	if multiplayer.is_server():
 		instance.ammo_changed.connect(func(_mag, _reserve): _sync_weapon_ammo(owner_player.remote_player_id))
 		instance.reload_state_changed.connect(func(_state): _sync_weapon_ammo(owner_player.remote_player_id))
+	if from_world_pickup:
+		instance.apply_world_pickup_ammo(world_mag, world_reserve)
 	current_weapon = instance
 	weapon_changed.emit(current_weapon)
 

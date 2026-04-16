@@ -44,15 +44,6 @@ blend_point_7/pos = Vector2(0, -1)
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_6bp0k"]
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_jigrk"]
-animation = &"char/firing rifle"
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_w3vaj"]
-animation = &"char/hit reaction"
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_6bp0k"]
-animation = &"char/reloading"
-
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_5k5vh"]
 animation = &"char/rifle aiming idle"
 
@@ -67,45 +58,6 @@ advance_condition = &"moving"
 advance_mode = 2
 advance_condition = &"idle"
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ao87u"]
-advance_condition = &"shoot"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_74rfg"]
-advance_mode = 2
-advance_condition = &"idle"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_rxkjs"]
-advance_mode = 2
-advance_condition = &"moving"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_j78qb"]
-advance_condition = &"hit"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jigrk"]
-advance_condition = &"hit"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5k5vh"]
-switch_mode = 2
-advance_mode = 2
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_58pqy"]
-switch_mode = 2
-advance_mode = 2
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_awemn"]
-advance_condition = &"is_reloading"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_txsov"]
-switch_mode = 2
-advance_mode = 2
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_7pcpc"]
-advance_condition = &"is_reloading"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_rgcj1"]
-switch_mode = 2
-advance_mode = 2
-
 [resource]
 states/BlendSpace2D/node = SubResource("AnimationNodeBlendSpace2D_jigrk")
 states/BlendSpace2D/position = Vector2(867, -83)
@@ -113,13 +65,7 @@ states/End/position = Vector2(1301, -38)
 states/Locomotion/node = SubResource("AnimationNodeStateMachine_6bp0k")
 states/Locomotion/position = Vector2(299, -175)
 states/Start/position = Vector2(338, -8)
-"states/firing rifle/node" = SubResource("AnimationNodeAnimation_jigrk")
-"states/firing rifle/position" = Vector2(659, 141)
-"states/hit reaction/node" = SubResource("AnimationNodeAnimation_w3vaj")
-"states/hit reaction/position" = Vector2(654, 67)
-states/reload/node = SubResource("AnimationNodeAnimation_6bp0k")
-states/reload/position = Vector2(659, -3)
 "states/rifle aiming idle/node" = SubResource("AnimationNodeAnimation_5k5vh")
 "states/rifle aiming idle/position" = Vector2(476, -83)
-transitions = ["Start", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_w3vaj"), "rifle aiming idle", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_8f0wn"), "BlendSpace2D", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_d5w6b"), "rifle aiming idle", "firing rifle", SubResource("AnimationNodeStateMachineTransition_ao87u"), "firing rifle", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_74rfg"), "firing rifle", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_rxkjs"), "rifle aiming idle", "hit reaction", SubResource("AnimationNodeStateMachineTransition_j78qb"), "BlendSpace2D", "hit reaction", SubResource("AnimationNodeStateMachineTransition_jigrk"), "hit reaction", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_5k5vh"), "hit reaction", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_58pqy"), "rifle aiming idle", "reload", SubResource("AnimationNodeStateMachineTransition_awemn"), "reload", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_txsov"), "BlendSpace2D", "reload", SubResource("AnimationNodeStateMachineTransition_7pcpc"), "reload", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_rgcj1")]
-graph_offset = Vector2(208, -244)
+transitions = ["Start", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_w3vaj"), "rifle aiming idle", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_8f0wn"), "BlendSpace2D", "rifle aiming idle", SubResource("AnimationNodeStateMachineTransition_d5w6b")]
+graph_offset = Vector2(363, -67)

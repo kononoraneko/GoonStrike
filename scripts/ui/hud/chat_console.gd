@@ -159,7 +159,7 @@ func _is_server_command(text: String) -> bool:
 	var parts := text.trim_prefix("/").split(" ", false)
 	if parts.is_empty():
 		return false
-	return parts[0].to_lower() in ["op", "speed", "jump", "sv_ammo", "round_time", "round_limit"]
+	return parts[0].to_lower() in ["op", "speed", "jump", "sv_ammo", "round_time", "round_limit", "give", "weapons"]
 
 
 ## Навигация по истории стрелками.

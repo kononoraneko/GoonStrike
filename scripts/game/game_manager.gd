@@ -15,10 +15,15 @@ signal round_time_updated(seconds_left: float)
 signal match_stats_updated
 
 const HOST_PEER_ID := 1
+const WORLD_PICKUP_SCENE: PackedScene = preload("res://scenes/weapons/pickup_scene.tscn")
+const DROP_FORWARD_OFFSET := 1.1
+const DROP_UP_OFFSET := 0.6
 
 var _round_end_time: float = 0.0
 ## peer_id → { "k", "d", "a" } — ведётся на сервере, реплицируется на клиенты.
 var _match_stats: Dictionary = {}
+## Уникальный id для дропнутых пикапов (RPC по пути узла на клиенте ненадёжен).
+var _next_world_pickup_id: int = 0
 
 @onready var spawner: PlayerSpawner = $PlayerSpawner
 @onready var hud_manager: HUDManager = $HUDManager
@@ -360,7 +365,18 @@ func _rpc_client_round_ended(winning_team: int) -> void:
 	round_ended.emit(winning_team)
 
 
-# ── Weapon equip (stable node path) ───────────────────────────────────────
+# ── Weapon equip / drop / pickup (server-authoritative) ───────────────────
+#
+# Тип оружия задаётся только WeaponData (resource_path); отдельные RPC под
+# каждую модель не нужны — достаточно одного запроса дропа текущего слота.
+#
+# Безопасность:
+# - server_request_drop_weapon / server_request_use_pickup: на сервере
+#   multiplayer.get_remote_sender_id() == peer_id — нельзя дропнуть/подобрать
+#   за другого игрока.
+# - Подбор: сервер реагирует только на Area3D на сервере и has_player_in_range;
+#   слишком большой InteractShape даёт «щедрый» подбор — ограничивайте размер.
+# - rpc_* с authority рассылает хост.
 
 @rpc("authority", "reliable", "call_local")
 func rpc_equip_weapon_data(peer_id: int, data_path: String) -> void:
@@ -368,6 +384,62 @@ func rpc_equip_weapon_data(peer_id: int, data_path: String) -> void:
 	if pl == null:
 		return
 	pl.weapon_holder.equip_weapon_data_local(data_path)
+
+
+@rpc("authority", "reliable", "call_local")
+func rpc_equip_primary_from_world(peer_id: int, data_path: String, ammo_in_mag: int, ammo_reserve: int) -> void:
+	var pl := spawner.get_player(peer_id)
+	if pl == null:
+		return
+	pl.weapon_holder.equip_primary_from_world(data_path, ammo_in_mag, ammo_reserve)
+
+
+@rpc("authority", "reliable", "call_local")
+func rpc_clear_primary_weapon(peer_id: int) -> void:
+	var pl := spawner.get_player(peer_id)
+	if pl == null:
+		return
+	pl.weapon_holder.clear_current_weapon()
+
+
+func server_try_auto_pickup(peer_id: int, pickup: WeaponPickup) -> void:
+	if not multiplayer.is_server() or pickup == null:
+		return
+	var pl := spawner.get_player(peer_id)
+	if pl == null or pl.weapon_holder == null:
+		return
+	if pl.weapon_holder.has_primary_weapon():
+		return
+	_server_handle_primary_pickup(pl, pickup, false)
+
+
+@rpc("any_peer", "reliable")
+func server_request_drop_weapon(peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id != peer_id:
+		return
+	var pl := spawner.get_player(peer_id)
+	if pl == null:
+		return
+	_server_drop_player_weapon(pl)
+
+
+@rpc("any_peer", "reliable")
+func server_request_use_pickup(peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id != peer_id:
+		return
+	var pl := spawner.get_player(peer_id)
+	if pl == null:
+		return
+	var pickup := _find_best_pickup_for_player(peer_id, pl.global_position)
+	if pickup == null:
+		return
+	_server_handle_primary_pickup(pl, pickup, true)
 
 
 @rpc("any_peer", "reliable")
@@ -380,7 +452,136 @@ func server_weapon_sync_request(for_peer_id: int) -> void:
 	var pl := spawner.get_player(for_peer_id)
 	if pl == null or pl.weapon_holder.current_weapon == null:
 		return
-	var data_path := pl.weapon_holder.current_weapon.data.resource_path if pl.weapon_holder.current_weapon.data else ""
+	var snapshot := pl.weapon_holder.create_drop_snapshot()
+	var data_path := String(snapshot.get("data_path", ""))
 	if data_path.is_empty():
 		return
-	rpc_equip_weapon_data.rpc(for_peer_id, data_path)
+	rpc_equip_primary_from_world.rpc(
+		for_peer_id,
+		data_path,
+		int(snapshot.get("ammo_in_mag", 0)),
+		int(snapshot.get("ammo_reserve", 0))
+	)
+
+
+func _server_drop_player_weapon(player: OnlinePlayer) -> bool:
+	if player == null or player.weapon_holder == null:
+		return false
+	var snapshot := player.weapon_holder.create_drop_snapshot()
+	var data_path := String(snapshot.get("data_path", ""))
+	if data_path.is_empty():
+		return false
+	_spawn_world_pickup(player, data_path, int(snapshot.get("ammo_in_mag", 0)), int(snapshot.get("ammo_reserve", 0)))
+	rpc_clear_primary_weapon.rpc(player.remote_player_id)
+	return true
+
+
+func _server_handle_primary_pickup(player: OnlinePlayer, pickup: WeaponPickup, requested_via_use: bool) -> bool:
+	if player == null or player.weapon_holder == null or pickup == null:
+		return false
+	if not pickup.is_available() or not pickup.has_player_in_range(player.remote_player_id):
+		return false
+	var has_weapon := player.weapon_holder.has_primary_weapon()
+	if has_weapon:
+		if not requested_via_use or not pickup.use_to_swap_if_slot_busy:
+			return false
+	else:
+		if not pickup.auto_pickup_if_slot_empty and not requested_via_use:
+			return false
+
+	var data_path := pickup.get_pickup_data_path()
+	if data_path.is_empty():
+		return false
+	var ammo_state := pickup.get_pickup_ammo_state()
+	var target_mag := int(ammo_state.get("ammo_in_mag", 0))
+	var target_reserve := int(ammo_state.get("ammo_reserve", 0))
+
+	if has_weapon:
+		var old_snapshot := player.weapon_holder.create_drop_snapshot()
+		var old_data_path := String(old_snapshot.get("data_path", ""))
+		if not old_data_path.is_empty():
+			_spawn_world_pickup(
+				player,
+				old_data_path,
+				int(old_snapshot.get("ammo_in_mag", 0)),
+				int(old_snapshot.get("ammo_reserve", 0))
+			)
+
+	rpc_equip_primary_from_world.rpc(player.remote_player_id, data_path, target_mag, target_reserve)
+	pickup.consume_on_server()
+	return true
+
+
+func _spawn_world_pickup(player: OnlinePlayer, data_path: String, ammo_in_mag: int, ammo_reserve: int) -> void:
+	if WORLD_PICKUP_SCENE == null:
+		return
+	var forward := -player.global_transform.basis.z.normalized()
+	if forward == Vector3.ZERO:
+		forward = Vector3.FORWARD
+	var drop_pos := player.global_position + forward * DROP_FORWARD_OFFSET + Vector3.UP * DROP_UP_OFFSET
+	var linear_vel := forward * 3.0 + Vector3.UP * 2.0
+	# Высокоуровневый мультиплеер не реплицирует add_child — иначе пикап есть только
+	# на сервере и клиенты не видят меш. Рассылаем спавн с authority + call_local.
+	if multiplayer.has_multiplayer_peer():
+		if multiplayer.is_server():
+			_next_world_pickup_id += 1
+			var nid := _next_world_pickup_id
+			rpc_spawn_dropped_pickup.rpc(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, nid)
+	else:
+		_next_world_pickup_id += 1
+		_spawn_dropped_pickup_local(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, _next_world_pickup_id)
+
+
+@rpc("authority", "reliable", "call_local")
+func rpc_spawn_dropped_pickup(data_path: String, ammo_in_mag: int, ammo_reserve: int, drop_pos: Vector3, linear_vel: Vector3, network_pickup_id: int) -> void:
+	_spawn_dropped_pickup_local(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, network_pickup_id)
+
+
+func _spawn_dropped_pickup_local(data_path: String, ammo_in_mag: int, ammo_reserve: int, drop_pos: Vector3, linear_vel: Vector3, network_pickup_id: int) -> void:
+	if WORLD_PICKUP_SCENE == null:
+		return
+	var pickup := WORLD_PICKUP_SCENE.instantiate() as WeaponPickup
+	if pickup == null:
+		return
+	pickup.network_pickup_id = network_pickup_id
+	var parent := _get_world_pickups_root()
+	parent.add_child(pickup)
+	pickup.global_position = drop_pos
+	pickup.setup_world_pickup(data_path, ammo_in_mag, ammo_reserve)
+	pickup.linear_velocity = linear_vel
+
+
+@rpc("authority", "reliable", "call_local")
+func rpc_remove_world_pickup(network_pickup_id: int) -> void:
+	if network_pickup_id <= 0:
+		return
+	for n in get_tree().get_nodes_in_group("weapon_pickups"):
+		if n is WeaponPickup and (n as WeaponPickup).network_pickup_id == network_pickup_id:
+			(n as WeaponPickup).queue_free()
+			return
+
+
+func _get_world_pickups_root() -> Node:
+	# Узел Game в уровне — не родитель SpawnPoints; дропы вешаем на корень уровня.
+	var level := get_parent()
+	if level != null:
+		return level
+	return self
+
+
+func _find_best_pickup_for_player(peer_id: int, from_pos: Vector3) -> WeaponPickup:
+	var nearest: WeaponPickup = null
+	var best_dist_sq := INF
+	for node in get_tree().get_nodes_in_group("weapon_pickups"):
+		if node is not WeaponPickup:
+			continue
+		var pickup := node as WeaponPickup
+		if pickup == null or not pickup.is_available():
+			continue
+		if not pickup.has_player_in_range(peer_id):
+			continue
+		var dist_sq := pickup.global_position.distance_squared_to(from_pos)
+		if dist_sq < best_dist_sq:
+			best_dist_sq = dist_sq
+			nearest = pickup
+	return nearest

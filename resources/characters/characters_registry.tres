@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://b5kjptqgklmss" path="res://scripts/data/character_data.gd" id="1_i6ios"]
 [ext_resource type="Script" uid="uid://b5e03mc5443d2" path="res://scripts/data/characters_registry.gd" id="1_script"]
-[ext_resource type="Resource" path="res://resources/characters/lain.tres" id="2_lain"]
-[ext_resource type="Resource" path="res://resources/characters/leama.tres" id="3_leama"]
+[ext_resource type="Resource" uid="uid://dnr1rlh14yhti" path="res://resources/characters/lain.tres" id="2_lain"]
+[ext_resource type="Resource" uid="uid://y8g7r1oik2q0" path="res://resources/characters/leama.tres" id="3_leama"]
 
 [resource]
 script = ExtResource("1_script")

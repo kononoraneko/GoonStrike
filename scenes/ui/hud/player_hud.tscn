@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ntf57466x32q" path="res://scripts/ui/hud/player_hud.gd" id="1_3j41j"]
 [ext_resource type="Texture2D" uid="uid://bqihe6qwwhn7" path="res://resources/ak-47.png" id="2_3t2gr"]
+[ext_resource type="Texture2D" uid="uid://cdt3pmsb3x88u" path="res://assets/weapons/scope.png" id="3_x7jc0"]
 
 [node name="PlayerHUD" type="Control" unique_id=1856685360]
 visibility_layer = 2
@@ -96,3 +97,22 @@ offset_bottom = 2.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="ScopeOverlay" type="Control" parent="." unique_id=88291001]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TextureRect" type="TextureRect" parent="ScopeOverlay" unique_id=621981197]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_x7jc0")

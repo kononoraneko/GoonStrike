@@ -52,7 +52,12 @@ func shoot(aim_ray: Dictionary) -> bool:
 
 	if spread:
 		var mv: MovementComponent = owner_player.movement
-		aim_direction = spread.apply(aim_direction, mv.input_dir != Vector2.ZERO, not owner_player.is_on_floor())
+		var spread_scale := 1.0
+		if data and data.has_sniper_scope and owner_player.sniper_scope_stage > 0:
+			var st := owner_player.sniper_scope_stage
+			var tighter := 1.0 - 0.22 * float(st - 1)
+			spread_scale = data.scope_spread_multiplier * maxf(tighter, 0.45)
+		aim_direction = spread.apply(aim_direction, mv.input_dir != Vector2.ZERO, not owner_player.is_on_floor(), spread_scale)
 		spread.on_shot_fired()
 
 	var local_hit_point := aim_origin + aim_direction * data.range
@@ -126,6 +131,10 @@ func apply_ammo_state(new_mag: int, new_reserve: int, reloading: bool) -> void:
 	is_reloading = reloading
 	ammo_changed.emit(ammo_in_mag, ammo_reserve)
 	reload_state_changed.emit(is_reloading)
+
+
+func apply_world_pickup_ammo(world_mag: int, world_reserve: int) -> void:
+	apply_ammo_state(max(world_mag, 0), max(world_reserve, 0), false)
 
 
 ## Только для сервера. Проверяет тайминг и списывает патрон.

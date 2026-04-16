@@ -30,16 +30,18 @@ func _process(delta: float) -> void:
 
 
 ## Вызывается из Weapon.shoot() вместо прямой передачи direction.
-func apply(base_direction: Vector3, is_moving: bool, is_airborne: bool) -> Vector3:
+## spread_scale: 1.0 обычный разброс; меньше 1 (ADS) — сужает конус.
+func apply(base_direction: Vector3, is_moving: bool, is_airborne: bool, spread_scale: float = 1.0) -> Vector3:
 	if _data == null:
 		return base_direction
+	var s := clampf(spread_scale, 0.0, 1.0)
 	match _data.mode:
 		SpreadPattern.SpreadMode.RANDOM:
-			return _apply_random(base_direction, is_moving, is_airborne)
+			return _apply_random(base_direction, is_moving, is_airborne, s)
 		SpreadPattern.SpreadMode.BLOOM:
-			return _apply_bloom(base_direction, is_moving, is_airborne)
+			return _apply_bloom(base_direction, is_moving, is_airborne, s)
 		SpreadPattern.SpreadMode.PATTERN:
-			return _apply_pattern(base_direction)
+			return _apply_pattern(base_direction, s)
 	return base_direction
 
 
@@ -63,24 +65,26 @@ func reset() -> void:
 
 # ── Режимы ────────────────────────────────────────────────────────────────
 
-func _apply_random(dir: Vector3, is_moving: bool, is_airborne: bool) -> Vector3:
+func _apply_random(dir: Vector3, is_moving: bool, is_airborne: bool, spread_scale: float) -> Vector3:
 	var angle := _data.base_spread
 	if is_moving:   angle *= _data.move_multiplier
 	if is_airborne: angle *= _data.air_multiplier
+	angle *= spread_scale
 	return _random_cone(dir, deg_to_rad(angle))
 
 
-func _apply_bloom(dir: Vector3, is_moving: bool, is_airborne: bool) -> Vector3:
+func _apply_bloom(dir: Vector3, is_moving: bool, is_airborne: bool, spread_scale: float) -> Vector3:
 	var angle := _data.base_spread + _current_bloom
 	if is_moving:   angle *= _data.move_multiplier
 	if is_airborne: angle *= _data.air_multiplier
+	angle *= spread_scale
 	return _random_cone(dir, deg_to_rad(angle))
 
 
-func _apply_pattern(dir: Vector3) -> Vector3:
+func _apply_pattern(dir: Vector3, spread_scale: float) -> Vector3:
 	if _data.pattern_points.is_empty():
 		return dir
-	var offset: Vector2 = _data.pattern_points[_pattern_index]
+	var offset: Vector2 = _data.pattern_points[_pattern_index] * spread_scale
 	# offset.x — горизонтальное отклонение (yaw), offset.y — вертикальное (pitch)
 	var right := dir.cross(Vector3.UP).normalized()
 	var up    := right.cross(dir).normalized()

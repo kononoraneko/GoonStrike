@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="CharacterData" format=3 uid="uid://dnr1rlh14yhti"]
 
 [ext_resource type="Script" uid="uid://b5kjptqgklmss" path="res://scripts/data/character_data.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://drq5sxmo4htrx" path="res://scenes/characters/lain_character.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://cnmkk2u2dnehf" path="res://scenes/characters/lain_character.res" id="1_tgxba"]
 
 [resource]
 script = ExtResource("1_script")
 id = "lain"
 display_name = "Lain"
-character_scene = ExtResource("2_scene")
+character_scene = ExtResource("1_tgxba")

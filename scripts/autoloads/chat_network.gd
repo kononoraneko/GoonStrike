@@ -75,15 +75,21 @@ func _rpc_admin_command(text: String) -> void:
 	if sender_id == 0:
 		sender_id = 1
 
-	if not _is_op(sender_id):
-		_rpc_console_feedback.rpc_id(sender_id, "Нет прав: только op")
-		return
-
 	var parts := text.trim_prefix("/").split(" ", false)
 	if parts.is_empty():
 		return
 
 	var cmd := parts[0].to_lower()
+
+	# /weapons доступна всем
+	if cmd == "weapons":
+		_handle_weapons_command(sender_id)
+		return
+
+	if not _is_op(sender_id):
+		_rpc_console_feedback.rpc_id(sender_id, "Нет прав: только op")
+		return
+
 	match cmd:
 		"op":
 			if parts.size() < 2:
@@ -100,6 +106,8 @@ func _rpc_admin_command(text: String) -> void:
 			_handle_round_time_command(parts, sender_id)
 		"round_limit":
 			_handle_round_limit_command(parts, sender_id)
+		"give":
+			_handle_give_command(parts, sender_id)
 		_:
 			_rpc_console_feedback.rpc_id(sender_id, "Неизвестная серверная команда")
 
@@ -195,6 +203,41 @@ func _handle_round_limit_command(parts: PackedStringArray, sender_id: int) -> vo
 	mode.round_limit = maxi(int(parts[1]), 1)
 	send_system("[ADMIN] round_limit = %d" % mode.round_limit)
 	_rpc_console_feedback.rpc_id(sender_id, "Применено")
+
+
+func _handle_give_command(parts: PackedStringArray, sender_id: int) -> void:
+	if parts.size() < 2:
+		_rpc_console_feedback.rpc_id(sender_id, "Использование: /give <оружие>\nСписок: /weapons")
+		return
+	var weapon_key := parts[1].strip_edges().to_lower()
+	if not WeaponRegistry.has_weapon(weapon_key):
+		_rpc_console_feedback.rpc_id(sender_id, "Оружие не найдено: %s\nСписок: /weapons" % weapon_key)
+		return
+	var data_path := WeaponRegistry.get_weapon_path(weapon_key)
+	var gm := _get_game_manager()
+	if gm == null:
+		_rpc_console_feedback.rpc_id(sender_id, "GameManager не найден")
+		return
+	var pl := gm.spawner.get_player(sender_id)
+	if pl == null:
+		_rpc_console_feedback.rpc_id(sender_id, "Игрок не заспавнен")
+		return
+	if pl.weapon_holder.has_primary_weapon():
+		gm._server_drop_player_weapon(pl)
+	gm.rpc_equip_weapon_data.rpc(sender_id, data_path)
+	_rpc_console_feedback.rpc_id(sender_id, "Выдано: %s" % weapon_key)
+
+
+func _handle_weapons_command(sender_id: int) -> void:
+	var names := WeaponRegistry.get_all_names()
+	if names.is_empty():
+		_rpc_console_feedback.rpc_id(sender_id, "Оружие не зарегистрировано")
+		return
+	var lines: PackedStringArray = ["[b]Доступное оружие:[/b]"]
+	for n in names:
+		lines.append("  • %s" % n)
+	lines.append("Использование: /give <название>")
+	_rpc_console_feedback.rpc_id(sender_id, "\n".join(lines))
 
 
 # ── Утилиты ───────────────────────────────────────────────────────────────

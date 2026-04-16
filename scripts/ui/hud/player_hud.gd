@@ -21,6 +21,8 @@ class_name PlayerHUD extends Control
 @onready var weapon_icon: TextureRect = $VBoxContainer/WeaponIcon
 @onready var weapon_label:Label       = $VBoxContainer/WeaponLabel
 @onready var ammo_label:  Label       = $VBoxContainer/AmmoLabel
+@onready var cross_hair: ColorRect    = $CrossHair
+@onready var scope_overlay: Control   = $ScopeOverlay
 
 ## Устанавливается при спавне локального игрока.
 var player: OnlinePlayer
@@ -42,8 +44,11 @@ func setup(p: OnlinePlayer) -> void:
 	# ── Оружие ──────────────────────────────────────────────────────────
 	var wh := player.weapon_holder
 	wh.weapon_changed.connect(_on_weapon_changed)
+	if not player.sniper_scope_changed.is_connected(_on_sniper_scope_changed):
+		player.sniper_scope_changed.connect(_on_sniper_scope_changed)
 	# Если оружие уже есть при подключении HUD (выдано при спавне)
 	_on_weapon_changed(wh.current_weapon)
+	_on_sniper_scope_changed(player.is_sniper_scoped)
 
 
 func unbind_player() -> void:
@@ -56,7 +61,13 @@ func unbind_player() -> void:
 			wh.weapon_changed.disconnect(_on_weapon_changed)
 		if wh.current_weapon != null and wh.current_weapon.ammo_changed.is_connected(_on_ammo_changed):
 			wh.current_weapon.ammo_changed.disconnect(_on_ammo_changed)
+		if player.sniper_scope_changed.is_connected(_on_sniper_scope_changed):
+			player.sniper_scope_changed.disconnect(_on_sniper_scope_changed)
 	player = null
+	if scope_overlay:
+		scope_overlay.visible = false
+	if cross_hair:
+		cross_hair.visible = true
 	visible = false
 
 
@@ -86,3 +97,10 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 
 func _on_ammo_changed(in_mag: int, in_reserve: int) -> void:
 	ammo_label.text = "%d / %d" % [in_mag, in_reserve]
+
+
+func _on_sniper_scope_changed(active: bool) -> void:
+	if scope_overlay:
+		scope_overlay.visible = active
+	if cross_hair:
+		cross_hair.visible = not active
