@@ -1,11 +1,11 @@
 [gd_scene format=4 uid="uid://bhtilu7nd7oyb"]
 
 [ext_resource type="Texture2D" uid="uid://by1mn4xk51ucp" path="res://assets/dev_textures/black/texture_01.png" id="1_6lluh"]
-[ext_resource type="Script" uid="uid://h1vw5vub82yx" path="res://scripts/game/game_manager.gd" id="1_8rn00"]
-[ext_resource type="Script" uid="uid://6cbm3vor7sfv" path="res://scripts/player/player_spawner.gd" id="2_vkhxg"]
-[ext_resource type="Script" uid="uid://cnrs6403rx5bq" path="res://scripts/ui/hud/hud_manager.gd" id="4_8rn00"]
+[ext_resource type="Script" uid="uid://dhgsw53ljjal0" path="res://scripts/game/game_manager.gd" id="1_8rn00"]
+[ext_resource type="Script" uid="uid://b3robkvfyts2h" path="res://scripts/player/player_spawner.gd" id="2_vkhxg"]
+[ext_resource type="Script" uid="uid://iiaw8yyyqcjp" path="res://scripts/ui/hud/hud_manager.gd" id="4_8rn00"]
 [ext_resource type="PackedScene" uid="uid://c4jwyinsdd4is" path="res://scenes/ui/hud/game_hud.tscn" id="5_uuk04"]
-[ext_resource type="PackedScene" uid="uid://gxgx3058a43l" path="res://scenes/game/buy_zone.tscn" id="7_uuk04"]
+[ext_resource type="PackedScene" uid="uid://bno57hcwd1er5" path="res://scenes/game/buy_zone.tscn" id="7_uuk04"]
 [ext_resource type="PackedScene" uid="uid://b6pjl6awvp1ne" path="res://scenes/characters/leama_character.tscn" id="8_3jdlx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vkhxg"]
@@ -279,7 +279,7 @@ shape = SubResource("BoxShape3D_8rn00")
 [node name="BuyZone" parent="." unique_id=1612607555 instance=ExtResource("7_uuk04")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.605096, 2.861023e-06, 30.93571)
 
-[node name="CollisionShape3D" parent="BuyZone" index="0" unique_id=885963181]
+[node name="CollisionShape3D" parent="BuyZone" index="0" unique_id=1446860129]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.68640137, 1.2, 0.22305298)
 
 [editable path="BuyZone"]
