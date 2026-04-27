@@ -2,17 +2,25 @@ extends Control
 
 const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings/settings_screen.gd")
 
-@onready var player_list: ItemList = $VBoxContainer/PlayerList
-@onready var status_label: Label = $VBoxContainer/StatusLabel
-@onready var session_label: Label = $VBoxContainer/SessionLabel
-@onready var host_session_box: VBoxContainer = $VBoxContainer/HostSessionBox
-@onready var map_option: OptionButton = $VBoxContainer/HostSessionBox/MapOption
-@onready var mode_option: OptionButton = $VBoxContainer/HostSessionBox/ModeOption
-@onready var chat_log: RichTextLabel = $VBoxContainer/ChatBox/ChatLog
-@onready var chat_input: LineEdit = $VBoxContainer/ChatBox/ChatInput
-@onready var settings_btn: Button = $VBoxContainer/ButtonRow/SettingsButton
-@onready var leave_btn: Button = $VBoxContainer/ButtonRow/LeaveButton
-@onready var start_btn: Button = $VBoxContainer/ButtonRow/StartButton
+@onready var players_tab_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/PlayersTabButton
+@onready var session_tab_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/SessionTabButton
+@onready var chat_tab_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/ChatTabButton
+@onready var close_drawer_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader/CloseDrawerButton
+@onready var drawer_title_label: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader/DrawerTitleLabel
+@onready var players_drawer: Control = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayersDrawer
+@onready var session_drawer: Control = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/SessionDrawer
+@onready var chat_drawer: Control = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ChatDrawer
+@onready var player_list: ItemList = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayersDrawer/PlayerList
+@onready var status_label: Label = $RootMargin/ShellRow/ContentStage/StageVBox/StatusLabel
+@onready var session_label: Label = $RootMargin/ShellRow/ContentStage/StageVBox/SessionLabel
+@onready var host_session_box: VBoxContainer = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/SessionDrawer/HostSessionBox
+@onready var map_option: OptionButton = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/SessionDrawer/HostSessionBox/MapOption
+@onready var mode_option: OptionButton = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/SessionDrawer/HostSessionBox/ModeOption
+@onready var chat_log: RichTextLabel = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ChatDrawer/ChatLog
+@onready var chat_input: LineEdit = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ChatDrawer/ChatInput
+@onready var settings_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/SettingsButton
+@onready var leave_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/LeaveButton
+@onready var start_btn: Button = $RootMargin/ShellRow/ContentStage/StageVBox/StartButton
 
 var _map_paths: Array[String] = []
 
@@ -30,6 +38,10 @@ func _ready() -> void:
 	settings_btn.pressed.connect(_on_settings_pressed)
 	leave_btn.pressed.connect(_on_leave_pressed)
 	start_btn.pressed.connect(_on_start_pressed)
+	players_tab_btn.pressed.connect(func() -> void: _open_drawer("players"))
+	session_tab_btn.pressed.connect(func() -> void: _open_drawer("session"))
+	chat_tab_btn.pressed.connect(func() -> void: _open_drawer("chat"))
+	close_drawer_btn.pressed.connect(_on_close_drawer_pressed)
 	map_option.item_selected.connect(_on_map_selected)
 	mode_option.item_selected.connect(_on_mode_selected)
 	chat_input.text_submitted.connect(_on_chat_submitted)
@@ -40,6 +52,7 @@ func _ready() -> void:
 	_refresh_leader_controls()
 	status_label.text = "Подключено: %d" % Lobby.players.size()
 	_refresh_list()
+	_open_drawer("players")
 
 
 func _on_lobby_session_changed() -> void:
@@ -133,6 +146,28 @@ func _refresh_list(_peer_id: int = -1, _player_info: Dictionary = {}) -> void:
 		var name := str(info.get("name", "?"))
 		player_list.add_item("%s%s%s" % [prefix, op_tag, name])
 	status_label.text = "Подключено: %d" % Lobby.players.size()
+
+
+func _on_close_drawer_pressed() -> void:
+	players_drawer.hide()
+	session_drawer.hide()
+	chat_drawer.hide()
+	drawer_title_label.text = "Панель закрыта"
+
+
+func _open_drawer(drawer: String) -> void:
+	players_drawer.visible = drawer == "players"
+	session_drawer.visible = drawer == "session"
+	chat_drawer.visible = drawer == "chat"
+	match drawer:
+		"players":
+			drawer_title_label.text = "Игроки"
+		"session":
+			drawer_title_label.text = "Параметры"
+		"chat":
+			drawer_title_label.text = "Чат"
+		_:
+			drawer_title_label.text = "Панель"
 
 
 func _on_settings_pressed() -> void:

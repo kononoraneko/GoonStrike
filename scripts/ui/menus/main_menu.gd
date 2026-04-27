@@ -4,35 +4,51 @@ const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings/settings_scre
 const LOCAL_SERVER_LAUNCHER := preload("res://scripts/server/local_server_launcher.gd")
 const LOCAL_SERVER_CONNECT_DELAY := 0.6
 
-@onready var name_edit: LineEdit = $VBoxContainer/NameEdit
-@onready var auth_status_label: Label = $VBoxContainer/AuthPanel/AuthVBox/AuthStatusLabel
-@onready var email_edit: LineEdit = $VBoxContainer/AuthPanel/AuthVBox/EmailEdit
-@onready var password_edit: LineEdit = $VBoxContainer/AuthPanel/AuthVBox/PasswordEdit
-@onready var login_btn: Button = $VBoxContainer/AuthPanel/AuthVBox/AuthButtons/LoginButton
-@onready var register_btn: Button = $VBoxContainer/AuthPanel/AuthVBox/AuthButtons/RegisterButton
-@onready var logout_btn: Button = $VBoxContainer/AuthPanel/AuthVBox/AuthButtons/LogoutButton
-@onready var ip_edit: LineEdit = $VBoxContainer/IpRow/IpEdit
-@onready var refresh_servers_btn: Button = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServerBrowserButtons/RefreshServersButton
-@onready var connect_selected_server_btn: Button = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServerBrowserButtons/ConnectSelectedServerButton
-@onready var trusted_servers_list: ItemList = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/TrustedServersList
-@onready var servers_status_label: Label = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServersStatusLabel
-@onready var join_btn: Button = $VBoxContainer/ButtonRow/JoinButton
-@onready var local_dedicated_btn: Button = $VBoxContainer/ButtonRow/LocalDedicatedButton
-@onready var settings_btn: Button = $VBoxContainer/ButtonRow/SettingsButton
-@onready var quit_btn: Button = $VBoxContainer/ButtonRow/QuitButton
-@onready var character_option: OptionButton = $VBoxContainer/HBoxContainer/OptionButton
-@onready var economy_status_label: Label = $VBoxContainer/EconomyPanel/EconomyVBox/EconomyStatusLabel
-@onready var soft_balance_label: Label = $VBoxContainer/EconomyPanel/EconomyVBox/SoftBalanceLabel
-@onready var dev_grant_btn: Button = $VBoxContainer/EconomyPanel/EconomyVBox/DevGrantButton
-@onready var ar15_skin_option: OptionButton = $VBoxContainer/EconomyPanel/EconomyVBox/AR15SkinRow/AR15SkinOption
-@onready var barret_skin_option: OptionButton = $VBoxContainer/EconomyPanel/EconomyVBox/BarretSkinRow/BarretSkinOption
-@onready var case_option: OptionButton = $VBoxContainer/EconomyPanel/EconomyVBox/CaseRow/CaseOption
-@onready var open_case_btn: Button = $VBoxContainer/EconomyPanel/EconomyVBox/CaseRow/OpenCaseButton
+@onready var play_tab_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/PlayTabButton
+@onready var servers_tab_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/ServersTabButton
+@onready var profile_tab_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/ProfileTabButton
+@onready var inventory_tab_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/InventoryTabButton
+@onready var close_drawer_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader/CloseDrawerButton
+@onready var drawer_title_label: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader/DrawerTitleLabel
+@onready var play_drawer: Control = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer
+@onready var servers_drawer: Control = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer
+@onready var profile_drawer: Control = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer
+@onready var inventory_drawer: Control = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer
+@onready var name_edit: LineEdit = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer/NameEdit
+@onready var auth_status_label: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/AuthStatusLabel
+@onready var email_edit: LineEdit = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/EmailEdit
+@onready var password_edit: LineEdit = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/PasswordEdit
+@onready var login_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/AuthButtons/LoginButton
+@onready var register_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/AuthButtons/RegisterButton
+@onready var logout_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/LogoutButton
+@onready var ip_edit: LineEdit = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer/IpRow/IpEdit
+@onready var refresh_servers_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/ServerBrowserButtons/RefreshServersButton
+@onready var connect_selected_server_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/ServerBrowserButtons/ConnectSelectedServerButton
+@onready var trusted_servers_list: ItemList = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/TrustedServersList
+@onready var servers_status_label: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/ServersStatusLabel
+@onready var join_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer/PlayButtons/JoinButton
+@onready var local_dedicated_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer/PlayButtons/LocalDedicatedButton
+@onready var settings_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/SettingsButton
+@onready var quit_btn: Button = $RootMargin/ShellRow/SideTabsPanel/SideTabsVBox/QuitButton
+@onready var character_option: OptionButton = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/CharacterRow/OptionButton
+@onready var economy_status_label: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/EconomyStatusLabel
+@onready var soft_balance_label: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/SoftBalanceLabel
+@onready var dev_grant_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/DevGrantButton
+@onready var ar15_skin_option: OptionButton = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/AR15SkinRow/AR15SkinOption
+@onready var barret_skin_option: OptionButton = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/BarretSkinRow/BarretSkinOption
+@onready var case_option: OptionButton = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/CaseRow/CaseOption
+@onready var open_case_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/CaseRow/OpenCaseButton
+@onready var inventory_items: ItemList = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryItems
+@onready var inventory_item_title: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox/InventoryItemTitle
+@onready var inventory_item_meta: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox/InventoryItemMeta
+@onready var inventory_equip_btn: Button = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox/InventoryEquipButton
 @onready var connecting_overlay: Control = $ConnectingOverlay
-@onready var error_label: Label = $VBoxContainer/ErrorLabel
+@onready var error_label: Label = $RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer/ErrorLabel
 
 var _is_waiting_connection: bool = false
 var _local_server_pid: int = -1
+var _inventory_selected_meta: Dictionary = {}
+
 
 func _ready() -> void:
 	name_edit.text_changed.connect(_on_name_text_changed)
@@ -47,8 +63,15 @@ func _ready() -> void:
 	local_dedicated_btn.pressed.connect(_on_local_dedicated_pressed)
 	settings_btn.pressed.connect(_on_settings_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
+	play_tab_btn.pressed.connect(func() -> void: _open_drawer(&"play"))
+	servers_tab_btn.pressed.connect(func() -> void: _open_drawer(&"servers"))
+	profile_tab_btn.pressed.connect(func() -> void: _open_drawer(&"profile"))
+	inventory_tab_btn.pressed.connect(func() -> void: _open_drawer(&"inventory"))
+	close_drawer_btn.pressed.connect(_on_close_drawer_pressed)
 	dev_grant_btn.pressed.connect(_on_dev_grant_pressed)
 	open_case_btn.pressed.connect(_on_open_case_pressed)
+	inventory_items.item_selected.connect(_on_inventory_item_selected)
+	inventory_equip_btn.pressed.connect(_on_inventory_equip_pressed)
 	ar15_skin_option.item_selected.connect(func(index: int): _on_weapon_skin_selected("ar-15", ar15_skin_option, index))
 	barret_skin_option.item_selected.connect(func(index: int): _on_weapon_skin_selected("barret", barret_skin_option, index))
 	Lobby.server_disconnected.connect(_on_server_disconnected)
@@ -56,10 +79,11 @@ func _ready() -> void:
 	AuthState.session_conflict.connect(_on_session_conflict)
 	AuthState.auth_error.connect(show_error)
 	ProfileState.profile_changed.connect(_refresh_economy_ui)
+
 	_populate_character_options()
 	_refresh_auth_ui()
 	_refresh_economy_ui()
-
+	_open_drawer(&"play")
 	show_connecting_overlay(false)
 	error_label.hide()
 
@@ -67,13 +91,39 @@ func _ready() -> void:
 	ProfileState.load_profile(name_edit.text)
 	call_deferred("_refresh_servers")
 
-	var pending_error : String = SceneRouter.consume_pending_error()
+	var pending_error: String = SceneRouter.consume_pending_error()
 	if not pending_error.is_empty():
 		show_error(pending_error)
 
 
 func _on_name_text_changed(new_text: String) -> void:
 	Lobby.set_player_name(new_text)
+
+
+func _on_close_drawer_pressed() -> void:
+	play_drawer.hide()
+	servers_drawer.hide()
+	profile_drawer.hide()
+	inventory_drawer.hide()
+	drawer_title_label.text = "Панель закрыта"
+
+
+func _open_drawer(drawer: StringName) -> void:
+	play_drawer.visible = drawer == &"play"
+	servers_drawer.visible = drawer == &"servers"
+	profile_drawer.visible = drawer == &"profile"
+	inventory_drawer.visible = drawer == &"inventory"
+	match String(drawer):
+		"play":
+			drawer_title_label.text = "Играть"
+		"servers":
+			drawer_title_label.text = "Серверы"
+		"profile":
+			drawer_title_label.text = "Профиль"
+		"inventory":
+			drawer_title_label.text = "Инвентарь"
+		_:
+			drawer_title_label.text = "Панель"
 
 
 func _on_login_pressed() -> void:
@@ -107,8 +157,7 @@ func _on_session_conflict() -> void:
 func _on_join_pressed() -> void:
 	if _is_waiting_connection:
 		return
-	var ip := ip_edit.text.strip_edges()
-	_begin_join(ip)
+	_begin_join(ip_edit.text.strip_edges())
 
 
 func _on_refresh_servers_pressed() -> void:
@@ -166,10 +215,7 @@ func _refresh_servers() -> void:
 			"port": int(entry.get("port", Lobby.PORT)),
 		})
 
-	if trusted_servers_list.get_item_count() == 0:
-		servers_status_label.text = "Доверенных серверов нет. Можно подключиться вручную по IP."
-	else:
-		servers_status_label.text = "Доверенных серверов: %d" % trusted_servers_list.get_item_count()
+	servers_status_label.text = "Доверенных серверов: %d" % trusted_servers_list.get_item_count() if trusted_servers_list.get_item_count() > 0 else "Доверенных серверов нет. Можно подключиться вручную по IP."
 
 
 func _connect_to_selected_server() -> void:
@@ -210,16 +256,14 @@ func _on_local_dedicated_pressed() -> void:
 
 func _begin_join(address: String, port: int = -1) -> void:
 	_sync_local_profile_to_lobby()
-	var err : Error = Lobby.join_game(address, port)
+	var err: Error = Lobby.join_game(address, port)
 	if err != OK:
 		show_error("Не удалось начать подключение: %d" % err)
 		_is_waiting_connection = false
 		show_connecting_overlay(false)
 		return
-
 	_is_waiting_connection = true
 	show_connecting_overlay(true)
-
 	multiplayer.connected_to_server.connect(_on_connected_ok, CONNECT_ONE_SHOT)
 	multiplayer.connection_failed.connect(_on_connection_failed, CONNECT_ONE_SHOT)
 
@@ -305,6 +349,7 @@ func _refresh_economy_ui() -> void:
 	_populate_skin_option(ar15_skin_option, "ar-15")
 	_populate_skin_option(barret_skin_option, "barret")
 	_populate_case_options()
+	_rebuild_inventory_items()
 	_sync_local_profile_to_lobby()
 
 
@@ -337,12 +382,64 @@ func _populate_case_options() -> void:
 	case_option.disabled = case_option.get_item_count() == 0 or not ProfileState.backend_available or not AuthState.is_authenticated()
 
 
+func _rebuild_inventory_items() -> void:
+	inventory_items.clear()
+	_inventory_selected_meta.clear()
+	inventory_item_title.text = "Выберите предмет"
+	inventory_item_meta.text = "-"
+	inventory_equip_btn.disabled = true
+	var weapons: Array[String] = ["ar-15", "barret"]
+	for weapon_short_name in weapons:
+		for skin in CosmeticsRegistry.get_weapon_skins_for_weapon(weapon_short_name):
+			if not ProfileState.owns_item(skin.item_key):
+				continue
+			var equipped: bool = ProfileState.get_equipped_weapon_skin(weapon_short_name) == skin.item_key
+			var display := "%s%s [%s]" % ["[E] " if equipped else "", skin.display_name, skin.rarity]
+			inventory_items.add_item(display)
+			inventory_items.set_item_metadata(inventory_items.get_item_count() - 1, {
+				"slot": "weapon:%s" % weapon_short_name,
+				"item_key": skin.item_key,
+				"rarity": skin.rarity,
+				"display_name": skin.display_name,
+			})
+
+
+func _on_inventory_item_selected(index: int) -> void:
+	var meta_variant: Variant = inventory_items.get_item_metadata(index)
+	if not (meta_variant is Dictionary):
+		return
+	_inventory_selected_meta = meta_variant
+	inventory_item_title.text = String(_inventory_selected_meta.get("display_name", "Предмет"))
+	inventory_item_meta.text = "Слот: %s | Редкость: %s" % [
+		String(_inventory_selected_meta.get("slot", "-")),
+		String(_inventory_selected_meta.get("rarity", "-")),
+	]
+	var slot := String(_inventory_selected_meta.get("slot", ""))
+	var item_key := String(_inventory_selected_meta.get("item_key", ""))
+	var equipped := false
+	if slot.begins_with("weapon:"):
+		equipped = ProfileState.get_equipped_weapon_skin(slot.trim_prefix("weapon:")) == item_key
+	inventory_equip_btn.disabled = equipped or slot.is_empty() or item_key.is_empty()
+
+
+func _on_inventory_equip_pressed() -> void:
+	var slot := String(_inventory_selected_meta.get("slot", ""))
+	var item_key := String(_inventory_selected_meta.get("item_key", ""))
+	if slot.is_empty() or item_key.is_empty():
+		return
+	var ok := await ProfileState.equip_cosmetic(slot, item_key)
+	if not ok:
+		show_error("Не удалось экипировать предмет")
+		return
+	_refresh_economy_ui()
+
+
 func _on_weapon_skin_selected(weapon_short_name: String, option: OptionButton, index: int) -> void:
 	var item_key := String(option.get_item_metadata(index))
 	if item_key.is_empty():
 		return
 	await ProfileState.equip_cosmetic("weapon:%s" % weapon_short_name, item_key)
-	_sync_local_profile_to_lobby()
+	_refresh_economy_ui()
 
 
 func _on_dev_grant_pressed() -> void:
