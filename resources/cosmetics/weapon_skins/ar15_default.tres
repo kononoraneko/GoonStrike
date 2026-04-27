@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="WeaponSkinData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cosmetics/weapon_skin_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+item_key = "weapon_skin:ar-15:default"
+display_name = "AR-15 Default"
+rarity = "common"
+weapon_short_name = "ar-15"
+albedo_tint = Color(1, 1, 1, 1)

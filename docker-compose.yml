@@ -29,5 +29,14 @@ services:
       postgres:
         condition: service_healthy
 
+  admin-panel:
+    image: nginx:1.27-alpine
+    ports:
+      - "5173:80"
+    volumes:
+      - ./admin-panel:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:

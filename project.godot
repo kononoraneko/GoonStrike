@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 WeaponRegistry="*res://scripts/autoloads/weapon_registry.gd"
+CosmeticsRegistry="*res://scripts/autoloads/cosmetics_registry.gd"
 ChatNetwork="*uid://dhfwll5353mk"
 ConsoleCommands="*uid://cjrmr6pyo4okb"
 Lobby="*uid://scv3wmkatjpv"
@@ -25,6 +26,8 @@ SceneRouter="*uid://gwthxny73e75"
 ServerConfig="*uid://cnetct2cyaq0"
 BackendClient="*res://scripts/autoloads/backend_client.gd"
 Settings="*uid://h4r6oqqsy8e8"
+AuthState="*res://scripts/autoloads/auth_state.gd"
+ProfileState="*res://scripts/autoloads/profile_state.gd"
 
 [input]
 

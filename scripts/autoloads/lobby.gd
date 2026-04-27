@@ -33,7 +33,13 @@ var selected_mode_id: String = GameModeCatalog.ID_DM
 signal lobby_session_changed
 
 ## Информация локального игрока — меняется до подключения
-var local_info: Dictionary = {"name": "Player", "op": false}
+var local_info: Dictionary = {
+	"name": "Player",
+	"external_id": "guest:local",
+	"op": false,
+	"character_id": "lain",
+	"weapon_skins": {},
+}
 
 ## Runtime server/client settings. Defaults keep the existing local-host flow intact.
 var server_port: int = PORT
@@ -145,6 +151,23 @@ func _apply_lobby_session(map_path: String, mode_id: String) -> void:
 
 func set_player_name(new_name: String) -> void:
 	local_info["name"] = new_name
+
+
+func set_player_cosmetics(character_id: String, weapon_skins: Dictionary = {}) -> void:
+	local_info["external_id"] = ProfileState.external_id
+	local_info["character_id"] = _sanitize_character_id(character_id)
+	local_info["weapon_skins"] = _sanitize_weapon_skins(weapon_skins)
+
+
+func get_player_character_id(peer_id: int) -> String:
+	var info: Dictionary = players.get(peer_id, {}) as Dictionary
+	return _sanitize_character_id(String(info.get("character_id", "lain")))
+
+
+func get_player_external_id(peer_id: int) -> String:
+	var info: Dictionary = players.get(peer_id, {}) as Dictionary
+	var external_id := String(info.get("external_id", "")).strip_edges()
+	return external_id if not external_id.is_empty() else BackendClient.get_external_id_for_peer(peer_id)
 
 
 ## Имя игрока для UI / логов (peer_id из реестра).
@@ -287,6 +310,9 @@ func disconnect_game() -> void:
 	active_game_scene_path = ""
 	selected_mode_id = GameModeCatalog.ID_DM
 	local_info["op"] = false
+	local_info["external_id"] = ProfileState.external_id
+	local_info["character_id"] = "lain"
+	local_info["weapon_skins"] = {}
 	is_dedicated_server = false
 	auto_assign_lobby_leader = false
 	server_port = PORT
@@ -403,6 +429,9 @@ func _rpc_client_register(info: Dictionary) -> void:
 		return
 	var sanitized := info.duplicate(true)
 	sanitized["op"] = false
+	sanitized["external_id"] = _sanitize_external_id(String(sanitized.get("external_id", "")), peer_id)
+	sanitized["character_id"] = _sanitize_character_id(String(sanitized.get("character_id", "lain")))
+	sanitized["weapon_skins"] = _sanitize_weapon_skins(sanitized.get("weapon_skins", {}) as Dictionary)
 	_add_player(peer_id, sanitized)
 	_ensure_lobby_leader()
 	_rpc_sync_players_state.rpc_id(peer_id, _clone_players_for_net())
@@ -468,6 +497,9 @@ func _add_player(id: int, info: Dictionary) -> void:
 	var normalized: Dictionary = info.duplicate(true)
 	if not normalized.has("op"):
 		normalized["op"] = false
+	normalized["external_id"] = _sanitize_external_id(String(normalized.get("external_id", "")), id)
+	normalized["character_id"] = _sanitize_character_id(String(normalized.get("character_id", "lain")))
+	normalized["weapon_skins"] = _sanitize_weapon_skins(normalized.get("weapon_skins", {}) as Dictionary)
 	if players.has(id):
 		players[id] = normalized
 		players_state_changed.emit()
@@ -484,6 +516,32 @@ func _backend_upsert_player(id: int, info: Dictionary) -> void:
 	var backend := get_node_or_null("/root/BackendClient")
 	if backend != null and backend.has_method("upsert_player"):
 		backend.call("upsert_player", id, info)
+
+
+func _sanitize_character_id(character_id: String) -> String:
+	var normalized := character_id.strip_edges().to_lower()
+	if normalized.is_empty() or not CosmeticsRegistry.has_character_id(normalized):
+		return CosmeticsRegistry.DEFAULT_CHARACTER_ID
+	return normalized
+
+
+func _sanitize_external_id(external_id: String, peer_id: int) -> String:
+	var normalized := external_id.strip_edges()
+	if normalized.is_empty() or normalized.length() > 128:
+		return BackendClient.get_external_id_for_peer(peer_id)
+	return normalized
+
+
+func _sanitize_weapon_skins(raw: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for weapon_name in raw.keys():
+		var weapon_key := String(weapon_name).strip_edges().to_lower()
+		var skin_key := String(raw[weapon_name]).strip_edges()
+		if weapon_key.is_empty() or skin_key.is_empty():
+			continue
+		if CosmeticsRegistry.get_weapon_skin_for_weapon(skin_key, weapon_key) != null:
+			result[weapon_key] = skin_key
+	return result
 
 
 func _is_lobby_leader(peer_id: int) -> bool:

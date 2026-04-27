@@ -88,7 +88,7 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 		weapon_icon.texture = null
 		ammo_label.text = "-- / --"
 		return
-	weapon_label.text   = weapon.data.weapon_name
+	weapon_label.text = player.weapon_holder.get_current_weapon_display_name()
 	weapon_icon.texture = weapon.data.pickup_icon
 	if not weapon.ammo_changed.is_connected(_on_ammo_changed):
 		weapon.ammo_changed.connect(_on_ammo_changed)

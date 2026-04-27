@@ -37,6 +37,7 @@ func _ready() -> void:
 	_load_characters_registry()
 	var first_run := not FileAccess.file_exists(SETTINGS_PATH)
 	load_video_settings_from_file()
+	load_cosmetic_settings_from_file()
 	call_deferred("_boot_apply_video", first_run)
 
 
@@ -108,6 +109,30 @@ func get_selected_character_scene() -> PackedScene:
 		push_error("Settings: invalid character at index %d" % i)
 		return null
 	return ch.character_scene
+
+
+func get_selected_character_id() -> String:
+	if _characters.is_empty():
+		return "lain"
+	var i := clampi(selected_char, 0, _characters.size() - 1)
+	var ch: CharacterData = _characters[i]
+	return ch.id if ch != null and not ch.id.is_empty() else "lain"
+
+
+func set_selected_character_id(character_id: String) -> void:
+	var normalized := character_id.strip_edges().to_lower()
+	for i in range(_characters.size()):
+		var ch: CharacterData = _characters[i]
+		if ch != null and ch.id == normalized:
+			selected_char = i
+			save_cosmetic_settings()
+			return
+
+
+func get_character_data(index: int) -> CharacterData:
+	if index < 0 or index >= _characters.size():
+		return null
+	return _characters[index]
 
 
 # ── Potato (консоль) ───────────────────────────────────────────────────────
@@ -182,6 +207,21 @@ func load_video_settings_from_file() -> void:
 	msaa_3d = int(cfg.get_value("video", "msaa_3d", 1))
 	shadow_quality = clampi(int(cfg.get_value("video", "shadow_quality", 1)), 0, 2)
 	_potato_mode = bool(cfg.get_value("video", "potato_mode", false))
+
+
+func load_cosmetic_settings_from_file() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SETTINGS_PATH) != OK:
+		return
+	var character_id := String(cfg.get_value("cosmetics", "character_id", get_selected_character_id()))
+	set_selected_character_id(character_id)
+
+
+func save_cosmetic_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SETTINGS_PATH)
+	cfg.set_value("cosmetics", "character_id", get_selected_character_id())
+	cfg.save(SETTINGS_PATH)
 
 
 func save_video_settings() -> void:

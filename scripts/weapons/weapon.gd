@@ -36,6 +36,19 @@ func _ready() -> void:
 	_init_ammo_state()
 
 
+func apply_skin(skin: Resource) -> void:
+	if skin == null:
+		return
+	var override_material: Material = skin.material_override
+	if override_material == null and skin.albedo_tint != Color.WHITE:
+		var generated := StandardMaterial3D.new()
+		generated.albedo_color = skin.albedo_tint
+		override_material = generated
+	if override_material == null:
+		return
+	_apply_material_recursive(self, override_material)
+
+
 ## Вызывается клиентом при нажатии кнопки стрельбы.
 func shoot(aim_ray: Dictionary) -> bool:
 	if not _can_shoot_local():
@@ -217,3 +230,11 @@ func _finish_reload_local() -> void:
 
 func _should_predict_ammo() -> bool:
 	return multiplayer.is_server() or not multiplayer.has_multiplayer_peer()
+
+
+func _apply_material_recursive(node: Node, material: Material) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		mesh_instance.material_override = material
+	for child in node.get_children():
+		_apply_material_recursive(child, material)

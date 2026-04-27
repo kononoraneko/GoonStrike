@@ -50,7 +50,11 @@ Dedicated servers start through `scenes/server/server_bootstrap.tscn`, wait in t
 
 Local play can start a local dedicated server from the main menu. That path must not require Docker or `--backend-url`; players can run as guest/local peers. It does pass `--auto-op-first`, so the first joined local client can manage the lobby.
 
-Backend integration is optional persistence only. Active match state belongs to the Godot dedicated server, not FastAPI/PostgreSQL. Keep positions, damage, money, rounds, pickups, teams, and live timers in Godot; use backend for accounts, profiles, inventory/cosmetics, long-term stats, and optional finished-match history.
+Backend integration is optional persistence plus a dev trusted-server registry. Active match state belongs to the Godot dedicated server, not FastAPI/PostgreSQL. Keep positions, damage, money, rounds, pickups, teams, and live timers in Godot; use backend for accounts, profiles, inventory/cosmetics, long-term stats, optional finished-match history, and discovery of online dedicated servers.
+
+Trusted server browser now uses signed challenge auth for writes: dedicated servers call `POST /servers/challenge` with `server_id` + `key_id`, then sign `register/heartbeat/offline` requests with one-time nonce/challenge headers. Backend enforces key activity, TTL, and replay protection. Key provisioning/rotation is available via admin endpoint `POST /servers/admin/credentials` guarded by `GOONSTRIKE_REGISTRY_ADMIN_TOKEN`. Keep `GET /servers` read-only for clients. Do not treat backend server-list data as gameplay authority; clients still connect to the Godot server, and the Godot server owns live match truth.
+
+Backend validation should be Docker-first. The repo provides `docker-compose.yml` with PostgreSQL 16 and a Python 3.12 FastAPI service; use `docker compose up backend postgres` from the repo root, then check `http://127.0.0.1:8000/health`. Do not assume a local `python`/`py` executable is available on Windows.
 
 `GameModeCatalog` currently exposes:
 
@@ -67,6 +71,7 @@ Autoloads are declared in `project.godot`.
 - `ChatNetwork` -> `scripts/autoloads/chat_network.gd`
 - `ConsoleCommands` -> `scripts/autoloads/console_commands.gd`
 - `Lobby` -> `scripts/autoloads/lobby.gd`
+- `BackendClient` -> `scripts/autoloads/backend_client.gd`
 - `SceneRouter` -> `scripts/autoloads/scene_router.gd`
 - `ServerConfig` -> `scripts/autoloads/server_config.gd`
 - `Settings` -> `scripts/autoloads/Settings.gd`

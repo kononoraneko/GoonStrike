@@ -12,6 +12,9 @@ signal weapon_changed(new_weapon: Weapon)
 var is_shooting:    bool = false
 var current_weapon: Weapon = null
 var owner_player:   OnlinePlayer
+var current_skin_item_key: String = ""
+var current_skin_owner_peer_id: int = 0
+var current_skin_owner_name: String = ""
 
 ## Максимально допустимый угол между клиентским и серверным направлением.
 ## cos(25°) ≈ 0.906. Защищает от явных читов, оставляя запас на сетевой лаг.
@@ -90,12 +93,12 @@ func equip_weapon_data_local(data_path: String) -> void:
 	_set_weapon(data)
 
 
-func equip_primary_from_world(data_path: String, ammo_in_mag: int, ammo_reserve: int) -> void:
+func equip_primary_from_world(data_path: String, ammo_in_mag: int, ammo_reserve: int, skin_item_key: String = "", skin_owner_peer_id: int = 0, skin_owner_name: String = "") -> void:
 	var data := load(data_path) as WeaponData
 	if data == null or data.weapon_scene == null:
 		push_error("WeaponHolder: invalid world WeaponData at " + data_path)
 		return
-	_set_weapon(data, ammo_in_mag, ammo_reserve, true)
+	_set_weapon(data, ammo_in_mag, ammo_reserve, true, skin_item_key, skin_owner_peer_id, skin_owner_name)
 
 
 func drop_weapon() -> void:
@@ -110,6 +113,9 @@ func clear_current_weapon() -> void:
 		return
 	current_weapon.queue_free()
 	current_weapon = null
+	current_skin_item_key = ""
+	current_skin_owner_peer_id = 0
+	current_skin_owner_name = ""
 	if owner_player and owner_player.animation:
 		owner_player.animation.set_reloading(false)
 	weapon_changed.emit(null)
@@ -117,6 +123,24 @@ func clear_current_weapon() -> void:
 
 func has_primary_weapon() -> bool:
 	return current_weapon != null
+
+
+func get_current_weapon_display_name() -> String:
+	if current_weapon == null or current_weapon.data == null:
+		return "—"
+	var text := current_weapon.data.weapon_name
+	var weapon_key := current_weapon.data.weapon_name.strip_edges().to_lower()
+	if not current_skin_item_key.is_empty():
+		var skin := CosmeticsRegistry.get_weapon_skin_for_weapon(current_skin_item_key, weapon_key)
+		if skin != null and not skin.display_name.is_empty():
+			text += " | %s" % skin.display_name
+	if current_skin_owner_peer_id > 0 and owner_player != null and current_skin_owner_peer_id != owner_player.remote_player_id:
+		var owner_name := current_skin_owner_name
+		if owner_name.is_empty():
+			owner_name = Lobby.get_player_display_name(current_skin_owner_peer_id)
+		if not owner_name.is_empty():
+			text += "\nOwner: %s" % owner_name
+	return text
 
 
 func create_drop_snapshot() -> Dictionary:
@@ -129,6 +153,9 @@ func create_drop_snapshot() -> Dictionary:
 		"data_path": data_path,
 		"ammo_in_mag": max(current_weapon.ammo_in_mag, 0),
 		"ammo_reserve": max(current_weapon.ammo_reserve, 0),
+		"skin_item_key": current_skin_item_key,
+		"owner_peer_id": _get_snapshot_owner_peer_id(),
+		"owner_name": _get_snapshot_owner_name(),
 	}
 
 
@@ -274,7 +301,7 @@ func _get_weapon_parent_node() -> Node3D:
 	return owner_player
 
 
-func _set_weapon(data: WeaponData, world_mag: int = -1, world_reserve: int = -1, from_world_pickup: bool = false) -> void:
+func _set_weapon(data: WeaponData, world_mag: int = -1, world_reserve: int = -1, from_world_pickup: bool = false, forced_skin_item_key: String = "", skin_owner_peer_id: int = 0, skin_owner_name: String = "") -> void:
 	clear_current_weapon()
 	var instance := data.weapon_scene.instantiate() as Weapon
 	if instance == null:
@@ -285,6 +312,8 @@ func _set_weapon(data: WeaponData, world_mag: int = -1, world_reserve: int = -1,
 	instance.owner_player = owner_player
 	instance.ammo_mode    = ServerConfig.sv_ammo_mode
 	_get_weapon_parent_node().add_child(instance)
+	current_skin_item_key = _apply_weapon_skin(instance, forced_skin_item_key)
+	_apply_skin_owner_metadata(skin_owner_peer_id, skin_owner_name)
 	instance.shot_requested.connect(_on_shot_requested)
 	if multiplayer.is_server():
 		instance.ammo_changed.connect(func(_mag, _reserve): _sync_weapon_ammo(owner_player.remote_player_id))
@@ -293,6 +322,53 @@ func _set_weapon(data: WeaponData, world_mag: int = -1, world_reserve: int = -1,
 		instance.apply_world_pickup_ammo(world_mag, world_reserve)
 	current_weapon = instance
 	weapon_changed.emit(current_weapon)
+
+
+func _apply_weapon_skin(instance: Weapon, forced_skin_item_key: String = "") -> String:
+	if instance == null or instance.data == null:
+		return ""
+	var weapon_key := instance.data.weapon_name.strip_edges().to_lower()
+	var skins: Dictionary = owner_player.player_info.get("weapon_skins", {}) as Dictionary
+	var skin_key := forced_skin_item_key.strip_edges()
+	if skin_key.is_empty():
+		skin_key = String(skins.get(weapon_key, ""))
+	if skin_key.is_empty() and owner_player.is_multiplayer_authority():
+		skin_key = ProfileState.get_equipped_weapon_skin(weapon_key)
+	var skin := CosmeticsRegistry.get_weapon_skin_for_weapon(skin_key, weapon_key)
+	if skin != null:
+		instance.apply_skin(skin)
+		return skin_key
+	return ""
+
+
+func _apply_skin_owner_metadata(skin_owner_peer_id: int, skin_owner_name: String) -> void:
+	if current_skin_item_key.is_empty():
+		current_skin_owner_peer_id = 0
+		current_skin_owner_name = ""
+		return
+	if skin_owner_peer_id > 0:
+		current_skin_owner_peer_id = skin_owner_peer_id
+		current_skin_owner_name = skin_owner_name.strip_edges()
+		return
+	current_skin_owner_peer_id = owner_player.remote_player_id if owner_player else 0
+	current_skin_owner_name = Lobby.get_player_display_name(current_skin_owner_peer_id) if current_skin_owner_peer_id > 0 else ""
+
+
+func _get_snapshot_owner_peer_id() -> int:
+	if current_skin_item_key.is_empty():
+		return 0
+	if current_skin_owner_peer_id > 0:
+		return current_skin_owner_peer_id
+	return owner_player.remote_player_id if owner_player else 0
+
+
+func _get_snapshot_owner_name() -> String:
+	var owner_id := _get_snapshot_owner_peer_id()
+	if owner_id <= 0:
+		return ""
+	if not current_skin_owner_name.is_empty():
+		return current_skin_owner_name
+	return Lobby.get_player_display_name(owner_id)
 
 
 func _sync_weapon_ammo(peer_id: int) -> void:

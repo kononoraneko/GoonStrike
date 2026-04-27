@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GoonStrike Registry Admin</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>GoonStrike Registry Admin</h1>
+    <p class="hint">Dev admin panel for server credential provisioning and online server monitoring.</p>
+
+    <section class="card">
+      <h2>Connection</h2>
+      <div class="grid">
+        <label>
+          Backend URL
+          <input id="backendUrl" type="text" placeholder="http://127.0.0.1:8000" />
+        </label>
+        <label>
+          Admin Token
+          <input id="adminToken" type="password" placeholder="GOONSTRIKE_REGISTRY_ADMIN_TOKEN" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="saveSettingsBtn" type="button">Save Settings</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Credential Upsert / Rotation</h2>
+      <div class="grid">
+        <label>
+          Server ID
+          <input id="serverId" type="text" placeholder="my-server-1" />
+        </label>
+        <label>
+          Key ID
+          <input id="keyId" type="text" placeholder="prod-key-1" />
+        </label>
+        <label>
+          Secret
+          <input id="secret" type="password" placeholder="new secret" />
+        </label>
+        <label class="checkbox">
+          <input id="isActive" type="checkbox" checked />
+          Active key
+        </label>
+      </div>
+      <div class="row">
+        <button id="upsertCredentialBtn" type="button">Upsert Credential</button>
+        <button id="refreshCredentialsBtn" type="button">Refresh Credentials</button>
+        <button id="refreshServersBtn" type="button">Refresh Online Servers</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Credentials</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Server ID</th>
+            <th>Key ID</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+        <tbody id="credentialsBody"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Online Trusted Servers</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Server ID</th>
+            <th>Name</th>
+            <th>Host:Port</th>
+            <th>Mode/Map</th>
+            <th>Players</th>
+          </tr>
+        </thead>
+        <tbody id="serversBody"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Status</h2>
+      <pre id="statusLog">Ready.</pre>
+    </section>
+  </main>
+
+  <script src="./main.js"></script>
+</body>
+</html>

@@ -588,7 +588,10 @@ func rpc_sync_world_pickups_snapshot(entries: Array) -> void:
 			int(e.get("ammo_reserve", 0)),
 			pos,
 			vel,
-			nid
+			nid,
+			String(e.get("skin_item_key", "")),
+			int(e.get("owner_peer_id", 0)),
+			String(e.get("owner_name", ""))
 		)
 
 
@@ -601,11 +604,11 @@ func rpc_equip_weapon_data(peer_id: int, data_path: String) -> void:
 
 
 @rpc("authority", "reliable", "call_local")
-func rpc_equip_primary_from_world(peer_id: int, data_path: String, ammo_in_mag: int, ammo_reserve: int) -> void:
+func rpc_equip_primary_from_world(peer_id: int, data_path: String, ammo_in_mag: int, ammo_reserve: int, skin_item_key: String = "", skin_owner_peer_id: int = 0, skin_owner_name: String = "") -> void:
 	var pl := spawner.get_player(peer_id)
 	if pl == null:
 		return
-	pl.weapon_holder.equip_primary_from_world(data_path, ammo_in_mag, ammo_reserve)
+	pl.weapon_holder.equip_primary_from_world(data_path, ammo_in_mag, ammo_reserve, skin_item_key, skin_owner_peer_id, skin_owner_name)
 
 
 @rpc("authority", "reliable", "call_local")
@@ -693,7 +696,10 @@ func server_weapon_sync_request(for_peer_id: int) -> void:
 		for_peer_id,
 		data_path,
 		int(snapshot.get("ammo_in_mag", 0)),
-		int(snapshot.get("ammo_reserve", 0))
+		int(snapshot.get("ammo_reserve", 0)),
+		str(snapshot.get("skin_item_key", "")),
+		int(snapshot.get("owner_peer_id", 0)),
+		str(snapshot.get("owner_name", ""))
 	)
 
 
@@ -708,7 +714,15 @@ func _server_drop_player_weapon(player: OnlinePlayer) -> bool:
 	if data_path.is_empty():
 		return false
 	player.interact_cooldown_until_msec = Time.get_ticks_msec() + _DROP_INTERACT_COOLDOWN_MSEC
-	_spawn_world_pickup(player, data_path, int(snapshot.get("ammo_in_mag", 0)), int(snapshot.get("ammo_reserve", 0)))
+	_spawn_world_pickup(
+		player,
+		data_path,
+		int(snapshot.get("ammo_in_mag", 0)),
+		int(snapshot.get("ammo_reserve", 0)),
+		str(snapshot.get("skin_item_key", "")),
+		int(snapshot.get("owner_peer_id", 0)),
+		str(snapshot.get("owner_name", ""))
+	)
 	rpc_clear_primary_weapon.rpc(player.remote_player_id)
 	return true
 
@@ -732,6 +746,9 @@ func _server_handle_primary_pickup(player: OnlinePlayer, pickup: WeaponPickup, r
 	var ammo_state := pickup.get_pickup_ammo_state()
 	var target_mag := int(ammo_state.get("ammo_in_mag", 0))
 	var target_reserve := int(ammo_state.get("ammo_reserve", 0))
+	var target_skin_item_key := pickup.skin_item_key
+	var target_owner_peer_id := pickup.original_owner_peer_id
+	var target_owner_name := pickup.original_owner_name
 
 	if has_weapon:
 		var old_snapshot := player.weapon_holder.create_drop_snapshot()
@@ -741,10 +758,13 @@ func _server_handle_primary_pickup(player: OnlinePlayer, pickup: WeaponPickup, r
 				player,
 				old_data_path,
 				int(old_snapshot.get("ammo_in_mag", 0)),
-				int(old_snapshot.get("ammo_reserve", 0))
+				int(old_snapshot.get("ammo_reserve", 0)),
+				str(old_snapshot.get("skin_item_key", "")),
+				int(old_snapshot.get("owner_peer_id", 0)),
+				str(old_snapshot.get("owner_name", ""))
 			)
 
-	rpc_equip_primary_from_world.rpc(player.remote_player_id, data_path, target_mag, target_reserve)
+	rpc_equip_primary_from_world.rpc(player.remote_player_id, data_path, target_mag, target_reserve, target_skin_item_key, target_owner_peer_id, target_owner_name)
 	pickup.consume_on_server()
 	return true
 
@@ -777,7 +797,7 @@ func _compute_safe_drop_spawn(player: OnlinePlayer) -> Dictionary:
 	return {"position": drop_pos, "linear_velocity": linear_vel}
 
 
-func _spawn_world_pickup(player: OnlinePlayer, data_path: String, ammo_in_mag: int, ammo_reserve: int) -> void:
+func _spawn_world_pickup(player: OnlinePlayer, data_path: String, ammo_in_mag: int, ammo_reserve: int, skin_item_key: String = "", owner_peer_id: int = 0, owner_name: String = "") -> void:
 	if WORLD_PICKUP_SCENE == null:
 		return
 	var spawn := _compute_safe_drop_spawn(player)
@@ -789,18 +809,18 @@ func _spawn_world_pickup(player: OnlinePlayer, data_path: String, ammo_in_mag: i
 		if multiplayer.is_server():
 			_next_world_pickup_id += 1
 			var nid := _next_world_pickup_id
-			rpc_spawn_dropped_pickup.rpc(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, nid)
+			rpc_spawn_dropped_pickup.rpc(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, nid, skin_item_key, owner_peer_id, owner_name)
 	else:
 		_next_world_pickup_id += 1
-		_spawn_dropped_pickup_local(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, _next_world_pickup_id)
+		_spawn_dropped_pickup_local(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, _next_world_pickup_id, skin_item_key, owner_peer_id, owner_name)
 
 
 @rpc("authority", "reliable", "call_local")
-func rpc_spawn_dropped_pickup(data_path: String, ammo_in_mag: int, ammo_reserve: int, drop_pos: Vector3, linear_vel: Vector3, network_pickup_id: int) -> void:
-	_spawn_dropped_pickup_local(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, network_pickup_id)
+func rpc_spawn_dropped_pickup(data_path: String, ammo_in_mag: int, ammo_reserve: int, drop_pos: Vector3, linear_vel: Vector3, network_pickup_id: int, skin_item_key: String = "", owner_peer_id: int = 0, owner_name: String = "") -> void:
+	_spawn_dropped_pickup_local(data_path, ammo_in_mag, ammo_reserve, drop_pos, linear_vel, network_pickup_id, skin_item_key, owner_peer_id, owner_name)
 
 
-func _spawn_dropped_pickup_local(data_path: String, ammo_in_mag: int, ammo_reserve: int, drop_pos: Vector3, linear_vel: Vector3, network_pickup_id: int) -> void:
+func _spawn_dropped_pickup_local(data_path: String, ammo_in_mag: int, ammo_reserve: int, drop_pos: Vector3, linear_vel: Vector3, network_pickup_id: int, skin_item_key: String = "", owner_peer_id: int = 0, owner_name: String = "") -> void:
 	if WORLD_PICKUP_SCENE == null:
 		return
 	var pickup := WORLD_PICKUP_SCENE.instantiate() as WeaponPickup
@@ -811,7 +831,7 @@ func _spawn_dropped_pickup_local(data_path: String, ammo_in_mag: int, ammo_reser
 	var parent := _get_world_pickups_root()
 	parent.add_child(pickup)
 	pickup.global_position = drop_pos
-	pickup.setup_world_pickup(data_path, ammo_in_mag, ammo_reserve)
+	pickup.setup_world_pickup(data_path, ammo_in_mag, ammo_reserve, skin_item_key, owner_peer_id, owner_name)
 	var vel := linear_vel
 	get_tree().create_timer(0.0).timeout.connect(func():
 		if is_instance_valid(pickup):
@@ -868,6 +888,9 @@ func _late_join_sync_session_state_to_peer(joining_peer_id: int) -> void:
 			"data_path": p.get_pickup_data_path(),
 			"ammo_in_mag": p.ammo_in_mag,
 			"ammo_reserve": p.ammo_reserve,
+			"skin_item_key": p.skin_item_key,
+			"owner_peer_id": p.original_owner_peer_id,
+			"owner_name": p.original_owner_name,
 			"pos": p.global_position,
 			"vel": p.linear_velocity,
 		})
@@ -892,7 +915,10 @@ func _late_join_sync_session_state_to_peer(joining_peer_id: int) -> void:
 			holder_id,
 			path,
 			int(snap.get("ammo_in_mag", 0)),
-			int(snap.get("ammo_reserve", 0))
+			int(snap.get("ammo_reserve", 0)),
+			str(snap.get("skin_item_key", "")),
+			int(snap.get("owner_peer_id", 0)),
+			str(snap.get("owner_name", ""))
 		)
 
 

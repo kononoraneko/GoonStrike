@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CharacterCosmeticData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cosmetics/character_cosmetic_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/characters/lain_character.res" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+item_key = "character:lain"
+display_name = "Lain"
+rarity = "common"
+character_id = "lain"
+character_scene = ExtResource("2_scene")

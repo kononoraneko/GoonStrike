@@ -29,11 +29,12 @@ func spawn(id: int, info: Dictionary) -> OnlinePlayer:
 		push_warning("PlayerSpawner: player %d already spawned" % id)
 		return _nodes[id]
 
-	if player_scene == null:
-		push_error("PlayerSpawner: player_scene is not set")
+	var scene := _resolve_player_scene(info)
+	if scene == null:
+		push_error("PlayerSpawner: no valid player scene for player %d" % id)
 		return null
 
-	var player: OnlinePlayer = player_scene.instantiate()
+	var player: OnlinePlayer = scene.instantiate()
 	player.name = str(id)
 	player.player_info = info
 	player.remote_player_id = id
@@ -48,6 +49,15 @@ func spawn(id: int, info: Dictionary) -> OnlinePlayer:
 	_nodes[id] = player
 	_spawn_counter[id] = int(_spawn_counter.get(id, 0)) + 1
 	return player
+
+
+func _resolve_player_scene(info: Dictionary) -> PackedScene:
+	var character_id := String(info.get("character_id", "")).strip_edges().to_lower()
+	if not character_id.is_empty():
+		var cosmetic_scene := CosmeticsRegistry.get_character_scene(character_id)
+		if cosmetic_scene != null:
+			return cosmetic_scene
+	return player_scene
 
 
 ## Новый раунд / респавн: существующий павн переносится на актуальную точку команды (счётчик попыток растёт — другая точка внутри списка).

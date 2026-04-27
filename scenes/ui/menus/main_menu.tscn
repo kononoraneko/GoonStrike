@@ -19,9 +19,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -220.0
-offset_top = -150.0
+offset_top = -370.0
 offset_right = 220.0
-offset_bottom = 150.0
+offset_bottom = 370.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -33,6 +33,40 @@ horizontal_alignment = 1
 [node name="NameEdit" type="LineEdit" parent="VBoxContainer" unique_id=1191572895]
 layout_mode = 2
 placeholder_text = "Имя игрока"
+
+[node name="AuthPanel" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="AuthVBox" type="VBoxContainer" parent="VBoxContainer/AuthPanel"]
+layout_mode = 2
+
+[node name="AuthStatusLabel" type="Label" parent="VBoxContainer/AuthPanel/AuthVBox"]
+layout_mode = 2
+text = "Auth: offline"
+
+[node name="EmailEdit" type="LineEdit" parent="VBoxContainer/AuthPanel/AuthVBox"]
+layout_mode = 2
+placeholder_text = "email"
+
+[node name="PasswordEdit" type="LineEdit" parent="VBoxContainer/AuthPanel/AuthVBox"]
+layout_mode = 2
+placeholder_text = "password"
+secret = true
+
+[node name="AuthButtons" type="HBoxContainer" parent="VBoxContainer/AuthPanel/AuthVBox"]
+layout_mode = 2
+
+[node name="LoginButton" type="Button" parent="VBoxContainer/AuthPanel/AuthVBox/AuthButtons"]
+layout_mode = 2
+text = "Login"
+
+[node name="RegisterButton" type="Button" parent="VBoxContainer/AuthPanel/AuthVBox/AuthButtons"]
+layout_mode = 2
+text = "Register"
+
+[node name="LogoutButton" type="Button" parent="VBoxContainer/AuthPanel/AuthVBox/AuthButtons"]
+layout_mode = 2
+text = "Logout"
 
 [node name="IpRow" type="HBoxContainer" parent="VBoxContainer" unique_id=2041771387]
 layout_mode = 2
@@ -46,6 +80,37 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "127.0.0.1"
 placeholder_text = "127.0.0.1"
+
+[node name="ServerBrowserPanel" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ServerBrowserVBox" type="VBoxContainer" parent="VBoxContainer/ServerBrowserPanel"]
+layout_mode = 2
+
+[node name="ServerBrowserTitle" type="Label" parent="VBoxContainer/ServerBrowserPanel/ServerBrowserVBox"]
+layout_mode = 2
+text = "Доверенные серверы"
+
+[node name="ServerBrowserButtons" type="HBoxContainer" parent="VBoxContainer/ServerBrowserPanel/ServerBrowserVBox"]
+layout_mode = 2
+
+[node name="RefreshServersButton" type="Button" parent="VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServerBrowserButtons"]
+layout_mode = 2
+text = "Обновить"
+
+[node name="ConnectSelectedServerButton" type="Button" parent="VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServerBrowserButtons"]
+layout_mode = 2
+disabled = true
+text = "Подключиться к выбранному"
+
+[node name="TrustedServersList" type="ItemList" parent="VBoxContainer/ServerBrowserPanel/ServerBrowserVBox"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+
+[node name="ServersStatusLabel" type="Label" parent="VBoxContainer/ServerBrowserPanel/ServerBrowserVBox"]
+layout_mode = 2
+text = "Registry не обновлён"
+autowrap_mode = 3
 
 [node name="ButtonRow" type="VBoxContainer" parent="VBoxContainer" unique_id=1223072838]
 layout_mode = 2
@@ -87,7 +152,59 @@ popup/item_1/id = 1
 
 [node name="Label" type="Label" parent="VBoxContainer/HBoxContainer" unique_id=1175457694]
 layout_mode = 2
-text = "Модель игрока (влияет на всех игроков)"
+text = "Модель игрока"
+
+[node name="EconomyPanel" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="EconomyVBox" type="VBoxContainer" parent="VBoxContainer/EconomyPanel"]
+layout_mode = 2
+
+[node name="EconomyStatusLabel" type="Label" parent="VBoxContainer/EconomyPanel/EconomyVBox"]
+layout_mode = 2
+text = "Economy: offline"
+autowrap_mode = 3
+
+[node name="SoftBalanceLabel" type="Label" parent="VBoxContainer/EconomyPanel/EconomyVBox"]
+layout_mode = 2
+text = "Soft: 0"
+
+[node name="DevGrantButton" type="Button" parent="VBoxContainer/EconomyPanel/EconomyVBox"]
+layout_mode = 2
+text = "+1000 soft (dev)"
+
+[node name="AR15SkinRow" type="HBoxContainer" parent="VBoxContainer/EconomyPanel/EconomyVBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/EconomyPanel/EconomyVBox/AR15SkinRow"]
+layout_mode = 2
+text = "AR-15 skin"
+
+[node name="AR15SkinOption" type="OptionButton" parent="VBoxContainer/EconomyPanel/EconomyVBox/AR15SkinRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BarretSkinRow" type="HBoxContainer" parent="VBoxContainer/EconomyPanel/EconomyVBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/EconomyPanel/EconomyVBox/BarretSkinRow"]
+layout_mode = 2
+text = "Barret skin"
+
+[node name="BarretSkinOption" type="OptionButton" parent="VBoxContainer/EconomyPanel/EconomyVBox/BarretSkinRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CaseRow" type="HBoxContainer" parent="VBoxContainer/EconomyPanel/EconomyVBox"]
+layout_mode = 2
+
+[node name="CaseOption" type="OptionButton" parent="VBoxContainer/EconomyPanel/EconomyVBox/CaseRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OpenCaseButton" type="Button" parent="VBoxContainer/EconomyPanel/EconomyVBox/CaseRow"]
+layout_mode = 2
+text = "Open case"
 
 [node name="ConnectingOverlay" type="ColorRect" parent="." unique_id=106276306]
 visible = false

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="WeaponSkinData" format=3]
+
+[ext_resource type="Script" path="res://scripts/cosmetics/weapon_skin_data.gd" id="1_script"]
+[ext_resource type="Material" path="res://resources/cosmetics/materials/gold_weapon_material.tres" id="2_mat"]
+
+[resource]
+script = ExtResource("1_script")
+item_key = "weapon_skin:ar-15:gold"
+display_name = "AR-15 Gold"
+rarity = "rare"
+weapon_short_name = "ar-15"
+material_override = ExtResource("2_mat")
+albedo_tint = Color(1, 0.74, 0.18, 1)

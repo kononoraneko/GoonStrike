@@ -5,11 +5,29 @@ const LOCAL_SERVER_LAUNCHER := preload("res://scripts/server/local_server_launch
 const LOCAL_SERVER_CONNECT_DELAY := 0.6
 
 @onready var name_edit: LineEdit = $VBoxContainer/NameEdit
+@onready var auth_status_label: Label = $VBoxContainer/AuthPanel/AuthVBox/AuthStatusLabel
+@onready var email_edit: LineEdit = $VBoxContainer/AuthPanel/AuthVBox/EmailEdit
+@onready var password_edit: LineEdit = $VBoxContainer/AuthPanel/AuthVBox/PasswordEdit
+@onready var login_btn: Button = $VBoxContainer/AuthPanel/AuthVBox/AuthButtons/LoginButton
+@onready var register_btn: Button = $VBoxContainer/AuthPanel/AuthVBox/AuthButtons/RegisterButton
+@onready var logout_btn: Button = $VBoxContainer/AuthPanel/AuthVBox/AuthButtons/LogoutButton
 @onready var ip_edit: LineEdit = $VBoxContainer/IpRow/IpEdit
+@onready var refresh_servers_btn: Button = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServerBrowserButtons/RefreshServersButton
+@onready var connect_selected_server_btn: Button = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServerBrowserButtons/ConnectSelectedServerButton
+@onready var trusted_servers_list: ItemList = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/TrustedServersList
+@onready var servers_status_label: Label = $VBoxContainer/ServerBrowserPanel/ServerBrowserVBox/ServersStatusLabel
 @onready var join_btn: Button = $VBoxContainer/ButtonRow/JoinButton
 @onready var local_dedicated_btn: Button = $VBoxContainer/ButtonRow/LocalDedicatedButton
 @onready var settings_btn: Button = $VBoxContainer/ButtonRow/SettingsButton
 @onready var quit_btn: Button = $VBoxContainer/ButtonRow/QuitButton
+@onready var character_option: OptionButton = $VBoxContainer/HBoxContainer/OptionButton
+@onready var economy_status_label: Label = $VBoxContainer/EconomyPanel/EconomyVBox/EconomyStatusLabel
+@onready var soft_balance_label: Label = $VBoxContainer/EconomyPanel/EconomyVBox/SoftBalanceLabel
+@onready var dev_grant_btn: Button = $VBoxContainer/EconomyPanel/EconomyVBox/DevGrantButton
+@onready var ar15_skin_option: OptionButton = $VBoxContainer/EconomyPanel/EconomyVBox/AR15SkinRow/AR15SkinOption
+@onready var barret_skin_option: OptionButton = $VBoxContainer/EconomyPanel/EconomyVBox/BarretSkinRow/BarretSkinOption
+@onready var case_option: OptionButton = $VBoxContainer/EconomyPanel/EconomyVBox/CaseRow/CaseOption
+@onready var open_case_btn: Button = $VBoxContainer/EconomyPanel/EconomyVBox/CaseRow/OpenCaseButton
 @onready var connecting_overlay: Control = $ConnectingOverlay
 @onready var error_label: Label = $VBoxContainer/ErrorLabel
 
@@ -18,16 +36,36 @@ var _local_server_pid: int = -1
 
 func _ready() -> void:
 	name_edit.text_changed.connect(_on_name_text_changed)
+	login_btn.pressed.connect(_on_login_pressed)
+	register_btn.pressed.connect(_on_register_pressed)
+	logout_btn.pressed.connect(_on_logout_pressed)
+	refresh_servers_btn.pressed.connect(_on_refresh_servers_pressed)
+	connect_selected_server_btn.pressed.connect(_on_connect_selected_server_pressed)
+	trusted_servers_list.item_selected.connect(_on_trusted_server_selected)
+	trusted_servers_list.item_activated.connect(_on_trusted_server_activated)
 	join_btn.pressed.connect(_on_join_pressed)
 	local_dedicated_btn.pressed.connect(_on_local_dedicated_pressed)
 	settings_btn.pressed.connect(_on_settings_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
+	dev_grant_btn.pressed.connect(_on_dev_grant_pressed)
+	open_case_btn.pressed.connect(_on_open_case_pressed)
+	ar15_skin_option.item_selected.connect(func(index: int): _on_weapon_skin_selected("ar-15", ar15_skin_option, index))
+	barret_skin_option.item_selected.connect(func(index: int): _on_weapon_skin_selected("barret", barret_skin_option, index))
 	Lobby.server_disconnected.connect(_on_server_disconnected)
+	AuthState.auth_changed.connect(_refresh_auth_ui)
+	AuthState.session_conflict.connect(_on_session_conflict)
+	AuthState.auth_error.connect(show_error)
+	ProfileState.profile_changed.connect(_refresh_economy_ui)
+	_populate_character_options()
+	_refresh_auth_ui()
+	_refresh_economy_ui()
 
 	show_connecting_overlay(false)
 	error_label.hide()
 
 	name_edit.text = str(Lobby.local_info.get("name", "Player"))
+	ProfileState.load_profile(name_edit.text)
+	call_deferred("_refresh_servers")
 
 	var pending_error : String = SceneRouter.consume_pending_error()
 	if not pending_error.is_empty():
@@ -38,11 +76,120 @@ func _on_name_text_changed(new_text: String) -> void:
 	Lobby.set_player_name(new_text)
 
 
+func _on_login_pressed() -> void:
+	var ok := await AuthState.login(email_edit.text, password_edit.text)
+	if ok:
+		password_edit.clear()
+	else:
+		show_error("Не удалось войти")
+
+
+func _on_register_pressed() -> void:
+	var display_name := name_edit.text.strip_edges()
+	if display_name.is_empty():
+		display_name = "Player"
+	var ok := await AuthState.register(email_edit.text, password_edit.text, display_name)
+	if ok:
+		password_edit.clear()
+	else:
+		show_error("Не удалось зарегистрироваться")
+
+
+func _on_logout_pressed() -> void:
+	await AuthState.logout()
+	ProfileState.load_profile(name_edit.text)
+
+
+func _on_session_conflict() -> void:
+	show_error("Сессии этой учётки сброшены. Войдите ещё раз.")
+
+
 func _on_join_pressed() -> void:
 	if _is_waiting_connection:
 		return
 	var ip := ip_edit.text.strip_edges()
 	_begin_join(ip)
+
+
+func _on_refresh_servers_pressed() -> void:
+	await _refresh_servers()
+
+
+func _on_connect_selected_server_pressed() -> void:
+	_connect_to_selected_server()
+
+
+func _on_trusted_server_selected(_index: int) -> void:
+	connect_selected_server_btn.disabled = _is_waiting_connection
+
+
+func _on_trusted_server_activated(index: int) -> void:
+	_connect_to_server_item(index)
+
+
+func _refresh_servers() -> void:
+	if _is_waiting_connection:
+		return
+	refresh_servers_btn.disabled = true
+	connect_selected_server_btn.disabled = true
+	trusted_servers_list.clear()
+	servers_status_label.text = "Обновление списка серверов..."
+
+	var result := await BackendClient.fetch_servers()
+	refresh_servers_btn.disabled = _is_waiting_connection
+	if not result.get("ok", false):
+		var status_code := int(result.get("status", 0))
+		if status_code == 401 or status_code == 403:
+			servers_status_label.text = "Registry требует авторизацию. Используйте ручной IP."
+			return
+		servers_status_label.text = "Registry недоступен. Можно подключиться вручную по IP."
+		return
+
+	var data: Dictionary = result.get("data", {}) as Dictionary
+	var servers: Array = data.get("servers", []) as Array
+	for entry_variant in servers:
+		if not (entry_variant is Dictionary):
+			continue
+		var entry := entry_variant as Dictionary
+		var item_text := "%s | %s/%s | %d/%d | %s:%d" % [
+			String(entry.get("display_name", "Server")),
+			String(entry.get("mode_id", "?")),
+			String(entry.get("map_id", "?")),
+			int(entry.get("current_players", 0)),
+			int(entry.get("max_players", 0)),
+			String(entry.get("host", "")),
+			int(entry.get("port", Lobby.PORT)),
+		]
+		trusted_servers_list.add_item(item_text)
+		trusted_servers_list.set_item_metadata(trusted_servers_list.get_item_count() - 1, {
+			"host": String(entry.get("host", "")),
+			"port": int(entry.get("port", Lobby.PORT)),
+		})
+
+	if trusted_servers_list.get_item_count() == 0:
+		servers_status_label.text = "Доверенных серверов нет. Можно подключиться вручную по IP."
+	else:
+		servers_status_label.text = "Доверенных серверов: %d" % trusted_servers_list.get_item_count()
+
+
+func _connect_to_selected_server() -> void:
+	var selected := trusted_servers_list.get_selected_items()
+	if selected.is_empty():
+		show_error("Выберите сервер из списка")
+		return
+	_connect_to_server_item(selected[0])
+
+
+func _connect_to_server_item(index: int) -> void:
+	if _is_waiting_connection or index < 0 or index >= trusted_servers_list.get_item_count():
+		return
+	var metadata: Dictionary = trusted_servers_list.get_item_metadata(index) as Dictionary
+	var host := String(metadata.get("host", "")).strip_edges()
+	var port := int(metadata.get("port", Lobby.PORT))
+	if host.is_empty():
+		show_error("У сервера нет адреса")
+		return
+	_begin_join(host, port)
 
 
 func _on_local_dedicated_pressed() -> void:
@@ -62,6 +209,7 @@ func _on_local_dedicated_pressed() -> void:
 
 
 func _begin_join(address: String, port: int = -1) -> void:
+	_sync_local_profile_to_lobby()
 	var err : Error = Lobby.join_game(address, port)
 	if err != OK:
 		show_error("Не удалось начать подключение: %d" % err)
@@ -106,6 +254,8 @@ func show_connecting_overlay(visible: bool) -> void:
 	connecting_overlay.visible = visible
 	join_btn.disabled = visible
 	local_dedicated_btn.disabled = visible
+	refresh_servers_btn.disabled = visible
+	connect_selected_server_btn.disabled = visible or trusted_servers_list.get_selected_items().is_empty()
 
 
 func show_error(msg: String) -> void:
@@ -120,3 +270,109 @@ func show_error(msg: String) -> void:
 
 func _on_character_option_button_item_selected(index: int) -> void:
 	Settings.selected_char = index
+	var data := Settings.get_character_data(index)
+	if data != null:
+		ProfileState.set_local_character_id(data.id)
+		_sync_local_profile_to_lobby()
+
+
+func _populate_character_options() -> void:
+	character_option.clear()
+	for i in range(Settings.get_character_count()):
+		var data := Settings.get_character_data(i)
+		if data == null:
+			continue
+		character_option.add_item(data.display_name, i)
+		if data.id == ProfileState.get_equipped_character_id() or i == Settings.selected_char:
+			character_option.select(character_option.get_item_count() - 1)
+
+
+func _sync_local_profile_to_lobby() -> void:
+	var weapon_skins := {
+		"ar-15": ProfileState.get_equipped_weapon_skin("ar-15"),
+		"barret": ProfileState.get_equipped_weapon_skin("barret"),
+	}
+	Lobby.set_player_cosmetics(ProfileState.get_equipped_character_id(), weapon_skins)
+
+
+func _refresh_economy_ui() -> void:
+	var auth_ready := AuthState.is_authenticated()
+	var status := "online" if ProfileState.backend_available and auth_ready else "offline fallback"
+	economy_status_label.text = "Economy: %s" % status
+	soft_balance_label.text = "Soft: %d" % ProfileState.get_wallet_amount("soft")
+	dev_grant_btn.disabled = not ProfileState.backend_available or not auth_ready
+	open_case_btn.disabled = not ProfileState.backend_available or not auth_ready
+	_populate_skin_option(ar15_skin_option, "ar-15")
+	_populate_skin_option(barret_skin_option, "barret")
+	_populate_case_options()
+	_sync_local_profile_to_lobby()
+
+
+func _populate_skin_option(option: OptionButton, weapon_short_name: String) -> void:
+	option.clear()
+	var selected_item := ProfileState.get_equipped_weapon_skin(weapon_short_name)
+	for skin in CosmeticsRegistry.get_weapon_skins_for_weapon(weapon_short_name):
+		if not ProfileState.owns_item(skin.item_key):
+			continue
+		option.add_item("%s [%s]" % [skin.display_name, skin.rarity])
+		var idx := option.get_item_count() - 1
+		option.set_item_metadata(idx, skin.item_key)
+		if skin.item_key == selected_item:
+			option.select(idx)
+	option.disabled = option.get_item_count() <= 1
+
+
+func _populate_case_options() -> void:
+	case_option.clear()
+	for case_data in ProfileState.get_available_cases():
+		var case_key := String(case_data.get("case_key", ""))
+		if case_key.is_empty():
+			continue
+		case_option.add_item("%s (%d %s)" % [
+			String(case_data.get("display_name", case_key)),
+			int(case_data.get("price_amount", 0)),
+			String(case_data.get("price_currency", "soft")),
+		])
+		case_option.set_item_metadata(case_option.get_item_count() - 1, case_key)
+	case_option.disabled = case_option.get_item_count() == 0 or not ProfileState.backend_available or not AuthState.is_authenticated()
+
+
+func _on_weapon_skin_selected(weapon_short_name: String, option: OptionButton, index: int) -> void:
+	var item_key := String(option.get_item_metadata(index))
+	if item_key.is_empty():
+		return
+	await ProfileState.equip_cosmetic("weapon:%s" % weapon_short_name, item_key)
+	_sync_local_profile_to_lobby()
+
+
+func _on_dev_grant_pressed() -> void:
+	var ok := await ProfileState.grant_dev_currency("soft", 1000)
+	if not ok:
+		show_error("Backend dev grant недоступен")
+
+
+func _on_open_case_pressed() -> void:
+	if case_option.get_item_count() == 0:
+		show_error("Нет доступных кейсов")
+		return
+	var case_key := String(case_option.get_item_metadata(case_option.selected))
+	var result := await ProfileState.open_case(case_key)
+	if not result.get("ok", false):
+		show_error("Кейс недоступен: %s" % str(result.get("error", result.get("raw", "offline"))))
+		return
+	var data: Dictionary = result.get("data", {})
+	show_error("Выпало: %s" % String(data.get("granted_item_key", "unknown")))
+
+
+func _refresh_auth_ui() -> void:
+	auth_status_label.text = "Auth: %s" % AuthState.status
+	var authenticated := AuthState.is_authenticated()
+	login_btn.disabled = authenticated
+	register_btn.disabled = authenticated
+	logout_btn.disabled = not authenticated
+	email_edit.editable = not authenticated
+	password_edit.editable = not authenticated
+	if authenticated:
+		var account: Dictionary = AuthState.account
+		email_edit.text = String(account.get("email", email_edit.text))
+		ProfileState.load_profile(name_edit.text)

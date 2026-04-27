@@ -22,6 +22,9 @@ var network_pickup_id: int = 0
 var weapon_data_path: String = ""
 var ammo_in_mag: int = -1
 var ammo_reserve: int = -1
+var skin_item_key: String = ""
+var original_owner_peer_id: int = 0
+var original_owner_name: String = ""
 
 
 func _ready() -> void:
@@ -32,7 +35,7 @@ func _ready() -> void:
 		weapon_data_path = weapon_data.resource_path
 
 	if weapon_data and label:
-		label.text = weapon_data.weapon_name
+		_update_label()
 
 	if weapon_data:
 		_refresh_world_visual(weapon_data)
@@ -76,15 +79,17 @@ func get_pickup_ammo_state() -> Dictionary:
 	}
 
 
-func setup_world_pickup(data_path: String, in_mag: int, in_reserve: int) -> void:
+func setup_world_pickup(data_path: String, in_mag: int, in_reserve: int, p_skin_item_key: String = "", p_owner_peer_id: int = 0, p_owner_name: String = "") -> void:
 	weapon_data_path = data_path
 	ammo_in_mag = max(in_mag, 0)
 	ammo_reserve = max(in_reserve, 0)
+	skin_item_key = p_skin_item_key.strip_edges()
+	original_owner_peer_id = max(p_owner_peer_id, 0)
+	original_owner_name = p_owner_name.strip_edges()
 	var loaded_data := load(data_path) as WeaponData
 	if loaded_data:
 		weapon_data = loaded_data
-		if label:
-			label.text = loaded_data.weapon_name
+		_update_label()
 		if loaded_data.pickup_physics_shape and physics_shape:
 			physics_shape.shape = loaded_data.pickup_physics_shape
 		_refresh_world_visual(loaded_data)
@@ -123,6 +128,43 @@ func _refresh_world_visual(data: WeaponData) -> void:
 		if spr:
 			spr.queue_free()
 		visual_root.add_child(vis)
+		_apply_skin_to_visual(data, vis)
+
+
+func _apply_skin_to_visual(data: WeaponData, visual: Node) -> void:
+	if skin_item_key.is_empty() or data == null:
+		return
+	var weapon_key := data.weapon_name.strip_edges().to_lower()
+	var skin := CosmeticsRegistry.get_weapon_skin_for_weapon(skin_item_key, weapon_key)
+	if skin == null:
+		return
+	var material: Material = skin.material_override
+	if material == null and skin.albedo_tint != Color.WHITE:
+		var generated := StandardMaterial3D.new()
+		generated.albedo_color = skin.albedo_tint
+		material = generated
+	if material != null:
+		_apply_material_recursive(visual, material)
+
+
+func _apply_material_recursive(node: Node, material: Material) -> void:
+	if node is MeshInstance3D:
+		(node as MeshInstance3D).material_override = material
+	for child in node.get_children():
+		_apply_material_recursive(child, material)
+
+
+func _update_label() -> void:
+	if label == null or weapon_data == null:
+		return
+	var text := weapon_data.weapon_name
+	if not skin_item_key.is_empty():
+		var skin := CosmeticsRegistry.get_weapon_skin_for_weapon(skin_item_key, weapon_data.weapon_name.strip_edges().to_lower())
+		if skin != null and not skin.display_name.is_empty():
+			text += " | %s" % skin.display_name
+	if not original_owner_name.is_empty():
+		text += "\nOwner: %s" % original_owner_name
+	label.text = text
 
 
 func consume_on_server() -> void:
