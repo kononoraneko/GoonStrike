@@ -42,6 +42,7 @@ var _match_stats: Dictionary = {}
 ## Уникальный id для дропнутых пикапов (RPC по пути узла на клиенте ненадёжен).
 var _next_world_pickup_id: int = 0
 var _last_buy_availability: Dictionary = {}
+var _match_id: String = ""
 
 @onready var spawner: PlayerSpawner = $PlayerSpawner
 @onready var hud_manager: HUDManager = $HUDManager
@@ -145,6 +146,10 @@ func _on_team_match_finished(winning_team: int, score: int) -> void:
 	var tm := game_mode as TeamGameMode
 	var tname := tm.get_team_name(winning_team)
 	ChatNetwork.send_system("[Match] Победа: %s (%d)" % [tname, score])
+	var winners: Array[int] = []
+	for pid in tm.get_team_members(winning_team):
+		winners.append(int(pid))
+	_submit_match_result(winners)
 
 
 # ── Спавн / деспавн ───────────────────────────────────────────────────────
@@ -263,6 +268,8 @@ func _rpc_respawn_player(peer_id: int) -> void:
 # ── Старт / финиш игры ────────────────────────────────────────────────────
 
 func start_game() -> void:
+	if _match_id.is_empty():
+		_match_id = _create_match_id()
 	for pid in Lobby.players.keys():
 		_ensure_match_stat_entry(int(pid))
 		if multiplayer.is_server() and not is_host_spectator(int(pid)):
@@ -289,6 +296,7 @@ func _on_ffa_match_finished(winner_id: int, score: int) -> void:
 	var msg: String = "[DM] Победитель: %s (%d фрагов)" % [winner_name, score]
 	print(msg)
 	ChatNetwork.send_system(msg)
+	_submit_match_result([winner_id])
 
 
 func _broadcast_killfeed(victim_id: int, attacker_id: int) -> void:
@@ -303,6 +311,22 @@ func _broadcast_killfeed(victim_id: int, attacker_id: int) -> void:
 		msg = "[KILL] %s → %s" % [attacker_name, victim_name]
 	print(msg)
 	ChatNetwork.send_system(msg)
+
+
+func _submit_match_result(winner_ids: Array[int]) -> void:
+	if not multiplayer.is_server():
+		return
+	var backend := get_node_or_null("/root/BackendClient")
+	if backend == null or not backend.has_method("submit_match_result"):
+		return
+	var map_id := "unknown"
+	if Lobby.selected_map != null:
+		map_id = Lobby.selected_map.id if not Lobby.selected_map.id.is_empty() else Lobby.selected_map.resource_path
+	backend.call("submit_match_result", _match_id, Lobby.selected_mode_id, map_id, _pack_match_stats_for_net(), winner_ids)
+
+
+func _create_match_id() -> String:
+	return "%s-%d" % [Lobby.selected_mode_id, Time.get_unix_time_from_system()]
 
 
 func _on_server_disconnected() -> void:
@@ -829,6 +853,8 @@ func _late_join_sync_session_state_to_peer(joining_peer_id: int) -> void:
 	if not multiplayer.is_server():
 		return
 	if not multiplayer.has_multiplayer_peer():
+		return
+	if joining_peer_id == multiplayer.get_unique_id():
 		return
 	var pickup_entries: Array = []
 	for node in get_tree().get_nodes_in_group("weapon_pickups"):

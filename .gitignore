@@ -6,3 +6,9 @@ scripts/game_modes/deathmatch_mode.gd.uid
 /addons/godot-git-plugin/windows
 export_presets.cfg
 *.uid
+
+# Python backend
+__pycache__/
+*.py[cod]
+.venv/
+.env

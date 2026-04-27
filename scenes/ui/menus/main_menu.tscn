@@ -50,13 +50,13 @@ placeholder_text = "127.0.0.1"
 [node name="ButtonRow" type="VBoxContainer" parent="VBoxContainer" unique_id=1223072838]
 layout_mode = 2
 
-[node name="CreateButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1228826462]
-layout_mode = 2
-text = "Создать бокал-хост"
-
 [node name="JoinButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1978696484]
 layout_mode = 2
 text = "Подключиться"
+
+[node name="LocalDedicatedButton" type="Button" parent="VBoxContainer/ButtonRow"]
+layout_mode = 2
+text = "Локальная игра"
 
 [node name="SettingsButton" type="Button" parent="VBoxContainer/ButtonRow" unique_id=1620796272]
 layout_mode = 2

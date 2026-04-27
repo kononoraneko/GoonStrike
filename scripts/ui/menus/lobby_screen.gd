@@ -8,6 +8,8 @@ const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings/settings_scre
 @onready var host_session_box: VBoxContainer = $VBoxContainer/HostSessionBox
 @onready var map_option: OptionButton = $VBoxContainer/HostSessionBox/MapOption
 @onready var mode_option: OptionButton = $VBoxContainer/HostSessionBox/ModeOption
+@onready var chat_log: RichTextLabel = $VBoxContainer/ChatBox/ChatLog
+@onready var chat_input: LineEdit = $VBoxContainer/ChatBox/ChatInput
 @onready var settings_btn: Button = $VBoxContainer/ButtonRow/SettingsButton
 @onready var leave_btn: Button = $VBoxContainer/ButtonRow/LeaveButton
 @onready var start_btn: Button = $VBoxContainer/ButtonRow/StartButton
@@ -20,6 +22,9 @@ func _ready() -> void:
 	Lobby.player_disconnected.connect(_refresh_list)
 	Lobby.server_disconnected.connect(_on_server_disconnected)
 	Lobby.lobby_session_changed.connect(_on_lobby_session_changed)
+	Lobby.players_state_changed.connect(_on_players_state_changed)
+	ChatNetwork.chat_received.connect(_on_chat_received)
+	ChatNetwork.system_received.connect(_on_system_received)
 	multiplayer.connection_failed.connect(_on_connection_failed)
 
 	settings_btn.pressed.connect(_on_settings_pressed)
@@ -27,20 +32,25 @@ func _ready() -> void:
 	start_btn.pressed.connect(_on_start_pressed)
 	map_option.item_selected.connect(_on_map_selected)
 	mode_option.item_selected.connect(_on_mode_selected)
+	chat_input.text_submitted.connect(_on_chat_submitted)
 
-	start_btn.visible = multiplayer.is_server()
-	host_session_box.visible = multiplayer.is_server()
 	_build_map_options()
 	_build_mode_options()
 	_refresh_session_ui()
+	_refresh_leader_controls()
 	status_label.text = "Подключено: %d" % Lobby.players.size()
 	_refresh_list()
 
 
 func _on_lobby_session_changed() -> void:
 	_refresh_session_ui()
-	if multiplayer.is_server():
-		_sync_mode_option_with_lobby()
+	_build_mode_options()
+	_sync_mode_option_with_lobby()
+
+
+func _on_players_state_changed() -> void:
+	_refresh_leader_controls()
+	_refresh_list()
 
 
 func _build_map_options() -> void:
@@ -98,20 +108,20 @@ func _refresh_session_ui() -> void:
 
 
 func _on_map_selected(index: int) -> void:
-	if not multiplayer.is_server():
+	if not Lobby.is_local_lobby_leader():
 		return
 	var path: Variant = map_option.get_item_metadata(index)
 	if path is String:
-		Lobby.host_set_map_by_path(path)
+		Lobby.request_set_map_by_path(path)
 	_build_mode_options()
 
 
 func _on_mode_selected(index: int) -> void:
-	if not multiplayer.is_server():
+	if not Lobby.is_local_lobby_leader():
 		return
 	var mid: Variant = mode_option.get_item_metadata(index)
 	if mid is String:
-		Lobby.host_set_mode_id(mid)
+		Lobby.request_set_mode_id(mid)
 
 
 func _refresh_list(_peer_id: int = -1, _player_info: Dictionary = {}) -> void:
@@ -134,9 +144,35 @@ func _on_leave_pressed() -> void:
 
 
 func _on_start_pressed() -> void:
-	if not multiplayer.is_server():
+	if not Lobby.is_local_lobby_leader():
 		return
-	Lobby.start_match_from_selection()
+	Lobby.request_start_match()
+
+
+func _on_chat_submitted(raw: String) -> void:
+	var text := raw.strip_edges()
+	chat_input.clear()
+	if text.is_empty():
+		return
+	ChatNetwork.send(text)
+
+
+func _on_chat_received(sender_name: String, text: String) -> void:
+	_append_chat_line("%s: %s" % [sender_name, text])
+
+
+func _on_system_received(text: String) -> void:
+	_append_chat_line("[система] %s" % text)
+
+
+func _append_chat_line(text: String) -> void:
+	chat_log.append_text(text + "\n")
+
+
+func _refresh_leader_controls() -> void:
+	var is_leader := Lobby.is_local_lobby_leader()
+	host_session_box.visible = is_leader
+	start_btn.visible = is_leader
 
 
 func _on_server_disconnected() -> void:

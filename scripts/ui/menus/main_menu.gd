@@ -1,22 +1,25 @@
 extends Control
 
 const SETTINGS_SCREEN_SCRIPT := preload("res://scripts/ui/settings/settings_screen.gd")
+const LOCAL_SERVER_LAUNCHER := preload("res://scripts/server/local_server_launcher.gd")
+const LOCAL_SERVER_CONNECT_DELAY := 0.6
 
 @onready var name_edit: LineEdit = $VBoxContainer/NameEdit
 @onready var ip_edit: LineEdit = $VBoxContainer/IpRow/IpEdit
-@onready var create_btn: Button = $VBoxContainer/ButtonRow/CreateButton
 @onready var join_btn: Button = $VBoxContainer/ButtonRow/JoinButton
+@onready var local_dedicated_btn: Button = $VBoxContainer/ButtonRow/LocalDedicatedButton
 @onready var settings_btn: Button = $VBoxContainer/ButtonRow/SettingsButton
 @onready var quit_btn: Button = $VBoxContainer/ButtonRow/QuitButton
 @onready var connecting_overlay: Control = $ConnectingOverlay
 @onready var error_label: Label = $VBoxContainer/ErrorLabel
 
 var _is_waiting_connection: bool = false
+var _local_server_pid: int = -1
 
 func _ready() -> void:
 	name_edit.text_changed.connect(_on_name_text_changed)
-	create_btn.pressed.connect(_on_create_pressed)
 	join_btn.pressed.connect(_on_join_pressed)
+	local_dedicated_btn.pressed.connect(_on_local_dedicated_pressed)
 	settings_btn.pressed.connect(_on_settings_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
 	Lobby.server_disconnected.connect(_on_server_disconnected)
@@ -35,23 +38,35 @@ func _on_name_text_changed(new_text: String) -> void:
 	Lobby.set_player_name(new_text)
 
 
-func _on_create_pressed() -> void:
-	if _is_waiting_connection:
-		return
-	var err : Error = Lobby.create_game()
-	if err != OK:
-		show_error("Не удалось создать сервер: %d" % err)
-		return
-	SceneRouter.go_lobby()
-
-
 func _on_join_pressed() -> void:
 	if _is_waiting_connection:
 		return
 	var ip := ip_edit.text.strip_edges()
-	var err : Error = Lobby.join_game(ip)
+	_begin_join(ip)
+
+
+func _on_local_dedicated_pressed() -> void:
+	if _is_waiting_connection:
+		return
+	_local_server_pid = LOCAL_SERVER_LAUNCHER.launch(Lobby.PORT, "default", GameModeCatalog.ID_TEAM_ELIM)
+	if _local_server_pid <= 0:
+		show_error("Не удалось запустить локальную игру")
+		return
+	Lobby.register_local_dedicated_process(_local_server_pid)
+	_is_waiting_connection = true
+	show_connecting_overlay(true)
+	await get_tree().create_timer(LOCAL_SERVER_CONNECT_DELAY).timeout
+	if not _is_waiting_connection:
+		return
+	_begin_join(Lobby.DEFAULT_IP, Lobby.PORT)
+
+
+func _begin_join(address: String, port: int = -1) -> void:
+	var err : Error = Lobby.join_game(address, port)
 	if err != OK:
 		show_error("Не удалось начать подключение: %d" % err)
+		_is_waiting_connection = false
+		show_connecting_overlay(false)
 		return
 
 	_is_waiting_connection = true
@@ -89,8 +104,8 @@ func _on_server_disconnected() -> void:
 
 func show_connecting_overlay(visible: bool) -> void:
 	connecting_overlay.visible = visible
-	create_btn.disabled = visible
 	join_btn.disabled = visible
+	local_dedicated_btn.disabled = visible
 
 
 func show_error(msg: String) -> void:

@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: goonstrike
+      POSTGRES_USER: goonstrike
+      POSTGRES_PASSWORD: goonstrike
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goonstrike -d goonstrike"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    image: python:3.12-slim
+    working_dir: /app
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    environment:
+      GOONSTRIKE_DATABASE_URL: postgresql+psycopg://goonstrike:goonstrike@postgres:5432/goonstrike
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

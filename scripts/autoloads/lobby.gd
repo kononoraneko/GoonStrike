@@ -9,6 +9,7 @@ extends Node
 signal player_connected(peer_id: int, player_info: Dictionary)
 signal player_disconnected(peer_id: int, player_info: Dictionary)
 signal server_disconnected
+signal players_state_changed
 
 # ── Константы ─────────────────────────────────────────────────────────────
 
@@ -34,6 +35,13 @@ signal lobby_session_changed
 ## Информация локального игрока — меняется до подключения
 var local_info: Dictionary = {"name": "Player", "op": false}
 
+## Runtime server/client settings. Defaults keep the existing local-host flow intact.
+var server_port: int = PORT
+var server_max_connections: int = MAX_CONNECTIONS
+var server_name: String = "host"
+var is_dedicated_server: bool = false
+var _local_dedicated_pid: int = -1
+
 ## Сервер: путь к текущей игровой сцене (для позднего входа после старта матча).
 var active_game_scene_path: String = ""
 
@@ -46,6 +54,11 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected_ok)
 	multiplayer.connection_failed.connect(_on_connected_fail)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:
+		stop_local_dedicated_process()
 
 
 func _load_default_map() -> void:
@@ -139,27 +152,82 @@ func get_player_display_name(peer_id: int) -> String:
 	return str(info.get("name", str(peer_id)))
 
 
-func join_game(address: String = "") -> Error:
+func join_game(address: String = "", port: int = -1) -> Error:
 	if address.is_empty():
 		address = DEFAULT_IP
+	var target_port := port if port > 0 else server_port
+	var parsed := _split_address_port(address, target_port)
+	address = String(parsed["address"])
+	target_port = int(parsed["port"])
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(address, PORT)
+	var err := peer.create_client(address, target_port)
 	if err != OK:
 		return err
 	multiplayer.multiplayer_peer = peer
 	return OK
 
 
-func create_game() -> Error:
+func create_game(port: int = PORT, max_connections: int = MAX_CONNECTIONS, host_name: String = "host") -> Error:
+	is_dedicated_server = false
+	return _create_server(port, max_connections, host_name, true)
+
+
+func create_dedicated_server(port: int = PORT, max_connections: int = MAX_CONNECTIONS, host_name: String = "dedicated") -> Error:
+	is_dedicated_server = true
+	return _create_server(port, max_connections, host_name, false)
+
+
+func _create_server(port: int, max_connections: int, host_name: String, server_op: bool) -> Error:
+	server_port = port
+	server_max_connections = max_connections
+	server_name = host_name
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(PORT, MAX_CONNECTIONS)
+	var err := peer.create_server(server_port, server_max_connections)
 	if err != OK:
 		return err
 	multiplayer.multiplayer_peer = peer
-	local_info["name"] = "host"
-	local_info["op"] = true
+	local_info["name"] = server_name
+	local_info["op"] = server_op
 	_add_player(1, local_info)
 	return OK
+
+
+func is_local_lobby_leader() -> bool:
+	return bool(local_info.get("op", false))
+
+
+func request_set_map_by_path(map_path: String) -> void:
+	if multiplayer.is_server():
+		host_set_map_by_path(map_path)
+	else:
+		_rpc_request_set_map_by_path.rpc_id(1, map_path)
+
+
+func request_set_mode_id(mode_id: String) -> void:
+	if multiplayer.is_server():
+		host_set_mode_id(mode_id)
+	else:
+		_rpc_request_set_mode_id.rpc_id(1, mode_id)
+
+
+func request_start_match() -> void:
+	if multiplayer.is_server():
+		start_match_from_selection()
+	else:
+		_rpc_request_start_match.rpc_id(1)
+
+
+func register_local_dedicated_process(pid: int) -> void:
+	_local_dedicated_pid = pid
+
+
+func stop_local_dedicated_process() -> void:
+	if _local_dedicated_pid <= 0:
+		return
+	var err := OS.kill(_local_dedicated_pid)
+	if err != OK:
+		push_warning("Lobby: failed to stop local dedicated process %d: %d" % [_local_dedicated_pid, err])
+	_local_dedicated_pid = -1
 
 
 func set_player_op(peer_id: int, is_op: bool) -> void:
@@ -176,6 +244,37 @@ func _rpc_set_player_op(peer_id: int, is_op: bool) -> void:
 		players[peer_id] = info
 	if multiplayer.get_unique_id() == peer_id:
 		local_info["op"] = is_op
+	players_state_changed.emit()
+
+
+@rpc("any_peer", "reliable")
+func _rpc_request_set_map_by_path(map_path: String) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if not _is_lobby_leader(sender_id):
+		return
+	host_set_map_by_path(map_path)
+
+
+@rpc("any_peer", "reliable")
+func _rpc_request_set_mode_id(mode_id: String) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if not _is_lobby_leader(sender_id):
+		return
+	host_set_mode_id(mode_id)
+
+
+@rpc("any_peer", "reliable")
+func _rpc_request_start_match() -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if not _is_lobby_leader(sender_id):
+		return
+	start_match_from_selection()
 
 func disconnect_game() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
@@ -185,7 +284,12 @@ func disconnect_game() -> void:
 	active_game_scene_path = ""
 	selected_mode_id = GameModeCatalog.ID_DM
 	local_info["op"] = false
+	is_dedicated_server = false
+	server_port = PORT
+	server_max_connections = MAX_CONNECTIONS
+	server_name = "host"
 	_load_default_map()
+	stop_local_dedicated_process()
 
 
 # ── Загрузка сцены ────────────────────────────────────────────────────────
@@ -236,6 +340,23 @@ func _mark_peer_loaded(peer_id: int) -> void:
 		all_players_loaded.emit()
 
 
+func _split_address_port(address: String, fallback_port: int) -> Dictionary:
+	var clean := address.strip_edges()
+	if clean.is_empty():
+		clean = DEFAULT_IP
+	if clean.count(":") == 1:
+		var parts := clean.split(":", false, 2)
+		if parts.size() == 2 and parts[1].is_valid_int():
+			return {
+				"address": String(parts[0]),
+				"port": int(parts[1]),
+			}
+	return {
+		"address": clean,
+		"port": fallback_port,
+	}
+
+
 # ── Внутренние обработчики ────────────────────────────────────────────────
 
 func _on_peer_connected(_id: int) -> void:
@@ -250,6 +371,8 @@ func _on_peer_disconnected(id: int) -> void:
 	var info : Dictionary = players[id].duplicate()
 	players.erase(id)
 	player_disconnected.emit(id, info)
+	players_state_changed.emit()
+	_ensure_lobby_leader()
 
 
 func _on_connected_ok() -> void:
@@ -277,8 +400,9 @@ func _rpc_client_register(info: Dictionary) -> void:
 	var sanitized := info.duplicate(true)
 	sanitized["op"] = false
 	_add_player(peer_id, sanitized)
+	_ensure_lobby_leader()
 	_rpc_sync_players_state.rpc_id(peer_id, _clone_players_for_net())
-	_broadcast_new_player_to_remote_peers(peer_id, sanitized.duplicate(true))
+	_broadcast_new_player_to_remote_peers(peer_id, (players[peer_id] as Dictionary).duplicate(true))
 	var map_p := selected_map.resource_path if selected_map else ""
 	_rpc_lobby_session.rpc_id(peer_id, map_p, selected_mode_id)
 	if not active_game_scene_path.is_empty():
@@ -317,6 +441,10 @@ func _rpc_sync_players_state(full: Dictionary) -> void:
 	for pid in players.keys():
 		if not had.has(pid):
 			player_connected.emit(pid, players[pid])
+	if players.has(multiplayer.get_unique_id()):
+		var local_entry: Dictionary = players[multiplayer.get_unique_id()]
+		local_info["op"] = bool(local_entry.get("op", false))
+	players_state_changed.emit()
 
 
 func _broadcast_new_player_to_remote_peers(peer_id: int, info: Dictionary) -> void:
@@ -338,6 +466,60 @@ func _add_player(id: int, info: Dictionary) -> void:
 		normalized["op"] = false
 	if players.has(id):
 		players[id] = normalized
+		players_state_changed.emit()
 		return
 	players[id] = normalized
 	player_connected.emit(id, normalized)
+	players_state_changed.emit()
+	_backend_upsert_player(id, normalized)
+
+
+func _backend_upsert_player(id: int, info: Dictionary) -> void:
+	if not multiplayer.is_server() or id <= 0:
+		return
+	var backend := get_node_or_null("/root/BackendClient")
+	if backend != null and backend.has_method("upsert_player"):
+		backend.call("upsert_player", id, info)
+
+
+func _is_lobby_leader(peer_id: int) -> bool:
+	if peer_id <= 0:
+		return false
+	if peer_id == 1:
+		return not is_dedicated_server
+	var info: Dictionary = players.get(peer_id, {}) as Dictionary
+	return bool(info.get("op", false))
+
+
+func _ensure_lobby_leader() -> void:
+	if not multiplayer.is_server():
+		return
+	var current_leader := _find_current_lobby_leader()
+	if current_leader > 0:
+		return
+	var next_leader := _find_next_lobby_leader()
+	if next_leader <= 0:
+		return
+	set_player_op(next_leader, true)
+	ChatNetwork.send_system("[Lobby] %s стал лидером лобби" % get_player_display_name(next_leader))
+
+
+func _find_current_lobby_leader() -> int:
+	for peer_id in players.keys():
+		var id := int(peer_id)
+		if id == 1:
+			continue
+		var info: Dictionary = players[id]
+		if bool(info.get("op", false)):
+			return id
+	return -1
+
+
+func _find_next_lobby_leader() -> int:
+	var ids: Array[int] = []
+	for peer_id in players.keys():
+		var id := int(peer_id)
+		if id != 1:
+			ids.append(id)
+	ids.sort()
+	return ids[0] if not ids.is_empty() else -1
