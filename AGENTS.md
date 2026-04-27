@@ -46,9 +46,9 @@ The usual player flow is:
 10. player spawning via `scripts/player/player_spawner.gd`
 11. HUD via `scripts/ui/hud/hud_manager.gd`
 
-Dedicated servers start through `scenes/server/server_bootstrap.tscn`, wait in the lobby by default, and only load the match after the lobby leader requests start. The technical server peer `1` is not the lobby leader on dedicated servers; the first joined client receives `op = true`.
+Dedicated servers start through `scenes/server/server_bootstrap.tscn`, wait in the lobby by default, and only load the match after the lobby leader requests start. The technical server peer `1` is not the lobby leader on dedicated servers. A terminal-started dedicated server does not auto-assign OP unless launched with `--auto-op-first`.
 
-Local play can start a local dedicated server from the main menu. That path must not require Docker or `--backend-url`; players can run as guest/local peers.
+Local play can start a local dedicated server from the main menu. That path must not require Docker or `--backend-url`; players can run as guest/local peers. It does pass `--auto-op-first`, so the first joined local client can manage the lobby.
 
 Backend integration is optional persistence only. Active match state belongs to the Godot dedicated server, not FastAPI/PostgreSQL. Keep positions, damage, money, rounds, pickups, teams, and live timers in Godot; use backend for accounts, profiles, inventory/cosmetics, long-term stats, and optional finished-match history.
 

@@ -64,6 +64,7 @@ Useful arguments:
 - `--mode team_elim` or `--mode dm`
 - `--backend-url http://127.0.0.1:8000`
 - `--auto-start` for quick tests that should skip the lobby and load the match immediately
+- `--auto-op-first` to automatically make the first joined client the lobby leader
 
 The server scene is `scenes/server/server_bootstrap.tscn`. It creates an ENet server through `Lobby.create_dedicated_server()`, applies the selected map/mode, optionally configures `BackendClient`, and waits in the lobby by default.
 
@@ -71,7 +72,7 @@ The server scene is `scenes/server/server_bootstrap.tscn`. It creates an ENet se
 
 The main menu has a `Локальная игра` button. It starts a local dedicated server process and connects the client to `127.0.0.1:7000`.
 
-This path does not start Docker and does not pass `--backend-url`, so it works as guest/offline local play.
+This path does not start Docker and does not pass `--backend-url`, so it works as guest/offline local play. It does pass `--auto-op-first`, so the local player can manage the lobby and start the match.
 
 ## Dedicated Lobby Flow
 
@@ -82,9 +83,10 @@ The game client no longer creates an in-process local host. Use either the `Ло
 3. Start the game client normally.
 4. Enter the server IP, for local testing usually `127.0.0.1`.
 5. Press `Подключиться`.
-6. The first joined client becomes lobby leader (`[OP]`).
-7. The leader can select map/mode and press `Начать игру`.
-8. Other players can wait and chat in the lobby.
+6. For `Локальная игра`, the first joined client becomes lobby leader (`[OP]`).
+7. For a terminal-started dedicated server, OP is not assigned automatically unless the server was started with `--auto-op-first`.
+8. The leader can select map/mode and press `Начать игру`.
+9. Other players can wait and chat in the lobby.
 
 Production servers should be launched as standalone headless processes on Linux or in containers.
 

@@ -23,10 +23,11 @@ func _start_server() -> void:
 	var mode_id := String(args.get("mode", GameModeCatalog.ID_TEAM_ELIM))
 	var backend_url := String(args.get("backend-url", ""))
 	var auto_start := bool(args.get("auto-start", false))
+	var auto_op_first := bool(args.get("auto-op-first", false))
 
 	_setup_backend_client(backend_url)
 
-	var err := Lobby.create_dedicated_server(port, max_players, server_name)
+	var err := Lobby.create_dedicated_server(port, max_players, server_name, auto_op_first)
 	if err != OK:
 		push_error("Dedicated server failed to listen on port %d: %d" % [port, err])
 		get_tree().quit(err)
@@ -47,7 +48,10 @@ func _start_server() -> void:
 	if auto_start:
 		Lobby.start_match_from_selection()
 	else:
-		print("Dedicated server is waiting in lobby. First joined client becomes lobby leader.")
+		if auto_op_first:
+			print("Dedicated server is waiting in lobby. First joined client becomes lobby leader.")
+		else:
+			print("Dedicated server is waiting in lobby. OP is not auto-assigned.")
 
 
 func _setup_backend_client(backend_url: String) -> void:

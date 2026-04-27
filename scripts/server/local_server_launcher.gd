@@ -33,6 +33,7 @@ static func _build_args(port: int, map_id: String, mode_id: String, backend_url:
 	args.append(map_id)
 	args.append("--mode")
 	args.append(mode_id)
+	args.append("--auto-op-first")
 	if not backend_url.strip_edges().is_empty():
 		args.append("--backend-url")
 		args.append(backend_url)

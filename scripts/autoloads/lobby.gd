@@ -40,6 +40,7 @@ var server_port: int = PORT
 var server_max_connections: int = MAX_CONNECTIONS
 var server_name: String = "host"
 var is_dedicated_server: bool = false
+var auto_assign_lobby_leader: bool = false
 var _local_dedicated_pid: int = -1
 
 ## Сервер: путь к текущей игровой сцене (для позднего входа после старта матча).
@@ -169,11 +170,13 @@ func join_game(address: String = "", port: int = -1) -> Error:
 
 func create_game(port: int = PORT, max_connections: int = MAX_CONNECTIONS, host_name: String = "host") -> Error:
 	is_dedicated_server = false
+	auto_assign_lobby_leader = true
 	return _create_server(port, max_connections, host_name, true)
 
 
-func create_dedicated_server(port: int = PORT, max_connections: int = MAX_CONNECTIONS, host_name: String = "dedicated") -> Error:
+func create_dedicated_server(port: int = PORT, max_connections: int = MAX_CONNECTIONS, host_name: String = "dedicated", auto_op_first: bool = false) -> Error:
 	is_dedicated_server = true
+	auto_assign_lobby_leader = auto_op_first
 	return _create_server(port, max_connections, host_name, false)
 
 
@@ -285,6 +288,7 @@ func disconnect_game() -> void:
 	selected_mode_id = GameModeCatalog.ID_DM
 	local_info["op"] = false
 	is_dedicated_server = false
+	auto_assign_lobby_leader = false
 	server_port = PORT
 	server_max_connections = MAX_CONNECTIONS
 	server_name = "host"
@@ -493,6 +497,8 @@ func _is_lobby_leader(peer_id: int) -> bool:
 
 func _ensure_lobby_leader() -> void:
 	if not multiplayer.is_server():
+		return
+	if not auto_assign_lobby_leader:
 		return
 	var current_leader := _find_current_lobby_leader()
 	if current_leader > 0:
