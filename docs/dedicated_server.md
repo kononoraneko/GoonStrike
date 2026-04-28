@@ -70,7 +70,12 @@ Useful arguments:
 - `--heartbeat-sec 10`
 - `--registry-key-id dev-key`
 - `--registry-secret dev-secret` (can be set by env `GOONSTRIKE_REGISTRY_SECRET`)
+- `--registry-enroll-token ...` or env `GOONSTRIKE_REGISTRY_ENROLL_TOKEN` (one-time exchange for keys; requires `--backend-url`)
+- `--registry-credentials-path ...` or env `GOONSTRIKE_REGISTRY_CREDENTIALS_PATH` (defaults to `user://goonstrike_dedicated_registry.cfg`)
+- `--registry-enroll-force` — run enrollment even if a credentials file already exists
 - `--auto-start` for quick tests that should skip the lobby and load the match immediately
+
+Docker / systemd without CLI flags: `GOONSTRIKE_BACKEND_URL`, `GOONSTRIKE_SERVER_ID`, `GOONSTRIKE_DEDICATED_PORT` / `PORT`, `GOONSTRIKE_PUBLIC_HOST`, `GOONSTRIKE_MAP_ID`, `GOONSTRIKE_MODE_ID`, enrollment vars above. See `docs/vds_orchestrator.md` for spawning containers from the backend.
 - `--auto-op-first` to automatically make the first joined client the lobby leader
 
 The server scene is `scenes/server/server_bootstrap.tscn`. It creates an ENet server through `Lobby.create_dedicated_server()`, applies the selected map/mode, optionally configures `BackendClient`, requests a backend challenge, signs registry payloads, and waits in the lobby by default.
@@ -83,10 +88,16 @@ Registry endpoints:
 
 - `GET /servers`
 - `POST /servers/challenge`
+- `POST /servers/registry/enroll` (dedicated exchanges one-time enrollment token)
 - `POST /servers/register`
 - `POST /servers/{server_id}/heartbeat`
 - `POST /servers/{server_id}/offline`
 - `POST /servers/admin/credentials` (admin-only key provisioning)
+- `POST /servers/admin/provision` (admin-only: generate triple, secret returned once)
+- `POST /servers/admin/enrollment-tokens` (admin-only: mint one-time enrollment token)
+- `GET /servers/admin/orchestrator/instances` (admin-only: list containers on VDS agent)
+- `GET /servers/admin/orchestrator/instances/{port}` (admin-only: inspect container status)
+- `GET /servers/admin/orchestrator/instances/{port}/logs?tail=200` (admin-only: tail logs via backend proxy)
 
 Trusted registry writes now use a signed challenge flow:
 
@@ -112,6 +123,29 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/servers/admin/credenti
   -ContentType "application/json" `
   -Body '{"server_id":"signed-e2e","key_id":"dev-key","secret":"dev-secret","is_active":true}'
 ```
+
+### One-click style flows (recommended for deploy)
+
+**A — Quick provision (admin generates keys for you)**
+
+- `POST /servers/admin/provision` with `X-GS-Admin-Token` (optional JSON: `server_id`, `key_id`; omitted fields are auto-generated).
+- Response includes plaintext `secret` **once**. Store it in your secret manager / systemd drop-in / container env (`GOONSTRIKE_REGISTRY_SECRET`), then pass `--registry-key-id` / `--registry-secret` (or env) to the dedicated binary as before.
+
+**B — Enrollment token (no manual secret copy onto the machine)**
+
+1. Admin mints a **one-time** token: `POST /servers/admin/enrollment-tokens` (optional `server_id` lock and `ttl_seconds`; defaults: `GOONSTRIKE_REGISTRY_ENROLLMENT_DEFAULT_TTL_SEC` / `_MAX_` in backend config).
+2. Start dedicated **once** with `--backend-url`, matching `--server-id`, and `--registry-enroll-token <token>` (or env `GOONSTRIKE_REGISTRY_ENROLL_TOKEN`).
+3. The process calls `POST /servers/registry/enroll`, receives `key_id` + `secret`, and saves them under `user://goonstrike_dedicated_registry.cfg` unless you override `--registry-credentials-path` / `GOONSTRIKE_REGISTRY_CREDENTIALS_PATH`.
+4. Next restarts omit the enrollment token; credentials load from that file. Use `--registry-enroll-force` to enroll again (consumes a **new** minted token).
+
+The admin panel (`admin-panel/`) exposes **Provision credentials**, **Mint enrollment token**, and **VDS orchestrator** actions (spawn/list/stop + inspect/logs) that wrap these endpoints.
+
+#### Security notes
+
+- **Better than pasting the admin token on the server**: enrollment uses a **short-lived, single-use** bearer that only creates registry signing keys — not full admin API access.
+- Still treat enrollment tokens like passwords: **HTTPS only** toward the backend in production, tight firewall, minimal TTL. Anyone who steals a valid unused token could register **their** host only if they also satisfy `server_id` / optional lock — lock to the exact `--server-id` you put in your systemd unit.
+- **Secrets at rest**: restrict permissions on the saved credentials file / env files on the dedicated host (`600`, dedicated user).
+- **Provisioning** (`/admin/provision`) returns a long-lived registry secret — handle it like an API key (never commit, rotate via panel/API).
 
 ## Separate Web Admin Panel (MVP)
 
@@ -141,6 +175,9 @@ Then open:
 Panel capabilities:
 
 - set backend URL and admin token;
+- provision auto-generated credentials (`POST /servers/admin/provision`);
+- mint enrollment tokens (`POST /servers/admin/enrollment-tokens`);
+- spawn / list / stop dedicated containers via the VDS orchestrator (when configured);
 - create/rotate/deactivate server credentials via `POST /servers/admin/credentials`;
 - view current credentials via `GET /servers/admin/credentials`;
 - view trusted online servers via `GET /servers`.
@@ -180,6 +217,19 @@ Production servers should be launched as standalone headless processes on Linux 
 - `POST /servers/register`
 - `POST /servers/{server_id}/heartbeat`
 - `POST /servers/{server_id}/offline`
+- `POST /servers/registry/enroll` (dedicated exchanges enrollment token for credentials)
+- `POST /servers/register`
+- `POST /servers/{server_id}/heartbeat`
+- `POST /servers/{server_id}/offline`
+- `POST /servers/admin/provision` (admin token)
+- `POST /servers/admin/enrollment-tokens` (admin token)
+- `POST /servers/admin/orchestrator/spawn` (admin token; calls node agent on VDS)
+- `GET /servers/admin/orchestrator/instances` (admin token; proxy to agent)
+- `GET /servers/admin/orchestrator/instances/{port}` (admin token; inspect one container)
+- `GET /servers/admin/orchestrator/instances/{port}/logs?tail=200` (admin token; container logs)
+- `DELETE /servers/admin/orchestrator/instances/{port}` (admin token; stop container)
+- `POST /servers/admin/credentials` (admin token)
+- `GET /servers/admin/credentials` (admin token)
 
 Godot currently uses placeholder external ids like `peer:2` until real account/auth IDs exist.
 
@@ -187,6 +237,7 @@ Godot currently uses placeholder external ids like `peer:2` until real account/a
 
 - Add real authentication before trusting persistent player identity.
 - Add credential management UI/ops flow for server key rotation and revocation.
+- Harden enrollment and admin routes (rate limits, audit logs) beyond the current dev implementation.
 - Replace `Base.metadata.create_all()` with Alembic migrations before schema changes become important.
 - Add server process supervision for Linux deployments.
 - Add a matchmaking service before dynamically allocating public dedicated servers.

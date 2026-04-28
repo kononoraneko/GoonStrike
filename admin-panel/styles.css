@@ -47,6 +47,33 @@ label {
 
 input[type="text"],
 input[type="password"] {
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+
+.req {
+  color: #f87171;
+}
+
+.subheading {
+  margin: 16px 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e6eaf2;
+}
+
+.row.inline {
+  align-items: flex-end;
+}
+
+.inline-field {
+  flex: 0 1 160px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"] {
   border: 1px solid #3a4354;
   background: #0f1115;
   color: #f2f4f8;

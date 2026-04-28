@@ -30,23 +30,49 @@ func _notification(what: int) -> void:
 
 func _start_server() -> void:
 	var args := _parse_args()
-	var port := int(args.get("port", DEFAULT_PORT))
+	var port: int
+	if args.has("port"):
+		port = clampi(int(args.get("port", DEFAULT_PORT)), 1, 65535)
+	else:
+		var penv := String(OS.get_environment("GOONSTRIKE_DEDICATED_PORT")).strip_edges()
+		if penv.is_empty():
+			penv = String(OS.get_environment("PORT")).strip_edges()
+		if not penv.is_empty() and penv.is_valid_int():
+			port = clampi(int(penv), 1, 65535)
+		else:
+			port = DEFAULT_PORT
 	var max_players := int(args.get("max-players", DEFAULT_MAX_PLAYERS))
 	var server_name := String(args.get("name", "dedicated"))
-	var map_arg := String(args.get("map", ""))
-	var mode_id := String(args.get("mode", GameModeCatalog.ID_TEAM_ELIM))
-	var backend_url := String(args.get("backend-url", ""))
+	var map_arg := String(args.get("map", "")).strip_edges()
+	if map_arg.is_empty():
+		map_arg = String(OS.get_environment("GOONSTRIKE_MAP_ID")).strip_edges()
+	var mode_id := String(args.get("mode", "")).strip_edges()
+	if mode_id.is_empty():
+		mode_id = String(OS.get_environment("GOONSTRIKE_MODE_ID")).strip_edges()
+	if mode_id.is_empty():
+		mode_id = GameModeCatalog.ID_TEAM_ELIM
+	var backend_url := String(args.get("backend-url", "")).strip_edges()
+	if backend_url.is_empty():
+		backend_url = String(OS.get_environment("GOONSTRIKE_BACKEND_URL")).strip_edges()
 	var auto_start := _bool_arg(args.get("auto-start", false))
 	var auto_op_first := _bool_arg(args.get("auto-op-first", false))
 	var heartbeat_sec := float(args.get("heartbeat-sec", 10.0))
 	_display_name = String(args.get("display-name", server_name))
-	_public_host = String(args.get("public-host", "127.0.0.1"))
-	_server_id = String(args.get("server-id", _make_default_server_id(_display_name, port)))
+	if args.has("public-host"):
+		_public_host = String(args.get("public-host", "127.0.0.1"))
+	else:
+		var ph := String(OS.get_environment("GOONSTRIKE_PUBLIC_HOST")).strip_edges()
+		_public_host = ph if not ph.is_empty() else "127.0.0.1"
+	var sid_arg := String(args.get("server-id", "")).strip_edges()
+	if sid_arg.is_empty():
+		sid_arg = String(OS.get_environment("GOONSTRIKE_SERVER_ID")).strip_edges()
+	_server_id = sid_arg if not sid_arg.is_empty() else _make_default_server_id(_display_name, port)
 	_is_trusted = _bool_arg(args.get("trusted", true))
 	_registry_key_id = _resolve_arg_or_env(args, "registry-key-id", "GOONSTRIKE_REGISTRY_KEY_ID")
 	_registry_secret = _resolve_arg_or_env(args, "registry-secret", "GOONSTRIKE_REGISTRY_SECRET")
 
 	_setup_backend_client(backend_url)
+	await _resolve_registry_credentials_after_backend(args)
 
 	var err := Lobby.create_dedicated_server(port, max_players, server_name, auto_op_first)
 	if err != OK:
@@ -202,6 +228,79 @@ func _resolve_arg_or_env(args: Dictionary, key: String, env_name: String) -> Str
 
 func _requires_registry_auth() -> bool:
 	return not _registry_key_id.is_empty() and not _registry_secret.is_empty()
+
+
+func _resolve_credentials_path(args: Dictionary) -> String:
+	var path_arg := _resolve_arg_or_env(args, "registry-credentials-path", "GOONSTRIKE_REGISTRY_CREDENTIALS_PATH")
+	return path_arg if not path_arg.is_empty() else "user://goonstrike_dedicated_registry.cfg"
+
+
+func _resolve_registry_credentials_after_backend(args: Dictionary) -> void:
+	if _backend_client == null:
+		return
+	if _requires_registry_auth():
+		return
+
+	var cred_path := _resolve_credentials_path(args)
+	var enroll_token := _resolve_arg_or_env(args, "registry-enroll-token", "GOONSTRIKE_REGISTRY_ENROLL_TOKEN")
+	var enroll_force := _bool_arg(args.get("registry-enroll-force", false))
+
+	if not enroll_token.is_empty():
+		if not enroll_force and _try_load_registry_credentials_file(cred_path):
+			print("Loaded registry credentials from %s (skipped enrollment)." % cred_path)
+			return
+		if not _backend_client.has_method("registry_enroll"):
+			push_error("BackendClient.registry_enroll missing; cannot use registry enrollment.")
+			return
+		var enroll_result: Dictionary = await _backend_client.registry_enroll(enroll_token, _server_id)
+		if not enroll_result.get("ok", false):
+			push_error(
+				"Registry enrollment failed (HTTP %s): %s"
+				% [str(enroll_result.get("status", "")), str(enroll_result.get("raw", enroll_result))]
+			)
+			return
+		var enroll_data: Dictionary = enroll_result.get("data", {}) as Dictionary
+		var kid := String(enroll_data.get("key_id", "")).strip_edges()
+		var sec := String(enroll_data.get("secret", "")).strip_edges()
+		if kid.is_empty() or sec.is_empty():
+			push_error("Registry enrollment returned empty key_id/secret.")
+			return
+		_registry_key_id = kid
+		_registry_secret = sec
+		_save_registry_credentials_file(cred_path)
+		print("Registry enrolled; credentials saved to %s" % cred_path)
+		return
+
+	if _try_load_registry_credentials_file(cred_path):
+		print("Loaded registry credentials from %s" % cred_path)
+
+
+func _try_load_registry_credentials_file(path: String) -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(path) != OK:
+		return false
+	if not cfg.has_section("registry"):
+		return false
+	var kid := String(cfg.get_value("registry", "key_id", "")).strip_edges()
+	var sec := String(cfg.get_value("registry", "secret", "")).strip_edges()
+	if kid.is_empty() or sec.is_empty():
+		return false
+	var sid := String(cfg.get_value("registry", "server_id", "")).strip_edges()
+	if not sid.is_empty() and sid != _server_id:
+		return false
+	_registry_key_id = kid
+	_registry_secret = sec
+	return true
+
+
+func _save_registry_credentials_file(path: String) -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("registry", "server_id", _server_id)
+	cfg.set_value("registry", "key_id", _registry_key_id)
+	cfg.set_value("registry", "secret", _registry_secret)
+	var err := cfg.save(path)
+	if err != OK:
+		push_warning("Could not save registry credentials to '%s' (error %d)." % [path, err])
 
 
 func _auth_context_for_registry(force_refresh: bool) -> Dictionary:

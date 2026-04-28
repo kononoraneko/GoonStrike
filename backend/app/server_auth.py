@@ -74,6 +74,7 @@ def issue_server_challenge(db: Session, server_id: str, key_id: str) -> ServerCh
             challenge=challenge,
             key_id=key_id,
             expires_at=expires_at,
+            used_at=None,
         )
     )
     db.commit()

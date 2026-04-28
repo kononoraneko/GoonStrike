@@ -1,0 +1,53 @@
+FROM ubuntu:24.04
+
+ARG GODOT_VERSION=4.6.1
+ARG GODOT_RELEASE_TAG=stable
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV GODOT_BIN=/opt/godot/godot
+ENV GOONSTRIKE_DEDICATED_PORT=7000
+ENV GOONSTRIKE_MAP_ID=default
+ENV GOONSTRIKE_MODE_ID=team_elim
+ENV GOONSTRIKE_PUBLIC_HOST=127.0.0.1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        unzip \
+        libx11-6 \
+        libxcursor1 \
+        libxinerama1 \
+        libxrandr2 \
+        libxi6 \
+        libxext6 \
+        libfontconfig1 \
+        libfreetype6 \
+        libglu1-mesa \
+        libgl1 \
+        libasound2t64 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-${GODOT_RELEASE_TAG}/Godot_v${GODOT_VERSION}-${GODOT_RELEASE_TAG}_linux.x86_64.zip"; \
+    curl -fsSL "$url" -o /tmp/godot.zip; \
+    mkdir -p /opt/godot; \
+    unzip -q /tmp/godot.zip -d /opt/godot; \
+    rm -f /tmp/godot.zip; \
+    mv /opt/godot/Godot_v${GODOT_VERSION}-${GODOT_RELEASE_TAG}_linux.x86_64 "$GODOT_BIN"; \
+    chmod +x "$GODOT_BIN"
+
+WORKDIR /opt/goonstrike
+
+# For production, replace this COPY with exported artifacts from CI if desired.
+COPY . /opt/goonstrike
+
+COPY orchestrator/dedicated.entrypoint.sh /usr/local/bin/goonstrike-dedicated-entrypoint
+RUN chmod +x /usr/local/bin/goonstrike-dedicated-entrypoint \
+    && useradd -m -u 10001 goonstrike \
+    && chown -R goonstrike:goonstrike /opt/goonstrike
+
+USER goonstrike
+EXPOSE 7000/udp
+
+ENTRYPOINT ["/usr/local/bin/goonstrike-dedicated-entrypoint"]

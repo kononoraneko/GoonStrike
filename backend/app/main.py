@@ -6,6 +6,7 @@ from .config import settings
 from .db import Base, engine
 from . import models  # noqa: F401 - imported so SQLAlchemy registers models
 from .routes import auth, economy, health, matches, players, servers
+from .routes import health, servers
 from .server_auth import ensure_bootstrap_credential
 
 
@@ -16,7 +17,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
     app.include_router(health.router)
@@ -89,3 +90,23 @@ def _apply_dev_schema_patches() -> None:
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_server_auth_nonces_challenge ON server_auth_nonces (challenge)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_server_auth_nonces_expires_at ON server_auth_nonces (expires_at)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_server_auth_nonces_used_at ON server_auth_nonces (used_at)"))
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS server_enrollment_tokens (
+                    id SERIAL PRIMARY KEY,
+                    token_hash VARCHAR(128) NOT NULL,
+                    expires_at TIMESTAMPTZ NOT NULL,
+                    used_at TIMESTAMPTZ NULL,
+                    server_id_constraint VARCHAR(128) NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    CONSTRAINT uq_server_enrollment_tokens_token_hash UNIQUE (token_hash)
+                )
+                """
+            )
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_server_enrollment_tokens_expires_at ON server_enrollment_tokens (expires_at)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_server_enrollment_tokens_used_at ON server_enrollment_tokens (used_at)"))
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_server_enrollment_tokens_server_id_constraint ON server_enrollment_tokens (server_id_constraint)")
+        )

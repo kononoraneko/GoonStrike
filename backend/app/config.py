@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     registry_bootstrap_key_id: str = ""
     registry_bootstrap_secret: str = ""
     registry_admin_token: str = ""
+    registry_enrollment_default_ttl_sec: int = 900
+    registry_enrollment_max_ttl_sec: int = 3600
+    ## Single-host VDS: backend calls this URL to start dedicated containers (see orchestrator/agent).
+    orchestrator_url: str = ""
+    orchestrator_secret: str = ""
+    ## URL dedicated containers use to reach this API (HTTPS domain or http://HOST_IP:8000).
+    public_backend_url: str = ""
+    orchestrator_default_image: str = "goonstrike-dedicated:latest"
     admin_panel_allowed_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="GOONSTRIKE_")

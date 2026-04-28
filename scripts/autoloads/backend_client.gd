@@ -51,6 +51,15 @@ func fetch_server_challenge(server_id: String, key_id: String) -> Dictionary:
 	}, false)
 
 
+func registry_enroll(enrollment_token: String, server_id: String) -> Dictionary:
+	if not is_configured() or enrollment_token.is_empty() or server_id.is_empty():
+		return {"ok": false, "offline": false, "status": 400, "data": {}}
+	return await _request_json("POST", "/servers/registry/enroll", {
+		"enrollment_token": enrollment_token,
+		"server_id": server_id,
+	}, false)
+
+
 func register_server(payload: Dictionary, auth_context: Dictionary = {}) -> void:
 	if not is_configured():
 		return

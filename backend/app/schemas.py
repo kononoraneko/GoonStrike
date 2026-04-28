@@ -77,6 +77,65 @@ class ServerCredentialListResponse(BaseModel):
     credentials: list[ServerCredentialResponse]
 
 
+class ServerCredentialProvisionResponse(BaseModel):
+    """Plaintext secret is returned once when provisioning or enrolling."""
+
+    server_id: str
+    key_id: str
+    secret: str
+    is_active: bool
+
+
+class ServerEnrollmentMintRequest(BaseModel):
+    server_id: str | None = Field(default=None, max_length=128)
+    ttl_seconds: int | None = Field(default=None)
+
+
+class ServerEnrollmentMintResponse(BaseModel):
+    enrollment_token: str
+    expires_at: datetime
+    server_id_constraint: str | None = None
+
+
+class RegistryEnrollRequest(BaseModel):
+    enrollment_token: str = Field(min_length=16, max_length=512)
+    server_id: str = Field(min_length=1, max_length=128)
+
+
+class ServerProvisioningRequest(BaseModel):
+    """Optional explicit ids; backend generates missing pieces."""
+
+    server_id: str | None = Field(default=None, max_length=128)
+    key_id: str | None = Field(default=None, max_length=128)
+
+
+class OrchestratorSpawnRequest(BaseModel):
+    """Ask the node agent on your VDS to docker-run a dedicated container."""
+
+    port: int = Field(ge=1024, le=65534)
+    server_id: str | None = Field(default=None, max_length=128)
+    map_id: str = Field(default="default", max_length=128)
+    mode_id: str = Field(default="team_elim", max_length=64)
+    backend_url: str | None = Field(
+        default=None,
+        description="Public API URL reachable from inside the dedicated container (overrides GOONSTRIKE_PUBLIC_BACKEND_URL).",
+        max_length=512,
+    )
+    public_host: str | None = Field(
+        default=None,
+        description="Host/IP shown to players in the server browser (GOONSTRIKE_PUBLIC_HOST in container).",
+        max_length=255,
+    )
+    docker_image: str | None = Field(default=None, max_length=255)
+    enrollment_ttl_seconds: int | None = Field(default=None)
+
+
+class OrchestratorSpawnResponse(BaseModel):
+    server_id: str
+    enrollment_expires_at: datetime
+    orchestrator: dict
+
+
 class PlayerUpsertRequest(BaseModel):
     external_id: str = Field(min_length=1, max_length=128)
     display_name: str = Field(min_length=1, max_length=64)
