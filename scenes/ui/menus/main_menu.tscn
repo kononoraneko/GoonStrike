@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c1l0pg4ttjuxi"]
 
-[ext_resource type="Script" uid="uid://31ytmpkyyq57" path="res://scripts/ui/menus/main_menu.gd" id="1_flhq8"]
+[ext_resource type="Script" uid="uid://dfxi1l5pxl2f8" path="res://scripts/ui/menus/main_menu.gd" id="1_flhq8"]
 
 [node name="MainMenu" type="Control" unique_id=482925862]
 layout_mode = 3
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_flhq8")
 
-[node name="RootMargin" type="MarginContainer" parent="."]
+[node name="RootMargin" type="MarginContainer" parent="." unique_id=1666306979]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,35 +23,35 @@ offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ShellRow" type="HBoxContainer" parent="RootMargin"]
+[node name="ShellRow" type="HBoxContainer" parent="RootMargin" unique_id=1974677658]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SideTabsPanel" type="PanelContainer" parent="RootMargin/ShellRow"]
-layout_mode = 2
+[node name="SideTabsPanel" type="PanelContainer" parent="RootMargin/ShellRow" unique_id=1868604567]
 custom_minimum_size = Vector2(92, 0)
+layout_mode = 2
 
-[node name="SideTabsVBox" type="VBoxContainer" parent="RootMargin/ShellRow/SideTabsPanel"]
+[node name="SideTabsVBox" type="VBoxContainer" parent="RootMargin/ShellRow/SideTabsPanel" unique_id=256766011]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="PlayTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox"]
+[node name="PlayTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox" unique_id=1288403648]
 layout_mode = 2
 text = "Play"
 
-[node name="ServersTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox"]
+[node name="ServersTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox" unique_id=1159326390]
 layout_mode = 2
 text = "Srv"
 
-[node name="ProfileTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox"]
+[node name="ProfileTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox" unique_id=2047851408]
 layout_mode = 2
 text = "Prof"
 
-[node name="InventoryTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox"]
+[node name="InventoryTabButton" type="Button" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox" unique_id=2010761707]
 layout_mode = 2
 text = "Inv"
 
-[node name="Spacer" type="Control" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox"]
+[node name="Spacer" type="Control" parent="RootMargin/ShellRow/SideTabsPanel/SideTabsVBox" unique_id=97938195]
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -63,12 +63,12 @@ text = "Cfg"
 layout_mode = 2
 text = "Exit"
 
-[node name="ContentStage" type="PanelContainer" parent="RootMargin/ShellRow"]
+[node name="ContentStage" type="PanelContainer" parent="RootMargin/ShellRow" unique_id=507204572]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="StageVBox" type="VBoxContainer" parent="RootMargin/ShellRow/ContentStage"]
+[node name="StageVBox" type="VBoxContainer" parent="RootMargin/ShellRow/ContentStage" unique_id=1083527551]
 layout_mode = 2
 theme_override_constants/separation = 8
 
@@ -77,40 +77,40 @@ layout_mode = 2
 text = "GoonStrike"
 horizontal_alignment = 1
 
-[node name="StageHint" type="Label" parent="RootMargin/ShellRow/ContentStage/StageVBox"]
+[node name="StageHint" type="Label" parent="RootMargin/ShellRow/ContentStage/StageVBox" unique_id=311487790]
 layout_mode = 2
+size_flags_vertical = 3
 text = "Центральная область зарезервирована под 3D-сцену."
 horizontal_alignment = 1
 autowrap_mode = 3
-size_flags_vertical = 3
 
-[node name="DrawerHostPanel" type="PanelContainer" parent="RootMargin/ShellRow"]
-layout_mode = 2
+[node name="DrawerHostPanel" type="PanelContainer" parent="RootMargin/ShellRow" unique_id=212065549]
 custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
 size_flags_vertical = 3
 
-[node name="DrawerHostVBox" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel"]
+[node name="DrawerHostVBox" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel" unique_id=1564293507]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="DrawerHeader" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox"]
+[node name="DrawerHeader" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox" unique_id=1320188826]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="DrawerTitleLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader"]
+[node name="DrawerTitleLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader" unique_id=1620217379]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Играть"
 
-[node name="CloseDrawerButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader"]
+[node name="CloseDrawerButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerHeader" unique_id=138579695]
 layout_mode = 2
 text = "X"
 
-[node name="DrawerStack" type="Control" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox"]
+[node name="DrawerStack" type="Control" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox" unique_id=1953999904]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="PlayDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack"]
+[node name="PlayDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack" unique_id=37634169]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -137,7 +137,7 @@ size_flags_horizontal = 3
 text = "127.0.0.1"
 placeholder_text = "127.0.0.1"
 
-[node name="PlayButtons" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer"]
+[node name="PlayButtons" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer" unique_id=738245742]
 layout_mode = 2
 theme_override_constants/separation = 6
 
@@ -145,7 +145,7 @@ theme_override_constants/separation = 6
 layout_mode = 2
 text = "Подключиться"
 
-[node name="LocalDedicatedButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer/PlayButtons"]
+[node name="LocalDedicatedButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/PlayDrawer/PlayButtons" unique_id=366224699]
 layout_mode = 2
 text = "Локальная игра"
 
@@ -156,7 +156,7 @@ layout_mode = 2
 text = "Ошибка"
 autowrap_mode = 3
 
-[node name="ServersDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack"]
+[node name="ServersDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack" unique_id=109194952]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -166,30 +166,30 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
 
-[node name="ServerBrowserButtons" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer"]
+[node name="ServerBrowserButtons" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer" unique_id=1354855276]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="RefreshServersButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/ServerBrowserButtons"]
+[node name="RefreshServersButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/ServerBrowserButtons" unique_id=640574612]
 layout_mode = 2
 text = "Обновить"
 
-[node name="ConnectSelectedServerButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/ServerBrowserButtons"]
+[node name="ConnectSelectedServerButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer/ServerBrowserButtons" unique_id=630464286]
 layout_mode = 2
 disabled = true
 text = "Подключиться к выбранному"
 
-[node name="TrustedServersList" type="ItemList" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer"]
+[node name="TrustedServersList" type="ItemList" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer" unique_id=1865421802]
 custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ServersStatusLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer"]
+[node name="ServersStatusLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ServersDrawer" unique_id=1051160014]
 layout_mode = 2
 text = "Registry не обновлён"
 autowrap_mode = 3
 
-[node name="ProfileDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack"]
+[node name="ProfileDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack" unique_id=942053398]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -199,38 +199,38 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
 
-[node name="AuthStatusLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="AuthStatusLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=72905029]
 layout_mode = 2
 text = "Auth: offline"
 
-[node name="EmailEdit" type="LineEdit" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="EmailEdit" type="LineEdit" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=1392373352]
 layout_mode = 2
 placeholder_text = "email"
 
-[node name="PasswordEdit" type="LineEdit" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="PasswordEdit" type="LineEdit" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=939268421]
 layout_mode = 2
 placeholder_text = "password"
 secret = true
 
-[node name="AuthButtons" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="AuthButtons" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=1829421650]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LoginButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/AuthButtons"]
+[node name="LoginButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/AuthButtons" unique_id=301759605]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Login"
-size_flags_horizontal = 3
 
-[node name="RegisterButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/AuthButtons"]
+[node name="RegisterButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer/AuthButtons" unique_id=575051066]
 layout_mode = 2
-text = "Register"
 size_flags_horizontal = 3
+text = "Register"
 
-[node name="LogoutButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="LogoutButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=1846197293]
 layout_mode = 2
 text = "Logout"
 
-[node name="CharacterRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="CharacterRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=1664240175]
 layout_mode = 2
 theme_override_constants/separation = 6
 
@@ -248,20 +248,20 @@ popup/item_0/id = 0
 popup/item_1/text = "Leama"
 popup/item_1/id = 1
 
-[node name="EconomyStatusLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="EconomyStatusLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=1685245356]
 layout_mode = 2
 text = "Economy: offline"
 autowrap_mode = 3
 
-[node name="SoftBalanceLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="SoftBalanceLabel" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=1472141215]
 layout_mode = 2
 text = "Soft: 0"
 
-[node name="DevGrantButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer"]
+[node name="DevGrantButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/ProfileDrawer" unique_id=294832488]
 layout_mode = 2
 text = "+1000 soft (dev)"
 
-[node name="InventoryDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack"]
+[node name="InventoryDrawer" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack" unique_id=394119482]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -271,82 +271,83 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
 
-[node name="InventoryTitle" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer"]
+[node name="InventoryTitle" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer" unique_id=1950476134]
 layout_mode = 2
 text = "Инвентарь"
 
-[node name="InventoryBody" type="HSplitContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer"]
+[node name="InventoryBody" type="HSplitContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer" unique_id=1820322425]
 layout_mode = 2
 size_flags_vertical = 3
+split_offsets = PackedInt32Array(180)
 split_offset = 180
 
-[node name="InventoryItems" type="ItemList" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody"]
+[node name="InventoryItems" type="ItemList" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody" unique_id=1056582222]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="InventoryDetailsPanel" type="PanelContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody"]
+[node name="InventoryDetailsPanel" type="PanelContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody" unique_id=1890960816]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InventoryDetailsVBox" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel"]
+[node name="InventoryDetailsVBox" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel" unique_id=1904325674]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="InventoryItemTitle" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox"]
+[node name="InventoryItemTitle" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox" unique_id=1772128414]
 layout_mode = 2
 text = "Выберите предмет"
 
-[node name="InventoryItemMeta" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox"]
-layout_mode = 2
+[node name="InventoryItemMeta" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox" unique_id=2072205337]
 modulate = Color(0.72, 0.76, 0.84, 1)
+layout_mode = 2
 text = "-"
 
-[node name="InventoryEquipButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox"]
+[node name="InventoryEquipButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryBody/InventoryDetailsPanel/InventoryDetailsVBox" unique_id=421802522]
 layout_mode = 2
 disabled = true
 text = "Экипировать"
 
-[node name="InventoryOptionsPanel" type="PanelContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer"]
+[node name="InventoryOptionsPanel" type="PanelContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer" unique_id=409759250]
 layout_mode = 2
 
-[node name="InventoryOptionsVBox" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="AR15SkinRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox"]
+[node name="InventoryOptionsVBox" type="VBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel" unique_id=865257014]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Label" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/AR15SkinRow"]
+[node name="AR15SkinRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox" unique_id=980386013]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/AR15SkinRow" unique_id=351172735]
 layout_mode = 2
 text = "AR-15"
 
-[node name="AR15SkinOption" type="OptionButton" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/AR15SkinRow"]
+[node name="AR15SkinOption" type="OptionButton" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/AR15SkinRow" unique_id=905503241]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BarretSkinRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox"]
+[node name="BarretSkinRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox" unique_id=320324198]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Label" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/BarretSkinRow"]
+[node name="Label" type="Label" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/BarretSkinRow" unique_id=2021712629]
 layout_mode = 2
 text = "Barret"
 
-[node name="BarretSkinOption" type="OptionButton" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/BarretSkinRow"]
+[node name="BarretSkinOption" type="OptionButton" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/BarretSkinRow" unique_id=897459316]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CaseRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox"]
+[node name="CaseRow" type="HBoxContainer" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox" unique_id=542626156]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="CaseOption" type="OptionButton" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/CaseRow"]
+[node name="CaseOption" type="OptionButton" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/CaseRow" unique_id=859161683]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="OpenCaseButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/CaseRow"]
+[node name="OpenCaseButton" type="Button" parent="RootMargin/ShellRow/DrawerHostPanel/DrawerHostVBox/DrawerStack/InventoryDrawer/InventoryOptionsPanel/InventoryOptionsVBox/CaseRow" unique_id=1422411171]
 layout_mode = 2
 text = "Открыть кейс"
 

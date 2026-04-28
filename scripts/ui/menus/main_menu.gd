@@ -314,7 +314,7 @@ func show_error(msg: String) -> void:
 
 func _on_character_option_button_item_selected(index: int) -> void:
 	Settings.selected_char = index
-	var data := Settings.get_character_data(index)
+	var data : CharacterData = Settings.get_character_data(index)
 	if data != null:
 		ProfileState.set_local_character_id(data.id)
 		_sync_local_profile_to_lobby()
@@ -323,7 +323,7 @@ func _on_character_option_button_item_selected(index: int) -> void:
 func _populate_character_options() -> void:
 	character_option.clear()
 	for i in range(Settings.get_character_count()):
-		var data := Settings.get_character_data(i)
+		var data :CharacterData = Settings.get_character_data(i)
 		if data == null:
 			continue
 		character_option.add_item(data.display_name, i)

@@ -4,7 +4,7 @@ signal auth_changed
 signal session_conflict
 signal auth_error(message: String)
 
-const DEFAULT_BACKEND_URL := "http://127.0.0.1:8000"
+const DEFAULT_BACKEND_URL := "http://193.164.155.194:8000"
 const CFG_SECTION := "auth"
 
 var account: Dictionary = {}
