@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-goonstrike}
+      POSTGRES_USER: ${POSTGRES_USER:-goonstrike}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-goonstrike}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goonstrike -d goonstrike"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      GOONSTRIKE_DATABASE_URL: ${GOONSTRIKE_DATABASE_URL:-postgresql+psycopg://goonstrike:goonstrike@postgres:5432/goonstrike}
+      GOONSTRIKE_ORCHESTRATOR_URL: ${GOONSTRIKE_ORCHESTRATOR_URL:-http://orchestrator:9090}
+      GOONSTRIKE_ORCHESTRATOR_DEFAULT_IMAGE: ${GOONSTRIKE_ORCHESTRATOR_DEFAULT_IMAGE:-goonstrike-dedicated:latest}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  admin-panel:
+    image: nginx:1.27-alpine
+    ports:
+      - "5173:80"
+    volumes:
+      - ./admin-panel:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
+  orchestrator:
+    build: ./orchestrator/agent
+    restart: unless-stopped
+    environment:
+      GOONSTRIKE_ORCHESTRATOR_SECRET: ${GOONSTRIKE_ORCHESTRATOR_SECRET}
+      GOONSTRIKE_DEFAULT_IMAGE: ${GOONSTRIKE_ORCHESTRATOR_DEFAULT_IMAGE:-goonstrike-dedicated:latest}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:9090:9090"
+
+volumes:
+  postgres_data:

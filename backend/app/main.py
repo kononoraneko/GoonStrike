@@ -5,7 +5,7 @@ from sqlalchemy import text
 from .config import settings
 from .db import Base, engine
 from . import models  # noqa: F401 - imported so SQLAlchemy registers models
-from .routes import auth, economy, health, matches, players, servers
+from .routes import health, servers
 from .server_auth import ensure_bootstrap_credential
 
 
@@ -20,10 +20,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(health.router)
-    app.include_router(auth.router)
-    app.include_router(players.router)
-    app.include_router(matches.router)
-    app.include_router(economy.router)
     app.include_router(servers.router)
     return app
 
@@ -40,7 +36,6 @@ def create_tables() -> None:
 
     with SessionLocal() as db:
         ensure_bootstrap_credential(db)
-        economy.seed_default_economy_catalog(db)
 
 
 def _apply_dev_schema_patches() -> None:
