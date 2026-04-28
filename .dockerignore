@@ -1,0 +1,12 @@
+.git
+.gitignore
+.cursor
+.vscode
+**/__pycache__/
+**/*.pyc
+*.log
+*.tmp
+backend/.env
+backend/.venv
+admin-panel/node_modules
+postgres_data

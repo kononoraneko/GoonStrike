@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+<<<<<<< Updated upstream
 Lobby="*uid://btxoouso5uydi"
 ChatNetwork="*uid://dvan28lalj7ii"
 ConsoleCommands="*uid://becjmouqvepai"
@@ -26,6 +27,19 @@ SceneRouter="*res://autoloads/scene_router.gd"
 [display]
 
 window/vsync/vsync_mode=2
+=======
+WeaponRegistry="*res://scripts/autoloads/weapon_registry.gd"
+CosmeticsRegistry="*res://scripts/autoloads/cosmetics_registry.gd"
+ChatNetwork="*res://scripts/autoloads/chat_network.gd"
+ConsoleCommands="*res://scripts/autoloads/console_commands.gd"
+Lobby="*res://scripts/autoloads/lobby.gd"
+SceneRouter="*res://scripts/autoloads/scene_router.gd"
+ServerConfig="*res://scripts/autoloads/server_config.gd"
+BackendClient="*res://scripts/autoloads/backend_client.gd"
+Settings="*res://scripts/autoloads/settings.gd"
+AuthState="*res://scripts/autoloads/auth_state.gd"
+ProfileState="*res://scripts/autoloads/profile_state.gd"
+>>>>>>> Stashed changes
 
 [input]
 

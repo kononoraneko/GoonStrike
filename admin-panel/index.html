@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GoonStrike Registry Admin</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>GoonStrike Registry Admin</h1>
+    <p class="hint">Dev admin panel for server credential provisioning and online server monitoring.</p>
+
+    <section class="card">
+      <h2>Connection</h2>
+      <div class="grid">
+        <label>
+          Backend URL
+          <input id="backendUrl" type="text" placeholder="http://127.0.0.1:8000" />
+        </label>
+        <label>
+          Admin Token
+          <input id="adminToken" type="password" placeholder="GOONSTRIKE_REGISTRY_ADMIN_TOKEN" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="saveSettingsBtn" type="button">Save Settings</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Quick provision (secret shown once)</h2>
+      <p class="hint">Generates server_id/key_id/secret on the backend. Copy the secret immediately; it is not stored in plaintext.</p>
+      <div class="grid">
+        <label>
+          Server ID (optional)
+          <input id="provisionServerId" type="text" placeholder="auto if empty" />
+        </label>
+        <label>
+          Key ID (optional)
+          <input id="provisionKeyId" type="text" placeholder="auto if empty" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="provisionBtn" type="button">Provision credentials</button>
+      </div>
+      <pre id="provisionOutput" class="mono"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Enrollment token (dedicated auto-fetch)</h2>
+      <p class="hint">Mint a one-time token. Start the dedicated server with <span class="mono">--registry-enroll-token</span> and <span class="mono">--backend-url</span>; it exchanges the token for keys and saves them (default <span class="mono">user://goonstrike_dedicated_registry.cfg</span>).</p>
+      <div class="grid">
+        <label>
+          Lock Server ID (optional)
+          <input id="enrollConstraintServerId" type="text" placeholder="e.g. dedicated-7000 — enroll must use this server_id" />
+        </label>
+        <label>
+          TTL (seconds)
+          <input id="enrollTtlSec" type="number" min="60" placeholder="default from backend" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="mintEnrollmentBtn" type="button">Mint enrollment token</button>
+      </div>
+      <pre id="enrollmentOutput" class="mono"></pre>
+    </section>
+
+    <section class="card">
+      <h2>VDS orchestrator</h2>
+      <p class="hint">
+        Requires backend env <span class="mono">GOONSTRIKE_ORCHESTRATOR_URL</span> and matching secrets. Calls
+        <span class="mono">POST /servers/admin/orchestrator/spawn</span> → node agent runs <span class="mono">docker run</span>.
+        <span class="mono">Backend URL for container</span> must be reachable from inside the dedicated container (often your public IP or domain, not <span class="mono">http://backend:8000</span>).
+      </p>
+      <div class="grid">
+        <label>
+          Port <span class="req">*</span>
+          <input id="spawnPort" type="number" min="1024" max="65534" value="7001" />
+        </label>
+        <label>
+          Server ID (optional)
+          <input id="spawnServerId" type="text" placeholder="auto: vds-{port}-…" />
+        </label>
+        <label>
+          Map ID
+          <input id="spawnMapId" type="text" value="default" />
+        </label>
+        <label>
+          Mode ID
+          <input id="spawnModeId" type="text" value="team_elim" />
+        </label>
+        <label>
+          Backend URL for container (optional)
+          <input id="spawnBackendUrl" type="text" placeholder="uses server GOONSTRIKE_PUBLIC_BACKEND_URL if empty" />
+        </label>
+        <label>
+          Public host (players see this IP/hostname)
+          <input id="spawnPublicHost" type="text" placeholder="203.0.113.10" />
+        </label>
+        <label>
+          Docker image (optional)
+          <input id="spawnDockerImage" type="text" placeholder="goonstrike-dedicated:latest" />
+        </label>
+        <label>
+          Enrollment TTL (sec)
+          <input id="spawnEnrollTtl" type="number" min="60" placeholder="backend default" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="spawnOrchestratorBtn" type="button">Spawn dedicated container</button>
+        <button id="refreshOrchestratorBtn" type="button">Refresh agent containers</button>
+      </div>
+      <pre id="spawnOrchestratorOutput" class="mono"></pre>
+
+      <h3 class="subheading">Running containers (agent)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Port</th>
+            <th>Status</th>
+            <th>Ports</th>
+          </tr>
+        </thead>
+        <tbody id="orchestratorContainersBody"></tbody>
+      </table>
+
+      <h3 class="subheading">Stop instance</h3>
+      <div class="row inline">
+        <label class="inline-field">
+          Port
+          <input id="stopOrchestratorPort" type="number" min="1024" max="65534" placeholder="7001" />
+        </label>
+        <button id="stopOrchestratorBtn" type="button">Remove container</button>
+      </div>
+      <h3 class="subheading">Instance diagnostics</h3>
+      <div class="row inline">
+        <label class="inline-field">
+          Port
+          <input id="inspectOrchestratorPort" type="number" min="1024" max="65534" placeholder="7001" />
+        </label>
+        <button id="inspectOrchestratorBtn" type="button">Inspect</button>
+        <button id="logsOrchestratorBtn" type="button">Tail logs</button>
+      </div>
+      <pre id="orchestratorInspectOutput" class="mono"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Credential Upsert / Rotation</h2>
+      <div class="grid">
+        <label>
+          Server ID
+          <input id="serverId" type="text" placeholder="my-server-1" />
+        </label>
+        <label>
+          Key ID
+          <input id="keyId" type="text" placeholder="prod-key-1" />
+        </label>
+        <label>
+          Secret
+          <input id="secret" type="password" placeholder="new secret" />
+        </label>
+        <label class="checkbox">
+          <input id="isActive" type="checkbox" checked />
+          Active key
+        </label>
+      </div>
+      <div class="row">
+        <button id="upsertCredentialBtn" type="button">Upsert Credential</button>
+        <button id="refreshCredentialsBtn" type="button">Refresh Credentials</button>
+        <button id="refreshServersBtn" type="button">Refresh Online Servers</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Credentials</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Server ID</th>
+            <th>Key ID</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+        <tbody id="credentialsBody"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Online Trusted Servers</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Server ID</th>
+            <th>Name</th>
+            <th>Host:Port</th>
+            <th>Mode/Map</th>
+            <th>Players</th>
+          </tr>
+        </thead>
+        <tbody id="serversBody"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Status</h2>
+      <pre id="statusLog">Ready.</pre>
+    </section>
+  </main>
+
+  <script src="./main.js"></script>
+</body>
+</html>

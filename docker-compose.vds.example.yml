@@ -1,0 +1,30 @@
+# Merge this into your root docker-compose.yml (do not duplicate the whole backend service).
+#
+# Backend env wiring required for one-host VDS:
+#   GOONSTRIKE_ORCHESTRATOR_URL=http://orchestrator:9090
+#   GOONSTRIKE_ORCHESTRATOR_SECRET=<same shared secret as agent>
+#   GOONSTRIKE_PUBLIC_BACKEND_URL=http://<VDS_PUBLIC_IP>:8000  (or https://api.domain.tld)
+#
+# Example .env values:
+#   GOONSTRIKE_ORCHESTRATOR_SECRET=change-me-strong-secret
+#   GOONSTRIKE_PUBLIC_BACKEND_URL=http://203.0.113.10:8000
+#   GOONSTRIKE_DEFAULT_IMAGE=goonstrike-dedicated:latest
+
+services:
+  # Existing backend service in your main compose file should include:
+  # environment:
+  #   GOONSTRIKE_ORCHESTRATOR_URL: http://orchestrator:9090
+  #   GOONSTRIKE_ORCHESTRATOR_SECRET: ${GOONSTRIKE_ORCHESTRATOR_SECRET}
+  #   GOONSTRIKE_PUBLIC_BACKEND_URL: ${GOONSTRIKE_PUBLIC_BACKEND_URL}
+  #   GOONSTRIKE_ORCHESTRATOR_DEFAULT_IMAGE: ${GOONSTRIKE_DEFAULT_IMAGE:-goonstrike-dedicated:latest}
+
+  orchestrator:
+    build: ./orchestrator/agent
+    restart: unless-stopped
+    environment:
+      GOONSTRIKE_ORCHESTRATOR_SECRET: ${GOONSTRIKE_ORCHESTRATOR_SECRET}
+      GOONSTRIKE_DEFAULT_IMAGE: ${GOONSTRIKE_DEFAULT_IMAGE:-goonstrike-dedicated:latest}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:9090:9090"
