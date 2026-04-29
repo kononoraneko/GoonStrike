@@ -26,7 +26,9 @@
       <div class="row">
         <button id="saveSettingsBtn" type="button">Save connection</button>
       </div>
-      <p class="hint">Backend URL and admin token are stored in this browser (<code>localStorage</code>).</p>
+      <p class="hint">
+        Saved in <code>localStorage</code>. After <code>docker compose</code>, nginx proxies <code>/health</code>, <code>/servers</code>, etc. to FastAPI — set Backend URL to the <strong>same</strong> URL you use to open this page (often <code>http://&lt;host&gt;:5173</code>), not bare static nginx.
+      </p>
     </section>
 
     <section class="card">
