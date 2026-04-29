@@ -45,8 +45,6 @@ label {
   justify-content: flex-end;
 }
 
-input[type="text"],
-input[type="password"] {
 .mono {
   font-family: ui-monospace, monospace;
   font-size: 13px;

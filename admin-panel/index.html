@@ -24,8 +24,47 @@
         </label>
       </div>
       <div class="row">
-        <button id="saveSettingsBtn" type="button">Save Settings</button>
+        <button id="saveSettingsBtn" type="button">Save connection</button>
       </div>
+      <p class="hint">Backend URL and admin token are stored in this browser (<code>localStorage</code>).</p>
+    </section>
+
+    <section class="card">
+      <h2>Quick provision credentials</h2>
+      <p class="hint">Creates a registry key triple; plaintext <span class="req">secret is shown once</span>.</p>
+      <div class="grid">
+        <label>
+          Server ID <span class="hint">(optional)</span>
+          <input id="provisionServerId" type="text" autocomplete="off" placeholder="auto if empty" />
+        </label>
+        <label>
+          Key ID <span class="hint">(optional)</span>
+          <input id="provisionKeyId" type="text" autocomplete="off" placeholder="auto if empty" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="provisionBtn" type="button">Provision</button>
+      </div>
+      <pre id="provisionOutput" class="mono">Output appears here.</pre>
+    </section>
+
+    <section class="card">
+      <h2>Mint enrollment token</h2>
+      <p class="hint">One-time token for dedicated to enroll and save credentials (<code>/servers/registry/enroll</code>).</p>
+      <div class="grid">
+        <label>
+          Lock to server ID <span class="hint">(optional)</span>
+          <input id="enrollConstraintServerId" type="text" autocomplete="off" placeholder="omit = any" />
+        </label>
+        <label>
+          TTL seconds <span class="hint">(optional)</span>
+          <input id="enrollTtlSec" type="number" min="60" autocomplete="off" placeholder="backend default" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="mintEnrollmentBtn" type="button">Mint token</button>
+      </div>
+      <pre id="enrollmentOutput" class="mono">Output appears here.</pre>
     </section>
 
     <section class="card">
@@ -83,6 +122,85 @@
         </thead>
         <tbody id="serversBody"></tbody>
       </table>
+    </section>
+
+    <section class="card">
+      <h2>VDS Dedicated (orchestrator)</h2>
+      <p class="hint">Start/stop Godot dedicated containers via backend → Docker agent (<code>/servers/admin/orchestrator/*</code>). Backend must have <code>GOONSTRIKE_ORCHESTRATOR_URL</code> / <code>GOONSTRIKE_ORCHESTRATOR_SECRET</code> configured.</p>
+
+      <h3 class="subheading">Spawn</h3>
+      <div class="grid">
+        <label>
+          UDP / game port <span class="req">*</span>
+          <input id="spawnPort" type="number" min="1024" max="65534" value="7001" />
+        </label>
+        <label>
+          Server ID <span class="hint">(optional)</span>
+          <input id="spawnServerId" type="text" autocomplete="off" placeholder="defaults from port" />
+        </label>
+        <label>
+          Map ID
+          <input id="spawnMapId" type="text" autocomplete="off" value="default" />
+        </label>
+        <label>
+          Mode ID
+          <input id="spawnModeId" type="text" autocomplete="off" value="team_elim" />
+        </label>
+        <label>
+          Dedicated backend URL <span class="hint">(URLs that reach backend from container)</span>
+          <input id="spawnBackendUrl" type="text" autocomplete="off" placeholder="e.g. http://host.docker.internal:8000 or public URL" />
+        </label>
+        <label>
+          Public host for browser list <span class="hint">(optional)</span>
+          <input id="spawnPublicHost" type="text" autocomplete="off" placeholder="e.g. 203.0.113.10" />
+        </label>
+        <label>
+          Docker image tag <span class="hint">(optional)</span>
+          <input id="spawnDockerImage" type="text" autocomplete="off" placeholder="goonstrike-dedicated:latest" />
+        </label>
+        <label>
+          Enrollment TTL (sec) <span class="hint">(optional)</span>
+          <input id="spawnEnrollTtl" type="number" min="60" autocomplete="off" placeholder="backend default" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="spawnOrchestratorBtn" type="button">Start dedicated</button>
+      </div>
+      <pre id="spawnOrchestratorOutput" class="mono">Spawn result appears here.</pre>
+
+      <h3 class="subheading">Containers on agent</h3>
+      <div class="row">
+        <button id="refreshOrchestratorBtn" type="button">Refresh list</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Port</th>
+            <th>Status</th>
+            <th>TCP mappings</th>
+          </tr>
+        </thead>
+        <tbody id="orchestratorContainersBody"></tbody>
+      </table>
+
+      <div class="row row inline">
+        <label class="inline-field">
+          Port to stop/remove
+          <input id="stopOrchestratorPort" type="number" min="1024" max="65534" />
+        </label>
+        <button id="stopOrchestratorBtn" type="button">Stop / remove container</button>
+      </div>
+
+      <div class="row row inline">
+        <label class="inline-field">
+          Port (inspect / logs)
+          <input id="inspectOrchestratorPort" type="number" min="1024" max="65534" />
+        </label>
+        <button id="inspectOrchestratorBtn" type="button">Inspect</button>
+        <button id="logsOrchestratorBtn" type="button">Tail logs</button>
+      </div>
+      <pre id="orchestratorInspectOutput" class="mono"></pre>
     </section>
 
     <section class="card">

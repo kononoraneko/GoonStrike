@@ -3,6 +3,20 @@ const state = {
   adminToken: "",
 };
 
+/** Persisted orchestrator/spawn UI fields */
+const ORCH_FORM_FIELDS = [
+  { id: "spawnPort", key: "gs_admin_spawn_port", fallback: "7001" },
+  { id: "spawnServerId", key: "gs_admin_spawn_server_id", fallback: "" },
+  { id: "spawnMapId", key: "gs_admin_spawn_map_id", fallback: "default" },
+  { id: "spawnModeId", key: "gs_admin_spawn_mode_id", fallback: "team_elim" },
+  { id: "spawnBackendUrl", key: "gs_admin_spawn_backend_url", fallback: "" },
+  { id: "spawnPublicHost", key: "gs_admin_spawn_public_host", fallback: "" },
+  { id: "spawnDockerImage", key: "gs_admin_spawn_docker_image", fallback: "" },
+  { id: "spawnEnrollTtl", key: "gs_admin_spawn_enroll_ttl", fallback: "" },
+  { id: "stopOrchestratorPort", key: "gs_admin_orch_stop_port", fallback: "" },
+  { id: "inspectOrchestratorPort", key: "gs_admin_orch_inspect_port", fallback: "" },
+];
+
 const backendUrlInput = document.getElementById("backendUrl");
 const adminTokenInput = document.getElementById("adminToken");
 const serverIdInput = document.getElementById("serverId");
@@ -17,11 +31,73 @@ function log(message) {
   statusLog.textContent = `[${new Date().toLocaleTimeString()}] ${message}\n${statusLog.textContent}`;
 }
 
+function formatDetail(detail) {
+  if (detail == null || detail === "") {
+    return "";
+  }
+  if (typeof detail === "string") {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) =>
+        typeof item === "object" && item !== null ? JSON.stringify(item) : String(item),
+      )
+      .join("; ");
+  }
+  if (typeof detail === "object") {
+    try {
+      return JSON.stringify(detail);
+    } catch (_e) {
+      return String(detail);
+    }
+  }
+  return String(detail);
+}
+
+function statusBadge(status) {
+  if (status == null || status === "") {
+    return "—";
+  }
+  return String(status);
+}
+
+function persistOrchestratorFields() {
+  for (const { id, key } of ORCH_FORM_FIELDS) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const v = el.value.trim();
+    if (v === "") {
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, v);
+    }
+  }
+}
+
+function loadOrchestratorFields() {
+  for (const { id, key, fallback } of ORCH_FORM_FIELDS) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    let val = localStorage.getItem(key);
+    if (val === null || val === "") {
+      val = fallback;
+    }
+    if ((val === null || val === "") && id === "spawnBackendUrl") {
+      val = state.backendUrl || "";
+    }
+    if (val !== null && val !== "") {
+      el.value = val;
+    }
+  }
+}
+
 function loadSettings() {
   state.backendUrl = localStorage.getItem("gs_admin_backend_url") || "http://127.0.0.1:8000";
   state.adminToken = localStorage.getItem("gs_admin_token") || "";
   backendUrlInput.value = state.backendUrl;
   adminTokenInput.value = state.adminToken;
+  loadOrchestratorFields();
 }
 
 function saveSettings() {
@@ -29,7 +105,7 @@ function saveSettings() {
   state.adminToken = adminTokenInput.value.trim();
   localStorage.setItem("gs_admin_backend_url", state.backendUrl);
   localStorage.setItem("gs_admin_token", state.adminToken);
-  log("Settings saved.");
+  persistOrchestratorFields();
 }
 
 async function request(path, options = {}) {
@@ -127,7 +203,11 @@ async function withUiError(action) {
   }
 }
 
-document.getElementById("saveSettingsBtn").addEventListener("click", () => withUiError(async () => {}));
+document.getElementById("saveSettingsBtn").addEventListener("click", () =>
+  withUiError(async () => {
+    log("Saved backend URL, admin token, and orchestrator fields to localStorage.");
+  }),
+);
 document.getElementById("refreshCredentialsBtn").addEventListener("click", () => withUiError(refreshCredentials));
 document.getElementById("refreshServersBtn").addEventListener("click", () => withUiError(refreshServers));
 document.getElementById("upsertCredentialBtn").addEventListener("click", () => withUiError(upsertCredential));
@@ -238,6 +318,7 @@ async function orchestratorSpawn() {
   document.getElementById("spawnOrchestratorOutput").textContent =
     `server_id=${json.server_id}\nenrollment_expires_at=${json.enrollment_expires_at ?? ""}\n\norchestrator:\n${orchText}`;
   log(`Spawn OK: ${json.server_id}`);
+  persistOrchestratorFields();
   await refreshOrchestratorContainers();
   await refreshServers();
 }
@@ -275,6 +356,7 @@ async function orchestratorStop() {
     },
   });
   log(`Removed: ${JSON.stringify(json)}`);
+  persistOrchestratorFields();
   await refreshOrchestratorContainers();
   await refreshServers();
 }
