@@ -2,6 +2,8 @@
 
 Цель: с **админ-панели / API** поднимать новые игровые сервера на Ubuntu VDS **без ручного SSH** каждый раз. Игровой процесс по-прежнему в **Godot dedicated**; оркестратор только запускает `docker run` с нужными переменными окружения.
 
+Общий контекст репозитория и правила авторитетности матча — см. [AGENTS.md](../AGENTS.md). Сценарий dedicated + backend — см. [dedicated_server.md](dedicated_server.md).
+
 ## Архитектура (один хост)
 
 ```mermaid
@@ -29,19 +31,23 @@ flowchart LR
 |-----------|------|
 | Node agent (FastAPI + `docker run`) | `orchestrator/agent/` |
 | Backend: спавн | `POST /servers/admin/orchestrator/spawn` |
-| Пример compose | `docker-compose.vds.example.yml` |
+| Корневой Compose (postgres, backend, admin-panel, **orchestrator**) | `docker-compose.yml` |
+| Подсказки для merge на VDS | `docker-compose.vds.example.yml` |
 | Dedicated image Dockerfile | `orchestrator/dedicated.Dockerfile.example` |
 
-Переменные backend (префикс `GOONSTRIKE_`):
+В **`docker-compose.yml`** сервис `orchestrator` уже описан: сокет Docker смонтирован, порт **`127.0.0.1:9090:9090`**. Чтобы спавн и прокси из backend работали, в окружении хоста (или `.env` в корне репозитория) должны быть заданы **`GOONSTRIKE_ORCHESTRATOR_SECRET`** и при необходимости **`GOONSTRIKE_PUBLIC_BACKEND_URL`**. Backend по умолчанию получает `GOONSTRIKE_ORCHESTRATOR_URL=http://orchestrator:9090` из Compose — этого достаточно, когда backend и agent в одной Docker-сети.
 
-- `GOONSTRIKE_ORCHESTRATOR_URL` — URL агента, например `http://orchestrator:9090`.
-- `GOONSTRIKE_ORCHESTRATOR_SECRET` — общий секрет с агентом (тот же, что на агенте).
-- `GOONSTRIKE_PUBLIC_BACKEND_URL` — URL API **как его видит контейнер dedicated** (часто это публичный `https://api.example.com` или `http://ВАШ_IP:8000`). Его же можно передать в теле `spawn` как `backend_url`.
+Переменные backend (префикс `GOONSTRIKE_`, см. `backend/app/config.py`):
 
-Агент:
+- `GOONSTRIKE_ORCHESTRATOR_URL` — URL агента (в Compose: `http://orchestrator:9090`).
+- `GOONSTRIKE_ORCHESTRATOR_SECRET` — **обязательный общий секрет** с агентом; без него backend вернёт 503 на оркестраторные вызовы, агент — 401/503.
+- `GOONSTRIKE_PUBLIC_BACKEND_URL` — URL API **как его видит контейнер dedicated** (часто публичный `https://api.example.com` или `http://ВАШ_IP:8000`). Если не задан, его нужно передать в теле `spawn` как `backend_url`, иначе backend отклонит запрос.
+- `GOONSTRIKE_ORCHESTRATOR_DEFAULT_IMAGE` — тег образа dedicated для спавна (по умолчанию `goonstrike-dedicated:latest`).
 
-- `GOONSTRIKE_ORCHESTRATOR_SECRET` (или устаревшее `GOONSTRIKE_AGENT_TOKEN`) — тот же секрет, что у backend.
-- `GOONSTRIKE_DEFAULT_IMAGE` — образ dedicated (по умолчанию `goonstrike-dedicated:latest`).
+Агент (`orchestrator/agent/main.py`):
+
+- `GOONSTRIKE_ORCHESTRATOR_SECRET` (или совместимое `GOONSTRIKE_AGENT_TOKEN`) — **то же значение**, что у backend.
+- `GOONSTRIKE_DEFAULT_IMAGE` — образ dedicated (в Compose: `GOONSTRIKE_ORCHESTRATOR_DEFAULT_IMAGE`).
 
 ## Образ dedicated
 
@@ -99,9 +105,9 @@ curl -H "X-GS-Admin-Token: $ADMIN" "http://127.0.0.1:8000/servers/admin/orchestr
 
 ## Безопасность
 
-- Разные роли: **админ-токен** backend (панель) ≠ **секрет агента** (только backend → agent).
-- Enrollment токен одноразовый и короткий — его передаёт только backend в теле запроса к Docker, не оператору в Slack.
-- Не публикуй порт агента наружу; при необходимости — fail2ban, firewall, только VPN.
+- Разные роли: **`GOONSTRIKE_REGISTRY_ADMIN_TOKEN`** (панель и `POST /servers/admin/*`) ≠ **`GOONSTRIKE_ORCHESTRATOR_SECRET`** (только backend → agent).
+- Enrollment токен одноразовый и короткий — его при спавне формирует backend и передаёт агенту в теле `POST /v1/instances`; не храните его в открытом виде вне защищённых каналов.
+- Не публикуй порт агента (9090) в интернет; в Compose он привязан к localhost на хосте — для удалённого backend используйте VPN/приватную сеть или туннель.
 
 ## Когда нужен Kubernetes / Nomad
 

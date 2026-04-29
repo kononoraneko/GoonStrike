@@ -310,12 +310,8 @@ async function orchestratorLogs() {
   log(`Logs OK: ${port}`);
 }
 
-document.getElementById("saveSettingsBtn").addEventListener("click", () => withUiError(async () => {}));
 document.getElementById("provisionBtn").addEventListener("click", () => withUiError(provisionCredentials));
 document.getElementById("mintEnrollmentBtn").addEventListener("click", () => withUiError(mintEnrollmentToken));
-document.getElementById("refreshCredentialsBtn").addEventListener("click", () => withUiError(refreshCredentials));
-document.getElementById("refreshServersBtn").addEventListener("click", () => withUiError(refreshServers));
-document.getElementById("upsertCredentialBtn").addEventListener("click", () => withUiError(upsertCredential));
 document.getElementById("spawnOrchestratorBtn").addEventListener("click", () => withUiError(orchestratorSpawn));
 document.getElementById("refreshOrchestratorBtn").addEventListener("click", () => withUiError(refreshOrchestratorContainers));
 document.getElementById("stopOrchestratorBtn").addEventListener("click", () => withUiError(orchestratorStop));

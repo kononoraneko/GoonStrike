@@ -5,6 +5,8 @@ signal session_conflict
 signal auth_error(message: String)
 
 const DEFAULT_BACKEND_URL := "http://193.164.155.194:8000"
+## Без смены кода: `GOONSTRIKE_CLIENT_BACKEND_URL` = полный origin, без пути (без `/api`).
+const ENV_BACKEND_URL := "GOONSTRIKE_CLIENT_BACKEND_URL"
 const CFG_SECTION := "auth"
 
 var account: Dictionary = {}
@@ -15,7 +17,7 @@ var status: String = "offline"
 
 func _ready() -> void:
 	if not BackendClient.is_configured():
-		BackendClient.configure(DEFAULT_BACKEND_URL)
+		BackendClient.configure(_resolve_client_backend_url())
 	BackendClient.auth_response_failed.connect(_on_backend_auth_failed)
 	_load_refresh_token()
 	if not refresh_token.is_empty():
@@ -60,13 +62,18 @@ func _handle_auth_result(result: Dictionary) -> bool:
 	if result.get("ok", false):
 		_apply_tokens(result.get("data", {}))
 		return true
-	var detail := _result_detail(result)
-	if int(result.get("status", 0)) == 409 and detail == "session_conflict":
+	var status_code := int(result.get("status", 0))
+	var data: Variant = result.get("data", {})
+	var raw_detail := ""
+	if data is Dictionary:
+		raw_detail = str((data as Dictionary).get("detail", ""))
+	if status_code == 409 and raw_detail == "session_conflict":
 		_clear_tokens()
 		status = "session_conflict"
 		session_conflict.emit()
 		auth_changed.emit()
 		return false
+	var detail := _result_detail(result)
 	status = "offline"
 	auth_error.emit(detail if not detail.is_empty() else "auth failed")
 	auth_changed.emit()
@@ -127,11 +134,28 @@ func _save_refresh_token() -> void:
 	cfg.save(Settings.SETTINGS_PATH)
 
 
+func _resolve_client_backend_url() -> String:
+	var env := String(OS.get_environment(ENV_BACKEND_URL)).strip_edges().trim_suffix("/")
+	return env if not env.is_empty() else DEFAULT_BACKEND_URL
+
+
 func _result_detail(result: Dictionary) -> String:
+	var status := int(result.get("status", 0))
 	var data: Variant = result.get("data", {})
+	var detail := ""
 	if data is Dictionary:
-		return str((data as Dictionary).get("detail", ""))
-	return str(result.get("raw", ""))
+		var d: Variant = (data as Dictionary).get("detail", "")
+		if d is Array:
+			detail = JSON.stringify(d)
+		else:
+			detail = str(d)
+	if detail.is_empty():
+		detail = str(result.get("raw", ""))
+	var base := BackendClient.base_url if BackendClient.is_configured() else ""
+	
+	if status > 0 and not detail.is_empty():
+		return "%s (HTTP %d)" % [detail, status]
+	return detail
 
 
 func _device_label() -> String:

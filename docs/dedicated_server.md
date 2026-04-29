@@ -15,12 +15,20 @@ The backend is optional for local/offline play. Active match state is never stor
 
 ## Run Backend Locally
 
-Only needed if you want persistence while testing. Local dedicated play works without this step.
+Only needed if you want persistence, accounts, or the trusted server list while testing. Local dedicated play works without this step.
 
-From the repository root:
+Validation is **Docker-first**: use Docker Compose for PostgreSQL and FastAPI. Do not assume a local `python` or `py` on Windows; `start_backend.bat` wraps Compose.
+
+From the repository root (Windows):
 
 ```powershell
 start_backend.bat
+```
+
+Equivalent (any OS, repository root):
+
+```powershell
+docker compose up -d postgres backend
 ```
 
 Health check:
@@ -34,6 +42,18 @@ Expected response:
 ```json
 {"status":"ok"}
 ```
+
+Optional: start the static admin UI (nginx on port 5173) together with the stack:
+
+```powershell
+docker compose up -d postgres backend admin-panel
+```
+
+## Game client and API base URL
+
+The game client’s `AuthState` autoload (`scripts/autoloads/auth_state.gd`) configures `BackendClient` when it is still empty: first it reads the environment variable **`GOONSTRIKE_CLIENT_BACKEND_URL`** (full origin, **no** path suffix such as `/api` — use e.g. `https://api.example.com` or `http://127.0.0.1:8000`), otherwise it uses the built-in default `http://127.0.0.1:8000`. A **404 Not Found** on login almost always means the client is talking to the wrong host/port or a URL with an extra path segment; check the message shown in-game and `GET {origin}/health` and `GET {origin}/docs` in a browser.
+
+Dedicated servers use **`--backend-url`** / **`GOONSTRIKE_BACKEND_URL`** independently; they do not rely on `AuthState`.
 
 ## Run Dedicated Server From Godot CLI
 
@@ -74,9 +94,9 @@ Useful arguments:
 - `--registry-credentials-path ...` or env `GOONSTRIKE_REGISTRY_CREDENTIALS_PATH` (defaults to `user://goonstrike_dedicated_registry.cfg`)
 - `--registry-enroll-force` — run enrollment even if a credentials file already exists
 - `--auto-start` for quick tests that should skip the lobby and load the match immediately
-
-Docker / systemd without CLI flags: `GOONSTRIKE_BACKEND_URL`, `GOONSTRIKE_SERVER_ID`, `GOONSTRIKE_DEDICATED_PORT` / `PORT`, `GOONSTRIKE_PUBLIC_HOST`, `GOONSTRIKE_MAP_ID`, `GOONSTRIKE_MODE_ID`, enrollment vars above. See `docs/vds_orchestrator.md` for spawning containers from the backend.
 - `--auto-op-first` to automatically make the first joined client the lobby leader
+
+**Environment variables** (Docker / systemd when not passing CLI flags): `GOONSTRIKE_BACKEND_URL`, `GOONSTRIKE_SERVER_ID`, `GOONSTRIKE_DEDICATED_PORT` / `PORT`, `GOONSTRIKE_PUBLIC_HOST`, `GOONSTRIKE_MAP_ID`, `GOONSTRIKE_MODE_ID`, plus the registry/enrollment variables listed above. For spawning containers from the backend, see [vds_orchestrator.md](vds_orchestrator.md).
 
 The server scene is `scenes/server/server_bootstrap.tscn`. It creates an ENet server through `Lobby.create_dedicated_server()`, applies the selected map/mode, optionally configures `BackendClient`, requests a backend challenge, signs registry payloads, and waits in the lobby by default.
 
@@ -106,6 +126,8 @@ Trusted registry writes now use a signed challenge flow:
 3. Dedicated server signs canonical request fields and sends headers:
    - `X-GS-Server-Id`, `X-GS-Key-Id`, `X-GS-Nonce`, `X-GS-Challenge`, `X-GS-Signature`.
 4. Backend validates signature, key activity, TTL, and replay (nonce/challenge can be used once).
+
+The server stores a **hash** of the shared secret; the signature is over a canonical string plus the SHA-256 of the request body, using the same derivation as the Godot client in `BackendClient._registry_headers`. Setting **`GOONSTRIKE_REGISTRY_AUTH_REQUIRED=false`** in the backend (dev only) skips verification — never use that in production.
 
 This is stronger than plain token auth, but still a dev implementation. Use secret rotation, strict credential provisioning, and proper secrets management before production. Clients must not trust map/mode/player counts as authoritative gameplay state; those fields are only for display and connection discovery.
 
@@ -162,11 +184,13 @@ Then open:
 
 - `http://127.0.0.1:5173`
 
-Or run via Docker Compose from repo root:
+Or run via Docker Compose from repo root (serves `admin-panel/` with nginx):
 
 ```powershell
 docker compose up -d admin-panel
 ```
+
+Ensure `GOONSTRIKE_REGISTRY_ADMIN_TOKEN` is set in `backend/.env` — without it, admin routes return 403.
 
 Then open:
 
@@ -206,32 +230,46 @@ The game client no longer creates an in-process local host. Use either the `Ло
 
 Production servers should be launched as standalone headless processes on Linux or in containers.
 
-## Current Backend API
+## Current Backend API (summary)
+
+**Health**
 
 - `GET /health`
+
+**Auth** (`/auth`, Bearer token after login)
+
+- `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`
+
+**Players**
+
 - `POST /players/upsert`
 - `GET /players/{external_id}/stats`
-- `POST /matches`
-- `GET /servers`
-- `POST /servers/challenge`
-- `POST /servers/register`
-- `POST /servers/{server_id}/heartbeat`
-- `POST /servers/{server_id}/offline`
-- `POST /servers/registry/enroll` (dedicated exchanges enrollment token for credentials)
-- `POST /servers/register`
-- `POST /servers/{server_id}/heartbeat`
-- `POST /servers/{server_id}/offline`
-- `POST /servers/admin/provision` (admin token)
-- `POST /servers/admin/enrollment-tokens` (admin token)
-- `POST /servers/admin/orchestrator/spawn` (admin token; calls node agent on VDS)
-- `GET /servers/admin/orchestrator/instances` (admin token; proxy to agent)
-- `GET /servers/admin/orchestrator/instances/{port}` (admin token; inspect one container)
-- `GET /servers/admin/orchestrator/instances/{port}/logs?tail=200` (admin token; container logs)
-- `DELETE /servers/admin/orchestrator/instances/{port}` (admin token; stop container)
-- `POST /servers/admin/credentials` (admin token)
-- `GET /servers/admin/credentials` (admin token)
 
-Godot currently uses placeholder external ids like `peer:2` until real account/auth IDs exist.
+**Matches**
+
+- `POST /matches`
+
+**Economy / profile** (inventory, catalog, cases — see `backend/app/routes/economy.py`)
+
+- `GET /profile/me`, `GET /profile/{external_id}`, `GET /catalog`
+- `GET /inventory/me`, `GET /inventory/{external_id}`, `POST /inventory/equip`
+- `POST /cases/open`, `POST /wallet/grant-dev` (dev)
+
+**Trusted servers** (`/servers`)
+
+- `GET /servers` — public browser list
+- `POST /servers/challenge` — issue nonce/challenge for signing
+- `POST /servers/registry/enroll` — dedicated exchanges one-time enrollment token for `key_id` + `secret`
+- `POST /servers/register`, `POST /servers/{server_id}/heartbeat`, `POST /servers/{server_id}/offline` — signed writes (unless `GOONSTRIKE_REGISTRY_AUTH_REQUIRED=false`)
+
+**Admin** (header `X-GS-Admin-Token` = `GOONSTRIKE_REGISTRY_ADMIN_TOKEN`)
+
+- `POST /servers/admin/provision`, `POST /servers/admin/enrollment-tokens`
+- `POST /servers/admin/credentials`, `GET /servers/admin/credentials`
+- `POST /servers/admin/orchestrator/spawn`
+- `GET /servers/admin/orchestrator/instances`, `GET .../instances/{port}`, `GET .../instances/{port}/logs`, `DELETE .../instances/{port}`
+
+Godot may still use placeholder external ids like `peer:2` when no account is linked; authenticated flows use backend identities from `GET /auth/me` / profile routes.
 
 ## Notes Before Production
 

@@ -6,7 +6,6 @@ from .config import settings
 from .db import Base, engine
 from . import models  # noqa: F401 - imported so SQLAlchemy registers models
 from .routes import auth, economy, health, matches, players, servers
-from .routes import health, servers
 from .server_auth import ensure_bootstrap_credential
 
 

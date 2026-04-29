@@ -24,8 +24,6 @@ from ..schemas import (
     ServerListResponse,
     ServerEnrollmentMintRequest,
     ServerEnrollmentMintResponse,
-    ServerHeartbeatRequest,
-    ServerListResponse,
     ServerProvisioningRequest,
     ServerRegisterRequest,
 )
