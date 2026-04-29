@@ -32,12 +32,13 @@ func _is_headless_dedicated_cosmetics_stub() -> bool:
 
 
 func _load_minimal_headless_cosmetics() -> void:
-	const LAIN_PATH := "res://resources/cosmetics/characters/lain.tres"
-	var data := load(LAIN_PATH) as Resource
-	if data == null or data.item_key.is_empty():
-		push_warning("CosmeticsRegistry headless: failed to load %s" % LAIN_PATH)
-		return
-	_characters[data.item_key] = data
+	## На dedicated в headless не тащим Character .tres/.res, чтобы не требовать .godot/imported текстуры.
+	var fallback := CharacterCosmeticData.new()
+	fallback.item_key = "character:%s" % DEFAULT_CHARACTER_ID
+	fallback.display_name = DEFAULT_CHARACTER_ID.capitalize()
+	fallback.character_id = DEFAULT_CHARACTER_ID
+	_characters[fallback.item_key] = fallback
+
 	for path in _WEAPON_SKIN_PATHS:
 		var ws := load(path) as Resource
 		if ws == null or ws.item_key.is_empty():
