@@ -23,11 +23,11 @@ BackendClient="*res://scripts/autoloads/backend_client.gd"
 Settings="*res://scripts/autoloads/Settings.gd"
 AuthState="*res://scripts/autoloads/auth_state.gd"
 ProfileState="*res://scripts/autoloads/profile_state.gd"
-ChatNetwork="*uid://btgv6yy6hk3n2"
-ConsoleCommands="*uid://cjrmr6pyo4okb"
-Lobby="*uid://56gtd7fy0pbo"
-SceneRouter="*uid://dfanjm62a5ws0"
-ServerConfig="*uid://djca8qjh6u5i3"
+ChatNetwork="*res://scripts/autoloads/chat_network.gd"
+ConsoleCommands="*res://scripts/autoloads/console_commands.gd"
+Lobby="*res://scripts/autoloads/lobby.gd"
+SceneRouter="*res://scripts/autoloads/scene_router.gd"
+ServerConfig="*res://scripts/autoloads/server_config.gd"
 
 [display]
 

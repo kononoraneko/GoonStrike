@@ -33,11 +33,15 @@ func _is_headless_dedicated_cosmetics_stub() -> bool:
 
 func _load_minimal_headless_cosmetics() -> void:
 	## На dedicated в headless не тащим Character .tres/.res, чтобы не требовать .godot/imported текстуры.
-	var fallback := CharacterCosmeticData.new()
-	fallback.item_key = "character:%s" % DEFAULT_CHARACTER_ID
-	fallback.display_name = DEFAULT_CHARACTER_ID.capitalize()
-	fallback.character_id = DEFAULT_CHARACTER_ID
-	_characters[fallback.item_key] = fallback
+	var cls := load("res://scripts/cosmetics/character_cosmetic_data.gd") as Script
+	if cls != null:
+		var fallback := cls.new() as Resource
+		fallback.set("item_key", "character:%s" % DEFAULT_CHARACTER_ID)
+		fallback.set("display_name", DEFAULT_CHARACTER_ID.capitalize())
+		fallback.set("character_id", DEFAULT_CHARACTER_ID)
+		_characters[String(fallback.get("item_key"))] = fallback
+	else:
+		push_warning("CosmeticsRegistry headless: failed to load CharacterCosmeticData script")
 
 	for path in _WEAPON_SKIN_PATHS:
 		var ws := load(path) as Resource
