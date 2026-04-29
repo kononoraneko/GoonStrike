@@ -194,6 +194,9 @@ func _apply_wallet_array(entries: Array) -> void:
 
 
 func _load_local_cosmetics() -> void:
+	if not is_instance_valid(Settings):
+		push_warning("ProfileState: Settings autoload missing; skip local cosmetics config.")
+		return
 	var cfg := ConfigFile.new()
 	if cfg.load(Settings.SETTINGS_PATH) != OK:
 		return
@@ -208,6 +211,8 @@ func _load_local_cosmetics() -> void:
 
 
 func _save_local_cosmetics() -> void:
+	if not is_instance_valid(Settings):
+		return
 	var cfg := ConfigFile.new()
 	cfg.load(Settings.SETTINGS_PATH)
 	cfg.set_value("cosmetics", "character_item", get_equipped_item("character"))

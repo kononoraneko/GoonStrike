@@ -16,6 +16,9 @@ var status: String = "offline"
 
 
 func _ready() -> void:
+	if not is_instance_valid(BackendClient):
+		push_warning("AuthState: BackendClient autoload missing; skip auth wiring.")
+		return
 	if not BackendClient.is_configured():
 		BackendClient.configure(_resolve_client_backend_url())
 	BackendClient.auth_response_failed.connect(_on_backend_auth_failed)

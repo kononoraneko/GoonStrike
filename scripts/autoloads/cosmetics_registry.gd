@@ -19,8 +19,31 @@ var _characters: Dictionary = {}
 
 
 func _ready() -> void:
+	## Headless dedicated must not preload full client cosmetics (heavy scenes; missing VPS assets spam errors).
+	if _is_headless_dedicated_cosmetics_stub():
+		_load_minimal_headless_cosmetics()
+		return
 	_load_weapon_skins()
 	_load_characters()
+
+
+func _is_headless_dedicated_cosmetics_stub() -> bool:
+	return DisplayServer.get_name() == "headless"
+
+
+func _load_minimal_headless_cosmetics() -> void:
+	const LAIN_PATH := "res://resources/cosmetics/characters/lain.tres"
+	var data := load(LAIN_PATH) as Resource
+	if data == null or data.item_key.is_empty():
+		push_warning("CosmeticsRegistry headless: failed to load %s" % LAIN_PATH)
+		return
+	_characters[data.item_key] = data
+	for path in _WEAPON_SKIN_PATHS:
+		var ws := load(path) as Resource
+		if ws == null or ws.item_key.is_empty():
+			push_warning("CosmeticsRegistry headless: skip weapon skin %s" % path)
+			continue
+		_weapon_skins[ws.item_key] = ws
 
 
 func get_weapon_skin(item_key: String) -> Resource:

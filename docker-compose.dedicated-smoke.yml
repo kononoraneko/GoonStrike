@@ -1,0 +1,28 @@
+# Overlay: Tier B — dedicated registry smoke. Requires env before `compose up`:
+#   COMPOSE_PROJECT_NAME=gsdedtest (recommended to isolate Postgres/backend)
+#   SMOKE_ENROLL_ADMIN_TOKEN    — forwarded into backend GOONSTRIKE_REGISTRY_ADMIN_TOKEN
+#   SMOKE_ENROLL_TOKEN           — minted token for dedicated-smoke container
+services:
+  backend:
+    environment:
+      GOONSTRIKE_REGISTRY_ADMIN_TOKEN: ${SMOKE_ENROLL_ADMIN_TOKEN}
+
+  dedicated-smoke:
+    image: ${DEDICATED_SMOKE_IMAGE:-goonstrike-dedicated:smoke}
+    build:
+      context: .
+      dockerfile: orchestrator/dedicated.Dockerfile.example
+    profiles: ["dedicated-smoke"]
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${SMOKE_DEDICATED_PORT:-7124}:${SMOKE_DEDICATED_PORT:-7124}/udp"
+    environment:
+      GOONSTRIKE_BACKEND_URL: http://backend:8000
+      GOONSTRIKE_DEDICATED_PORT: "${SMOKE_DEDICATED_PORT:-7124}"
+      GOONSTRIKE_SERVER_ID: compose-smoke-dedicated
+      GOONSTRIKE_REGISTRY_ENROLL_TOKEN: "${SMOKE_ENROLL_TOKEN}"
+      GOONSTRIKE_PUBLIC_HOST: "127.0.0.1"
+      GOONSTRIKE_MAP_ID: "default"
+      GOONSTRIKE_MODE_ID: "team_elim"
