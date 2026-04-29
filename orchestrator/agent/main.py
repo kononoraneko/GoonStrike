@@ -104,6 +104,9 @@ def create_instance(payload: InstanceCreate, _: None = Depends(_require_agent_to
     ]
     for key, val in env_pairs:
         cmd.extend(["-e", f"{key}={val}"])
+    # Dedicated must reach Postgres/FastAPI on the host — public IP URLs often fail inside the bridge ("hairpin NAT").
+    # With this host mapping, spawn with backend_url http://host.docker.internal:<backend_port>.
+    cmd.extend(["--add-host", "host.docker.internal:host-gateway"])
     # Godot ENetMultiplayerPeer uses UDP; plain -p publishes TCP only and clients cannot connect.
     cmd.extend(["-p", f"{payload.port}:{payload.port}/udp"])
     cmd.extend([payload.docker_image])

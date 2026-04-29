@@ -72,6 +72,10 @@ func _start_server() -> void:
 	_registry_secret = _resolve_arg_or_env(args, "registry-secret", "GOONSTRIKE_REGISTRY_SECRET")
 
 	_setup_backend_client(backend_url)
+	print(
+		"[GoonStrike dedicated] port=%d server_id=%s public_host=%s backend_url=%s map=%s mode=%s"
+		% [port, _server_id, _public_host, backend_url if not backend_url.is_empty() else "<none>", map_arg, mode_id]
+	)
 	await _resolve_registry_credentials_after_backend(args)
 
 	var err := Lobby.create_dedicated_server(port, max_players, server_name, auto_op_first)
@@ -136,11 +140,14 @@ func _register_server(heartbeat_sec: float) -> void:
 			auth_context,
 		)
 		if reg_result is Dictionary and not reg_result.get("ok", false):
-			push_error(
+			var msg := (
 				"Registry register failed HTTP %s: %s"
 				% [str(reg_result.get("status", "")), str(reg_result.get("raw", reg_result))]
 			)
+			push_error(msg)
+			print("[GoonStrike dedicated] %s" % msg)
 			return
+		print("[GoonStrike dedicated] Registry register OK (HTTP %s)" % str(reg_result.get("status", "")))
 	elif _backend_client.has_method("register_server"):
 		_backend_client.call("register_server", payload_identity, auth_context)
 	else:
