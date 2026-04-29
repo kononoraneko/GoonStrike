@@ -118,6 +118,20 @@ class ServerCredential(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class ServerEnrollmentToken(Base):
+    __tablename__ = "server_enrollment_tokens"
+    __table_args__ = (
+        UniqueConstraint("token_hash", name="uq_server_enrollment_tokens_token_hash"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    server_id_constraint: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class ServerAuthNonce(Base):
     __tablename__ = "server_auth_nonces"
     __table_args__ = (
