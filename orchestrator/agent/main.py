@@ -212,9 +212,16 @@ def get_instance_logs(port: int, tail: int = 200, _: None = Depends(_require_age
     proc = _run(["docker", "logs", "--tail", str(safe_tail), name])
     if proc.returncode != 0:
         raise HTTPException(status_code=500, detail=proc.stderr or proc.stdout or "docker logs failed")
+    merged_logs = ""
+    if proc.stdout:
+        merged_logs += proc.stdout
+    if proc.stderr:
+        if merged_logs and not merged_logs.endswith("\n"):
+            merged_logs += "\n"
+        merged_logs += proc.stderr
     return {
         "name": name,
         "port": port,
         "tail": safe_tail,
-        "logs": proc.stdout,
+        "logs": merged_logs,
     }
