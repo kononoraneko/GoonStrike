@@ -5,7 +5,7 @@ signal session_conflict
 signal auth_error(message: String)
 
 const DEFAULT_BACKEND_URL := "http://193.164.155.194:8000"
-## Без смены кода: `GOONSTRIKE_CLIENT_BACKEND_URL` = полный origin, без пути (без `/api`).
+
 const ENV_BACKEND_URL := "GOONSTRIKE_CLIENT_BACKEND_URL"
 const CFG_SECTION := "auth"
 

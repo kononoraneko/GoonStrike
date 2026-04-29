@@ -123,10 +123,29 @@ func _setup_backend_client(backend_url: String) -> void:
 
 
 func _register_server(heartbeat_sec: float) -> void:
-	if _backend_client == null or not _backend_client.has_method("register_server"):
+	if _backend_client == null:
 		return
 	var auth_context := await _auth_context_for_registry(true)
-	_backend_client.call("register_server", _build_registry_payload(true), auth_context)
+	var payload_identity := _build_registry_payload(true)
+
+	if _backend_client.has_method("registry_signed_request_await"):
+		var reg_result: Variant = await _backend_client.registry_signed_request_await(
+			"POST",
+			"/servers/register",
+			payload_identity,
+			auth_context,
+		)
+		if reg_result is Dictionary and not reg_result.get("ok", false):
+			push_error(
+				"Registry register failed HTTP %s: %s"
+				% [str(reg_result.get("status", "")), str(reg_result.get("raw", reg_result))]
+			)
+			return
+	elif _backend_client.has_method("register_server"):
+		_backend_client.call("register_server", payload_identity, auth_context)
+	else:
+		return
+
 	await _send_server_heartbeat()
 	if heartbeat_sec <= 0.0:
 		return

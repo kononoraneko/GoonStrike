@@ -66,6 +66,44 @@ func register_server(payload: Dictionary, auth_context: Dictionary = {}) -> void
 	_request("POST", "/servers/register", payload, _registry_headers("POST", "/servers/register", payload, auth_context))
 
 
+## Awaitable signed registry POST; use for /servers/register so heartbeat does not race ahead of registration.
+func registry_signed_request_await(method: String, path: String, payload: Variant, auth_context: Dictionary) -> Dictionary:
+	if not is_configured():
+		return {"ok": false, "offline": true, "status": 0, "data": {}}
+	var reg_hs := _registry_headers(method, path, payload, auth_context)
+	if reg_hs.is_empty():
+		return {"ok": false, "offline": false, "status": 401, "data": {}, "error": "registry_auth_headers_empty"}
+	var headers := _make_headers(false)
+	for i in range(reg_hs.size()):
+		headers.append(reg_hs[i])
+	var http := HTTPRequest.new()
+	http.timeout = request_timeout_sec
+	add_child(http)
+	var body := _request_body(payload)
+	var err := http.request(base_url + path, headers, _http_method(method), body)
+	if err != OK:
+		http.queue_free()
+		return {"ok": false, "offline": false, "status": 0, "error": "request_start_failed:%d" % err}
+	var completed: Array = await http.request_completed
+	http.queue_free()
+	var result_code := int(completed[0])
+	var response_code := int(completed[1])
+	var response_body := completed[3] as PackedByteArray
+	var text := response_body.get_string_from_utf8()
+	var data: Variant = {}
+	if not text.is_empty():
+		var parsed: Variant = JSON.parse_string(text)
+		if parsed != null:
+			data = parsed
+	return {
+		"ok": result_code == OK and response_code >= 200 and response_code < 300,
+		"offline": false,
+		"status": response_code,
+		"data": data,
+		"raw": text,
+	}
+
+
 func heartbeat_server(server_id: String, payload: Dictionary, auth_context: Dictionary = {}) -> void:
 	if not is_configured() or server_id.is_empty():
 		return

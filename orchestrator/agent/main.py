@@ -104,7 +104,9 @@ def create_instance(payload: InstanceCreate, _: None = Depends(_require_agent_to
     ]
     for key, val in env_pairs:
         cmd.extend(["-e", f"{key}={val}"])
-    cmd.extend(["-p", f"{payload.port}:{payload.port}", payload.docker_image])
+    # Godot ENetMultiplayerPeer uses UDP; plain -p publishes TCP only and clients cannot connect.
+    cmd.extend(["-p", f"{payload.port}:{payload.port}/udp"])
+    cmd.extend([payload.docker_image])
 
     proc = _run(cmd)
     if proc.returncode != 0:
