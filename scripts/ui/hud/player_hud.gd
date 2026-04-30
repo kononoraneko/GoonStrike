@@ -26,9 +26,15 @@ class_name PlayerHUD extends Control
 
 ## Устанавливается при спавне локального игрока.
 var player: OnlinePlayer
-var _crosshair_base_size: float = 4.0
-var _crosshair_target_size: float = 4.0
-var _crosshair_current_size: float = 4.0
+var _crosshair_base_size: float = 8.0
+var _crosshair_target_gap: float = 6.0
+var _crosshair_current_gap: float = 6.0
+var _crosshair_dynamic: bool = true
+var _crosshair_lines_count: int = 4
+var _crosshair_color: Color = Color(0.2, 1.0, 0.2, 0.95)
+var _crosshair_line_len: float = 8.0
+var _crosshair_thickness: float = 2.0
+var _crosshair_lines: Array[ColorRect] = []
 
 
 func setup(p: OnlinePlayer) -> void:
@@ -113,30 +119,105 @@ func _on_sniper_scope_changed(active: bool) -> void:
 func _process(delta: float) -> void:
 	if player == null or not is_instance_valid(player) or cross_hair == null:
 		return
+	if not _crosshair_dynamic:
+		_crosshair_target_gap = _crosshair_base_size
+		_crosshair_current_gap = _crosshair_base_size
+		_redraw_crosshair_lines(_crosshair_base_size)
+		return
 	var weapon := player.weapon_holder.current_weapon
 	if weapon == null:
-		_set_crosshair_size(_crosshair_base_size)
+		_crosshair_target_gap = _crosshair_base_size
+		_crosshair_current_gap = _crosshair_base_size
+		_redraw_crosshair_lines(_crosshair_base_size)
 		return
 	var angle := weapon.get_crosshair_spread_angle_deg()
-	_crosshair_target_size = clampf(_crosshair_base_size + angle * 1.6, _crosshair_base_size, 42.0)
-	_crosshair_current_size = lerpf(_crosshair_current_size, _crosshair_target_size, clampf(delta * 16.0, 0.0, 1.0))
-	_set_crosshair_size(_crosshair_current_size)
+	_crosshair_target_gap = clampf(_crosshair_base_size + angle * 1.35, _crosshair_base_size, 48.0)
+	# Быстрее отклик — чтобы в контр-стрейфе визуал почти моментально сходился.
+	_crosshair_current_gap = lerpf(_crosshair_current_gap, _crosshair_target_gap, clampf(delta * 40.0, 0.0, 1.0))
+	_redraw_crosshair_lines(_crosshair_current_gap)
 
 
 func _init_crosshair_size() -> void:
 	if cross_hair == null:
 		return
-	_crosshair_base_size = maxf(cross_hair.size.x, 4.0)
-	_crosshair_target_size = _crosshair_base_size
-	_crosshair_current_size = _crosshair_base_size
-	_set_crosshair_size(_crosshair_base_size)
+	_crosshair_target_gap = _crosshair_base_size
+	_crosshair_current_gap = _crosshair_base_size
+	cross_hair.color = Color(0, 0, 0, 0)
+	_rebuild_crosshair_lines()
+	_redraw_crosshair_lines(_crosshair_base_size)
 
 
-func _set_crosshair_size(size_px: float) -> void:
+func _rebuild_crosshair_lines() -> void:
 	if cross_hair == null:
 		return
-	var half := size_px * 0.5
-	cross_hair.offset_left = -half
-	cross_hair.offset_top = -half
-	cross_hair.offset_right = half
-	cross_hair.offset_bottom = half
+	for n in _crosshair_lines:
+		if n != null and is_instance_valid(n):
+			n.queue_free()
+	_crosshair_lines.clear()
+	for _i in range(4):
+		var line := ColorRect.new()
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.color = _crosshair_color
+		cross_hair.add_child(line)
+		_crosshair_lines.append(line)
+
+
+func _redraw_crosshair_lines(gap: float) -> void:
+	if _crosshair_lines.size() < 4:
+		return
+	var show_count := clampi(_crosshair_lines_count, 3, 4)
+	for i in range(_crosshair_lines.size()):
+		_crosshair_lines[i].visible = i < show_count
+		_crosshair_lines[i].color = _crosshair_color
+	var half_t := _crosshair_thickness * 0.5
+	var left := _crosshair_lines[0]
+	var right := _crosshair_lines[1]
+	var up := _crosshair_lines[2]
+	left.position = Vector2(-gap - _crosshair_line_len, -half_t)
+	left.size = Vector2(_crosshair_line_len, _crosshair_thickness)
+	right.position = Vector2(gap, -half_t)
+	right.size = Vector2(_crosshair_line_len, _crosshair_thickness)
+	up.position = Vector2(-half_t, -gap - _crosshair_line_len)
+	up.size = Vector2(_crosshair_thickness, _crosshair_line_len)
+	if show_count >= 4:
+		var down := _crosshair_lines[3]
+		down.position = Vector2(-half_t, gap)
+		down.size = Vector2(_crosshair_thickness, _crosshair_line_len)
+
+
+func set_crosshair_dynamic(enabled: bool) -> void:
+	_crosshair_dynamic = enabled
+
+
+func is_crosshair_dynamic() -> bool:
+	return _crosshair_dynamic
+
+
+func set_crosshair_size(px: float) -> void:
+	_crosshair_base_size = clampf(px, 2.0, 28.0)
+	_crosshair_target_gap = _crosshair_base_size
+	_crosshair_current_gap = _crosshair_base_size
+	_redraw_crosshair_lines(_crosshair_base_size)
+
+
+func get_crosshair_size() -> float:
+	return _crosshair_base_size
+
+
+func set_crosshair_style_lines(lines_count: int) -> void:
+	_crosshair_lines_count = clampi(lines_count, 3, 4)
+	_redraw_crosshair_lines(_crosshair_current_gap)
+
+
+func get_crosshair_style_lines() -> int:
+	return _crosshair_lines_count
+
+
+func set_crosshair_color_hex(hex: String) -> void:
+	var c := Color.from_string(hex, _crosshair_color)
+	_crosshair_color = c
+	_redraw_crosshair_lines(_crosshair_current_gap)
+
+
+func get_crosshair_color_hex() -> String:
+	return _crosshair_color.to_html()
