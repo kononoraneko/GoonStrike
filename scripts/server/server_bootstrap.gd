@@ -166,7 +166,9 @@ func _register_server(heartbeat_sec: float) -> void:
 func _send_server_heartbeat() -> void:
 	if _backend_client == null or not _backend_client.has_method("heartbeat_server"):
 		return
-	var auth_context := await _auth_context_for_registry(true)
+	# Не обновляем challenge на каждый heartbeat:
+	# при кратком сетевом сбое это приводило к пропуску heartbeat и выпадению из списка серверов.
+	var auth_context := await _auth_context_for_registry(false)
 	if _requires_registry_auth() and auth_context.is_empty():
 		return
 	_backend_client.call("heartbeat_server", _server_id, _build_registry_payload(false), auth_context)

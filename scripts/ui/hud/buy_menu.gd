@@ -298,7 +298,11 @@ func _add_weapon_row(wd: WeaponData, my_money: int) -> void:
 func _on_buy_pressed(weapon_path: String) -> void:
 	if _game_manager == null:
 		return
-	_game_manager.rpc_request_buy.rpc_id(1, weapon_path)
+	if multiplayer.has_multiplayer_peer():
+		_game_manager.rpc_request_buy.rpc_id(1, weapon_path)
+	else:
+		# Оффлайн/локальный запуск без net-peer.
+		_game_manager.rpc_request_buy(weapon_path)
 	buy_requested.emit(weapon_path)
 	close()
 

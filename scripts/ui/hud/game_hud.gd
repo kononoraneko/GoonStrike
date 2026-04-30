@@ -255,3 +255,39 @@ func _register_console_commands(player: OnlinePlayer) -> void:
 		0,
 		"bool"
 	)
+	ConsoleCommands.register_callable(
+		"cl_dynamiccrosshair",
+		func() -> bool: return player_hud.is_crosshair_dynamic(),
+		func(v: bool) -> void: player_hud.set_crosshair_dynamic(v),
+		"Динамический прицел (true/false).",
+		0,
+		0,
+		"bool"
+	)
+	ConsoleCommands.register_callable(
+		"cl_crosshairsize",
+		func() -> float: return player_hud.get_crosshair_size(),
+		func(v: float) -> void: player_hud.set_crosshair_size(v),
+		"Базовый размер/зазор прицела.",
+		2.0,
+		28.0,
+		"float"
+	)
+	ConsoleCommands.register_callable(
+		"cl_crosshairstyle",
+		func() -> int: return player_hud.get_crosshair_style_lines(),
+		func(v: int) -> void: player_hud.set_crosshair_style_lines(v),
+		"Стиль прицела: 3 или 4 палочки.",
+		3,
+		4,
+		"int"
+	)
+	ConsoleCommands.register_callable(
+		"cl_crosshaircolor",
+		func() -> String: return player_hud.get_crosshair_color_hex(),
+		func(v: String) -> void: player_hud.set_crosshair_color_hex(v),
+		"Цвет прицела (#RRGGBB или имя).",
+		0,
+		0,
+		"string"
+	)
