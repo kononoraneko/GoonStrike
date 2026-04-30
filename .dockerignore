@@ -1,12 +1,17 @@
 .git
-.gitignore
-.cursor
+.github
 .vscode
-**/__pycache__/
-**/*.pyc
+*.uid
+*.import
 *.log
-*.tmp
-backend/.env
-backend/.venv
-admin-panel/node_modules
-postgres_data
+
+# Non-runtime directories for dedicated image context.
+backend
+admin-panel
+orchestrator/agent
+docs
+
+# Dev/test helpers.
+scripts/docker_dedicated_smoke.ps1
+start_backend.bat
+start_dedicated_server.bat

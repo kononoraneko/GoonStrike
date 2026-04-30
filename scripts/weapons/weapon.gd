@@ -72,6 +72,11 @@ func shoot(aim_ray: Dictionary) -> bool:
 			var st := owner_player.sniper_scope_stage
 			var tighter := 1.0 - 0.22 * float(st - 1)
 			spread_scale = data.scope_spread_multiplier * maxf(tighter, 0.45)
+		if data and data.has_sniper_scope:
+			if mv.input_dir != Vector2.ZERO:
+				spread_scale *= 2.8
+			if not owner_player.is_on_floor():
+				spread_scale *= 4.0
 		spread_direction = spread.apply(base_direction, mv.input_dir != Vector2.ZERO, not owner_player.is_on_floor(), spread_scale)
 		# Хост (listen server): тот же узел оружия — bloom/pattern обновляет WeaponHolder._server_receive_shot,
 		# иначе on_shot_fired вызовется дважды. Клиент и оффлайн — здесь.
@@ -96,6 +101,23 @@ func shoot(aim_ray: Dictionary) -> bool:
 	show_tracer(muzzle_pos, local_hit_point)
 	shot_requested.emit(aim_origin, base_direction, spread_direction)
 	return true
+
+
+func get_crosshair_spread_angle_deg() -> float:
+	if data == null or spread == null or owner_player == null:
+		return 0.0
+	var mv: MovementComponent = owner_player.movement
+	var spread_scale := 1.0
+	if data.has_sniper_scope and owner_player.sniper_scope_stage > 0:
+		var st := owner_player.sniper_scope_stage
+		var tighter := 1.0 - 0.22 * float(st - 1)
+		spread_scale = data.scope_spread_multiplier * maxf(tighter, 0.45)
+	if data.has_sniper_scope:
+		if mv.input_dir != Vector2.ZERO:
+			spread_scale *= 2.8
+		if not owner_player.is_on_floor():
+			spread_scale *= 4.0
+	return spread.get_current_spread_angle(mv.input_dir != Vector2.ZERO, not owner_player.is_on_floor(), spread_scale)
 
 
 ## Вызывается у всех клиентов через broadcast (из WeaponHolder).

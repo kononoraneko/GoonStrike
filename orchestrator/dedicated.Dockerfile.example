@@ -1,7 +1,27 @@
-FROM ubuntu:24.04
+FROM debian:bookworm-slim AS godot_fetch
 
 ARG GODOT_VERSION=4.6.1
 ARG GODOT_RELEASE_TAG=stable
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-${GODOT_RELEASE_TAG}/Godot_v${GODOT_VERSION}-${GODOT_RELEASE_TAG}_linux.x86_64.zip"; \
+    curl -fsSL "$url" -o /tmp/godot.zip; \
+    mkdir -p /opt/godot; \
+    unzip -q /tmp/godot.zip -d /opt/godot; \
+    rm -f /tmp/godot.zip; \
+    mv /opt/godot/Godot_v${GODOT_VERSION}-${GODOT_RELEASE_TAG}_linux.x86_64 /opt/godot/godot; \
+    chmod +x /opt/godot/godot
+
+
+FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV GODOT_BIN=/opt/godot/godot
@@ -13,8 +33,6 @@ ENV GOONSTRIKE_PUBLIC_HOST=127.0.0.1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
-        curl \
-        unzip \
         libx11-6 \
         libxcursor1 \
         libxinerama1 \
@@ -25,21 +43,15 @@ RUN apt-get update \
         libfreetype6 \
         libglu1-mesa \
         libgl1 \
-        libasound2t64 \
+        libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN set -eux; \
-    url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-${GODOT_RELEASE_TAG}/Godot_v${GODOT_VERSION}-${GODOT_RELEASE_TAG}_linux.x86_64.zip"; \
-    curl -fsSL "$url" -o /tmp/godot.zip; \
-    mkdir -p /opt/godot; \
-    unzip -q /tmp/godot.zip -d /opt/godot; \
-    rm -f /tmp/godot.zip; \
-    mv /opt/godot/Godot_v${GODOT_VERSION}-${GODOT_RELEASE_TAG}_linux.x86_64 "$GODOT_BIN"; \
-    chmod +x "$GODOT_BIN"
+COPY --from=godot_fetch /opt/godot/godot /opt/godot/godot
 
 WORKDIR /opt/goonstrike
 
-# For production, replace this COPY with exported artifacts from CI if desired.
+# Важно: копируем весь проект-контекст (с учетом .dockerignore), чтобы не терять
+# служебные файлы Godot (например class cache), иначе headless может не разрешать class_name-типы.
 COPY . /opt/goonstrike
 
 COPY orchestrator/dedicated.entrypoint.sh /usr/local/bin/goonstrike-dedicated-entrypoint
