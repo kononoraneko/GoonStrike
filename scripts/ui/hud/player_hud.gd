@@ -26,6 +26,9 @@ class_name PlayerHUD extends Control
 
 ## Устанавливается при спавне локального игрока.
 var player: OnlinePlayer
+var _crosshair_base_size: float = 4.0
+var _crosshair_target_size: float = 4.0
+var _crosshair_current_size: float = 4.0
 
 
 func setup(p: OnlinePlayer) -> void:
@@ -49,6 +52,7 @@ func setup(p: OnlinePlayer) -> void:
 	# Если оружие уже есть при подключении HUD (выдано при спавне)
 	_on_weapon_changed(wh.current_weapon)
 	_on_sniper_scope_changed(player.is_sniper_scoped)
+	_init_crosshair_size()
 
 
 func unbind_player() -> void:
@@ -104,3 +108,35 @@ func _on_sniper_scope_changed(active: bool) -> void:
 		scope_overlay.visible = active
 	if cross_hair:
 		cross_hair.visible = not active
+
+
+func _process(delta: float) -> void:
+	if player == null or not is_instance_valid(player) or cross_hair == null:
+		return
+	var weapon := player.weapon_holder.current_weapon
+	if weapon == null:
+		_set_crosshair_size(_crosshair_base_size)
+		return
+	var angle := weapon.get_crosshair_spread_angle_deg()
+	_crosshair_target_size = clampf(_crosshair_base_size + angle * 1.6, _crosshair_base_size, 42.0)
+	_crosshair_current_size = lerpf(_crosshair_current_size, _crosshair_target_size, clampf(delta * 16.0, 0.0, 1.0))
+	_set_crosshair_size(_crosshair_current_size)
+
+
+func _init_crosshair_size() -> void:
+	if cross_hair == null:
+		return
+	_crosshair_base_size = maxf(cross_hair.size.x, 4.0)
+	_crosshair_target_size = _crosshair_base_size
+	_crosshair_current_size = _crosshair_base_size
+	_set_crosshair_size(_crosshair_base_size)
+
+
+func _set_crosshair_size(size_px: float) -> void:
+	if cross_hair == null:
+		return
+	var half := size_px * 0.5
+	cross_hair.offset_left = -half
+	cross_hair.offset_top = -half
+	cross_hair.offset_right = half
+	cross_hair.offset_bottom = half
