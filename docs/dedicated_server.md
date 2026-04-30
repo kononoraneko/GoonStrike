@@ -230,6 +230,17 @@ The game client no longer creates an in-process local host. Use either the `Ло
 
 Production servers should be launched as standalone headless processes on Linux or in containers.
 
+## Container size optimization (dedicated)
+
+The sample dedicated Dockerfile (`orchestrator/dedicated.Dockerfile.example`) is optimized to reduce image size:
+
+- multi-stage build (download Godot in a builder stage, keep only runtime binary in final image);
+- `debian:bookworm-slim` runtime base instead of full Ubuntu image;
+- runtime installs only required shared libs (no curl/unzip in final layer);
+- copies only runtime project folders (`project.godot`, `addons/`, `assets/`, `resources/`, `scenes/`, `scripts/`), not backend/admin/dev files.
+
+Tip: keep `.dockerignore` strict so heavy non-runtime directories are excluded from context during dedicated image builds.
+
 ## Current Backend API (summary)
 
 **Health**
