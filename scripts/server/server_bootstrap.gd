@@ -54,8 +54,8 @@ func _start_server() -> void:
 	var backend_url := String(args.get("backend-url", "")).strip_edges()
 	if backend_url.is_empty():
 		backend_url = String(OS.get_environment("GOONSTRIKE_BACKEND_URL")).strip_edges()
-	var auto_start := _bool_arg(args.get("auto-start", false))
-	var auto_op_first := _bool_arg(args.get("auto-op-first", false))
+	var auto_start := _bool_arg_or_env(args, "auto-start", "GOONSTRIKE_AUTO_START", true)
+	var auto_op_first := _bool_arg_or_env(args, "auto-op-first", "GOONSTRIKE_AUTO_OP_FIRST", false)
 	var heartbeat_sec := float(args.get("heartbeat-sec", 10.0))
 	_display_name = String(args.get("display-name", server_name))
 	if args.has("public-host"):
@@ -238,6 +238,15 @@ func _make_default_server_id(server_name: String, port: int) -> String:
 	return "%s-%d" % [normalized, port]
 
 
+func _bool_arg_or_env(args: Dictionary, key: String, env_name: String, default_value: bool = false) -> bool:
+	if args.has(key):
+		return _bool_arg(args.get(key, default_value))
+	var raw := String(OS.get_environment(env_name)).strip_edges()
+	if raw.is_empty():
+		return default_value
+	return _bool_arg(raw)
+
+
 func _bool_arg(value: Variant) -> bool:
 	if value is bool:
 		return value
@@ -269,7 +278,7 @@ func _resolve_registry_credentials_after_backend(args: Dictionary) -> void:
 
 	var cred_path := _resolve_credentials_path(args)
 	var enroll_token := _resolve_arg_or_env(args, "registry-enroll-token", "GOONSTRIKE_REGISTRY_ENROLL_TOKEN")
-	var enroll_force := _bool_arg(args.get("registry-enroll-force", false))
+	var enroll_force := _bool_arg_or_env(args, "registry-enroll-force", "GOONSTRIKE_REGISTRY_ENROLL_FORCE", false)
 
 	if not enroll_token.is_empty():
 		if not enroll_force and _try_load_registry_credentials_file(cred_path):

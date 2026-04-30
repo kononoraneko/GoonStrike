@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 import secrets
 
 import httpx
+from urllib.parse import urlparse
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -32,6 +33,16 @@ from ..server_auth import hash_server_secret, issue_server_challenge, verify_sig
 router = APIRouter(prefix="/servers", tags=["servers"])
 
 HEARTBEAT_TTL_SECONDS = 60
+
+
+def _normalize_backend_url_for_dedicated(raw_url: str) -> str:
+    value = raw_url.strip().rstrip("/")
+    if value == "":
+        return ""
+    parsed = urlparse(value)
+    if parsed.scheme == "":
+        value = f"http://{value}"
+    return value
 
 
 def _persist_new_enrollment_token(db: Session, server_id_constraint: str | None, ttl_seconds: int) -> tuple[str, datetime]:
@@ -204,9 +215,9 @@ def orchestrator_spawn_instance(
     _orchestrator_base_url()
     _orchestrator_headers()
 
-    public_backend = (payload.backend_url or "").strip()
+    public_backend = _normalize_backend_url_for_dedicated((payload.backend_url or "").strip())
     if public_backend == "":
-        public_backend = settings.public_backend_url.strip()
+        public_backend = _normalize_backend_url_for_dedicated(settings.public_backend_url.strip())
     if public_backend == "":
         raise HTTPException(
             status_code=400,
@@ -231,7 +242,7 @@ def orchestrator_spawn_instance(
     agent_body = {
         "server_id": server_id,
         "port": payload.port,
-        "backend_url": public_backend.rstrip("/"),
+        "backend_url": public_backend,
         "enrollment_token": token_plain,
         "map_id": payload.map_id,
         "mode_id": payload.mode_id,

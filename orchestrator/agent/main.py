@@ -85,10 +85,13 @@ def create_instance(payload: InstanceCreate, _: None = Depends(_require_agent_to
     env_pairs = [
         ("GOONSTRIKE_BACKEND_URL", payload.backend_url.rstrip("/")),
         ("GOONSTRIKE_REGISTRY_ENROLL_TOKEN", payload.enrollment_token),
+        ("GOONSTRIKE_REGISTRY_ENROLL_FORCE", "1"),
         ("GOONSTRIKE_SERVER_ID", payload.server_id),
         ("GOONSTRIKE_DEDICATED_PORT", str(payload.port)),
         ("GOONSTRIKE_MAP_ID", payload.map_id),
         ("GOONSTRIKE_MODE_ID", payload.mode_id),
+        ("GOONSTRIKE_AUTO_START", "1"),
+        ("GOONSTRIKE_AUTO_OP_FIRST", "0"),
     ]
     if payload.public_host:
         env_pairs.append(("GOONSTRIKE_PUBLIC_HOST", payload.public_host.strip()))
@@ -212,9 +215,16 @@ def get_instance_logs(port: int, tail: int = 200, _: None = Depends(_require_age
     proc = _run(["docker", "logs", "--tail", str(safe_tail), name])
     if proc.returncode != 0:
         raise HTTPException(status_code=500, detail=proc.stderr or proc.stdout or "docker logs failed")
+    merged_logs = ""
+    if proc.stdout:
+        merged_logs += proc.stdout
+    if proc.stderr:
+        if merged_logs and not merged_logs.endswith("\n"):
+            merged_logs += "\n"
+        merged_logs += proc.stderr
     return {
         "name": name,
         "port": port,
         "tail": safe_tail,
-        "logs": proc.stdout,
+        "logs": merged_logs,
     }
