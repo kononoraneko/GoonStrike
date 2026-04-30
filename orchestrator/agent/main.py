@@ -85,10 +85,13 @@ def create_instance(payload: InstanceCreate, _: None = Depends(_require_agent_to
     env_pairs = [
         ("GOONSTRIKE_BACKEND_URL", payload.backend_url.rstrip("/")),
         ("GOONSTRIKE_REGISTRY_ENROLL_TOKEN", payload.enrollment_token),
+        ("GOONSTRIKE_REGISTRY_ENROLL_FORCE", "1"),
         ("GOONSTRIKE_SERVER_ID", payload.server_id),
         ("GOONSTRIKE_DEDICATED_PORT", str(payload.port)),
         ("GOONSTRIKE_MAP_ID", payload.map_id),
         ("GOONSTRIKE_MODE_ID", payload.mode_id),
+        ("GOONSTRIKE_AUTO_START", "1"),
+        ("GOONSTRIKE_AUTO_OP_FIRST", "0"),
     ]
     if payload.public_host:
         env_pairs.append(("GOONSTRIKE_PUBLIC_HOST", payload.public_host.strip()))
