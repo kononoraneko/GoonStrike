@@ -34,7 +34,7 @@ func _process(delta: float) -> void:
 func apply(base_direction: Vector3, is_moving: bool, is_airborne: bool, spread_scale: float = 1.0) -> Vector3:
 	if _data == null:
 		return base_direction
-	var s := clampf(spread_scale, 0.0, 1.0)
+	var s := clampf(spread_scale, 0.0, 8.0)
 	match _data.mode:
 		SpreadPattern.SpreadMode.RANDOM:
 			return _apply_random(base_direction, is_moving, is_airborne, s)
@@ -43,6 +43,20 @@ func apply(base_direction: Vector3, is_moving: bool, is_airborne: bool, spread_s
 		SpreadPattern.SpreadMode.PATTERN:
 			return _apply_pattern(base_direction, s)
 	return base_direction
+
+
+func get_current_spread_angle(is_moving: bool, is_airborne: bool, spread_scale: float = 1.0) -> float:
+	if _data == null:
+		return 0.0
+	var s := clampf(spread_scale, 0.0, 8.0)
+	var angle := _data.base_spread
+	if _data.mode == SpreadPattern.SpreadMode.BLOOM:
+		angle += _current_bloom
+	if is_moving:
+		angle *= _data.move_multiplier
+	if is_airborne:
+		angle *= _data.air_multiplier
+	return maxf(angle * s, 0.0)
 
 
 ## Вызывается после каждого выстрела — обновляет внутреннее состояние.
